@@ -11,36 +11,67 @@ export async function generateCertificatePdf(
     return;
   }
 
-  // Scroll parent container to top so html2canvas captures from top offset 0
-  const parent = element.parentElement;
-  const oldScrollTop = parent ? parent.scrollTop : 0;
-  if (parent) {
-    parent.scrollTop = 0;
-  }
+  // 1. Create a clean, temporary wrapper placed at top: 0, left: 0 of the screen
+  const tempWrapper = document.createElement('div');
+  tempWrapper.id = 'temp-pdf-render-wrapper';
+  tempWrapper.style.position = 'fixed';
+  tempWrapper.style.top = '0';
+  tempWrapper.style.left = '0';
+  tempWrapper.style.width = '794px'; // Standard A4 width at 96 DPI
+  tempWrapper.style.zIndex = '999999'; // Render on top so html2canvas computes full visibility
+  tempWrapper.style.backgroundColor = '#ffffff';
+  tempWrapper.style.margin = '0';
+  tempWrapper.style.padding = '0';
+  tempWrapper.style.boxSizing = 'border-box';
+  tempWrapper.style.overflow = 'hidden';
+  tempWrapper.style.pointerEvents = 'none';
+
+  // 2. Clone the certificate element
+  const clone = element.cloneNode(true) as HTMLElement;
+  clone.style.margin = '0';
+  clone.style.padding = '28px 36px';
+  clone.style.width = '794px';
+  clone.style.maxWidth = '794px';
+  clone.style.boxSizing = 'border-box';
+  clone.style.boxShadow = 'none';
+  clone.style.borderRadius = '0';
+  clone.style.border = '6px double #b45309';
+  clone.style.backgroundColor = '#ffffff';
+  clone.style.color = '#0c0a09';
+  clone.style.position = 'relative';
+  clone.style.top = '0';
+  clone.style.left = '0';
+  clone.style.transform = 'none';
+
+  tempWrapper.appendChild(clone);
+  document.body.appendChild(tempWrapper);
 
   try {
-    // Allow any pending renders
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    // Brief delay to ensure cloned images/fonts/QR are rendered
+    await new Promise((resolve) => setTimeout(resolve, 250));
 
-    // Capture the visible element directly
-    const canvas = await html2canvas(element, {
-      scale: 2, // High resolution
+    const cloneHeight = clone.offsetHeight || clone.getBoundingClientRect().height || 1050;
+
+    // 3. Capture with html2canvas strictly bounded to 0,0 with exact clone dimensions
+    const canvas = await html2canvas(clone, {
+      scale: 2, // High DPI resolution
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
+      x: 0,
+      y: 0,
+      width: 794,
+      height: cloneHeight,
       scrollX: 0,
-      scrollY: 0
+      scrollY: 0,
+      windowWidth: 794,
+      windowHeight: cloneHeight
     });
-
-    // Restore scroll position
-    if (parent) {
-      parent.scrollTop = oldScrollTop;
-    }
 
     const imgData = canvas.toDataURL('image/jpeg', 0.98);
 
-    // Create a single-page A4 PDF (210mm x 297mm)
+    // 4. Build single-page jsPDF document (A4: 210mm x 297mm)
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -54,12 +85,12 @@ export async function generateCertificatePdf(
     const imgHeight = canvas.height;
     const ratio = imgWidth / imgHeight;
 
-    // Use 6mm margins
-    let renderWidth = pdfWidth - 12;
+    const margin = 6; // 6mm margin around document
+    let renderWidth = pdfWidth - (margin * 2);
     let renderHeight = renderWidth / ratio;
 
-    if (renderHeight > pdfHeight - 12) {
-      renderHeight = pdfHeight - 12;
+    if (renderHeight > (pdfHeight - (margin * 2))) {
+      renderHeight = pdfHeight - (margin * 2);
       renderWidth = renderHeight * ratio;
     }
 
@@ -72,13 +103,14 @@ export async function generateCertificatePdf(
     pdf.save(cleanFilename);
   } catch (err) {
     console.error('Error generating PDF with html2canvas:', err);
-    if (parent) {
-      parent.scrollTop = oldScrollTop;
-    }
     try {
       window.print();
     } catch (e) {
       console.error('Print fallback failed:', e);
+    }
+  } finally {
+    if (document.body.contains(tempWrapper)) {
+      document.body.removeChild(tempWrapper);
     }
   }
 }
@@ -107,6 +139,7 @@ export async function printElement(
   // In sandboxed frame or fallback, generate & download 1-page A4 PDF directly
   await generateCertificatePdf(elementId, docTitle);
 }
+
 
 
 

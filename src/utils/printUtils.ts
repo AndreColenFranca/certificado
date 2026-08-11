@@ -1,17 +1,19 @@
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
-// Helper to convert modern CSS oklch(...) colors to rgb/rgba/hex using HTML5 Canvas
-function convertOklchToRgb(cssText: string): string {
-  if (!cssText || !cssText.includes('oklch')) return cssText;
-  
+/**
+ * Converts any oklch(...) color string into a browser-resolved RGB / Hex string using HTML5 Canvas
+ */
+function convertOklchToRgb(cssValue: string): string {
+  if (!cssValue || !cssValue.includes('oklch')) return cssValue;
+
   const canvas = document.createElement('canvas');
   canvas.width = 1;
   canvas.height = 1;
   const ctx = canvas.getContext('2d');
-  if (!ctx) return cssText;
+  if (!ctx) return cssValue;
 
-  return cssText.replace(/oklch\([^)]+\)/gi, (match) => {
+  return cssValue.replace(/oklch\([^)]+\)/gi, (match) => {
     try {
       ctx.fillStyle = '#000000';
       ctx.fillStyle = match;
@@ -19,145 +21,143 @@ function convertOklchToRgb(cssText: string): string {
       if (resolved && resolved !== '#000000') {
         return resolved;
       }
-      if (match.includes(' 0 0') || match.includes(' 0% 0') || match.includes(' 0%')) {
-        return '#000000';
-      }
-      return resolved || '#000000';
+      return '#000000';
     } catch {
       return '#000000';
     }
   });
 }
 
-// Pre-process DOM element trees to replace any oklch colors before rendering
-function sanitizeOklchInNodeTree(root: HTMLElement) {
-  const elements = [root, ...Array.from(root.querySelectorAll('*'))];
-  const canvas = document.createElement('canvas');
-  canvas.width = 1;
-  canvas.height = 1;
-  const ctx = canvas.getContext('2d');
+/**
+ * Copies computed inline styles from a source DOM subtree to a target DOM subtree,
+ * converting any lingering oklch values to browser-compatible RGB values.
+ */
+function copyInlineComputedStyles(source: HTMLElement, target: HTMLElement) {
+  const sourceNodes = [source, ...Array.from(source.querySelectorAll('*'))];
+  const targetNodes = [target, ...Array.from(target.querySelectorAll('*'))];
 
-  elements.forEach((node) => {
-    const el = node as HTMLElement;
-    if (el.style && el.style.cssText && el.style.cssText.includes('oklch')) {
-      el.style.cssText = convertOklchToRgb(el.style.cssText);
-    }
+  for (let i = 0; i < sourceNodes.length; i++) {
+    const srcEl = sourceNodes[i] as HTMLElement;
+    const tgtEl = targetNodes[i] as HTMLElement;
 
-    if (ctx) {
-      try {
-        const comp = window.getComputedStyle(el);
-        const color = comp.color;
-        const bg = comp.backgroundColor;
-        const border = comp.borderColor;
+    if (!srcEl || !tgtEl || srcEl.nodeType !== Node.ELEMENT_NODE) continue;
 
-        if (color && color.includes('oklch')) {
-          el.style.color = convertOklchToRgb(color);
+    try {
+      const computed = window.getComputedStyle(srcEl);
+      let inlineCss = '';
+
+      for (let j = 0; j < computed.length; j++) {
+        const prop = computed[j];
+        if (!prop || prop.startsWith('--')) continue; // Skip custom CSS variables
+
+        let val = computed.getPropertyValue(prop);
+        if (val && val.includes('oklch')) {
+          val = convertOklchToRgb(val);
         }
-        if (bg && bg.includes('oklch')) {
-          el.style.backgroundColor = convertOklchToRgb(bg);
+        if (val) {
+          inlineCss += `${prop}:${val};`;
         }
-        if (border && border.includes('oklch')) {
-          el.style.borderColor = convertOklchToRgb(border);
-        }
-      } catch {
-        // quiet catch
+      }
+
+      tgtEl.setAttribute('style', inlineCss);
+    } catch (e) {
+      // Fallback: keep existing inline styles if getComputedStyle fails on special nodes
+      if (tgtEl.style && tgtEl.style.cssText && tgtEl.style.cssText.includes('oklch')) {
+        tgtEl.style.cssText = convertOklchToRgb(tgtEl.style.cssText);
       }
     }
-  });
+  }
 }
 
+/**
+ * Generates a high-quality 1-page A4 PDF for a given HTML element.
+ * Uses an isolated, clean iframe to completely bypass Tailwind v4 oklch CSS stylesheet parsing errors.
+ */
 export async function generateCertificatePdf(
   elementId = 'printable-certificate-document',
   docTitle = 'Certificado_de_Autenticidade'
-) {
+): Promise<boolean> {
   const element = document.getElementById(elementId);
   if (!element) {
     console.error(`Element #${elementId} not found`);
-    return;
+    return false;
   }
 
-  // 1. Create a clean, temporary wrapper placed at top: 0, left: 0 of the screen
-  const tempWrapper = document.createElement('div');
-  tempWrapper.id = 'temp-pdf-render-wrapper';
-  tempWrapper.style.position = 'fixed';
-  tempWrapper.style.top = '0';
-  tempWrapper.style.left = '0';
-  tempWrapper.style.width = '794px'; // Standard A4 width at 96 DPI
-  tempWrapper.style.zIndex = '999999'; // Render on top so html2canvas computes full visibility
-  tempWrapper.style.backgroundColor = '#ffffff';
-  tempWrapper.style.margin = '0';
-  tempWrapper.style.padding = '0';
-  tempWrapper.style.boxSizing = 'border-box';
-  tempWrapper.style.overflow = 'hidden';
-  tempWrapper.style.pointerEvents = 'none';
+  // 1. Create an isolated hidden iframe
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.top = '0';
+  iframe.style.left = '-9999px';
+  iframe.style.width = '800px';
+  iframe.style.height = '1130px';
+  iframe.style.border = 'none';
+  iframe.style.zIndex = '-9999';
+  document.body.appendChild(iframe);
 
-  // 2. Clone the certificate element
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+  if (!iframeDoc) {
+    document.body.removeChild(iframe);
+    return false;
+  }
+
+  // 2. Initialize clean HTML structure inside iframe (no external oklch stylesheets)
+  iframeDoc.open();
+  iframeDoc.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${docTitle}</title>
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { background: #ffffff; color: #0f172a; font-family: system-ui, -apple-system, sans-serif; webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          img { max-width: 100%; height: auto; }
+        </style>
+      </head>
+      <body style="width: 794px; margin: 0 auto; background: #ffffff; padding: 24px;">
+      </body>
+    </html>
+  `);
+  iframeDoc.close();
+
+  // 3. Clone source element and copy computed RGB styles
   const clone = element.cloneNode(true) as HTMLElement;
-  clone.style.margin = '0';
-  clone.style.padding = '28px 36px';
-  clone.style.width = '794px';
-  clone.style.maxWidth = '794px';
+  copyInlineComputedStyles(element, clone);
+
+  // Force strict A4 layout bounds on cloned container
+  clone.style.width = '746px';
+  clone.style.margin = '0 auto';
   clone.style.boxSizing = 'border-box';
+  clone.style.backgroundColor = '#ffffff';
   clone.style.boxShadow = 'none';
   clone.style.borderRadius = '0';
-  clone.style.border = '6px double #b45309';
-  clone.style.backgroundColor = '#ffffff';
-  clone.style.color = '#0c0a09';
-  clone.style.position = 'relative';
-  clone.style.top = '0';
-  clone.style.left = '0';
-  clone.style.transform = 'none';
 
-  // Sanitize any oklch in cloned element tree
-  sanitizeOklchInNodeTree(clone);
-
-  tempWrapper.appendChild(clone);
-  document.body.appendChild(tempWrapper);
+  iframeDoc.body.appendChild(clone);
 
   try {
-    // Brief delay to ensure cloned images/fonts/QR are rendered
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    // Wait for images & fonts to settle in the iframe
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
-    const cloneHeight = clone.offsetHeight || clone.getBoundingClientRect().height || 1050;
+    const renderHeight = clone.offsetHeight || clone.getBoundingClientRect().height || 1050;
 
-    // 3. Capture with html2canvas strictly bounded to 0,0 with exact clone dimensions
+    // 4. Capture with html2canvas inside the isolated iframe document
     const canvas = await html2canvas(clone, {
-      scale: 2, // High DPI resolution
+      scale: 2,
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
       x: 0,
       y: 0,
-      width: 794,
-      height: cloneHeight,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: 794,
-      windowHeight: cloneHeight,
-      onclone: (clonedDoc) => {
-        // Process all <style> elements in cloned document to remove oklch
-        const styleElements = clonedDoc.querySelectorAll('style');
-        styleElements.forEach((styleEl) => {
-          if (styleEl.textContent && styleEl.textContent.includes('oklch')) {
-            styleEl.textContent = convertOklchToRgb(styleEl.textContent);
-          }
-        });
-
-        // Process all elements in cloned document
-        const allNodes = clonedDoc.querySelectorAll('*');
-        allNodes.forEach((node) => {
-          const el = node as HTMLElement;
-          if (el.style && el.style.cssText && el.style.cssText.includes('oklch')) {
-            el.style.cssText = convertOklchToRgb(el.style.cssText);
-          }
-        });
-      }
+      width: 746,
+      height: renderHeight,
+      windowWidth: 800,
+      windowHeight: renderHeight + 50
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.98);
 
-    // 4. Build single-page jsPDF document (A4: 210mm x 297mm)
+    // 5. Construct A4 PDF in jsPDF (210mm x 297mm)
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -171,43 +171,48 @@ export async function generateCertificatePdf(
     const imgHeight = canvas.height;
     const ratio = imgWidth / imgHeight;
 
-    const margin = 6; // 6mm margin around document
-    let renderWidth = pdfWidth - (margin * 2);
-    let renderHeight = renderWidth / ratio;
+    const margin = 5; // 5mm margin
+    let fitWidth = pdfWidth - margin * 2;
+    let fitHeight = fitWidth / ratio;
 
-    if (renderHeight > (pdfHeight - (margin * 2))) {
-      renderHeight = pdfHeight - (margin * 2);
-      renderWidth = renderHeight * ratio;
+    if (fitHeight > pdfHeight - margin * 2) {
+      fitHeight = pdfHeight - margin * 2;
+      fitWidth = fitHeight * ratio;
     }
 
-    const xOffset = (pdfWidth - renderWidth) / 2;
-    const yOffset = (pdfHeight - renderHeight) / 2;
+    const xOffset = (pdfWidth - fitWidth) / 2;
+    const yOffset = (pdfHeight - fitHeight) / 2;
 
-    pdf.addImage(imgData, 'JPEG', xOffset, yOffset, renderWidth, renderHeight);
+    pdf.addImage(imgData, 'JPEG', xOffset, yOffset, fitWidth, fitHeight);
 
-    const cleanFilename = `${docTitle.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
-    pdf.save(cleanFilename);
+    const filename = `${docTitle.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
+    pdf.save(filename);
+    return true;
   } catch (err) {
-    console.error('Error generating PDF with html2canvas:', err);
+    console.error('Error in generateCertificatePdf:', err);
+    // Fallback: window.print() if canvas generation fails
     try {
       window.print();
     } catch (e) {
-      console.error('Print fallback failed:', e);
+      console.error('Fallback print failed:', e);
     }
+    return false;
   } finally {
-    if (document.body.contains(tempWrapper)) {
-      document.body.removeChild(tempWrapper);
+    if (document.body.contains(iframe)) {
+      document.body.removeChild(iframe);
     }
   }
 }
 
+/**
+ * Trigger print dialog or generate PDF directly
+ */
 export async function printElement(
   elementId = 'printable-certificate-document',
   docTitle = 'Certificado_de_Autenticidade'
 ) {
   const isSandboxed = window.self !== window.top;
 
-  // In standalone top window, try native print dialog first
   if (!isSandboxed) {
     try {
       const prevTitle = document.title;
@@ -218,19 +223,9 @@ export async function printElement(
       }, 1000);
       return;
     } catch (err) {
-      console.warn('Native window.print failed, generating PDF instead:', err);
+      console.warn('Native window.print failed, falling back to PDF generation:', err);
     }
   }
 
-  // In sandboxed frame or fallback, generate & download 1-page A4 PDF directly
   await generateCertificatePdf(elementId, docTitle);
 }
-
-
-
-
-
-
-
-
-

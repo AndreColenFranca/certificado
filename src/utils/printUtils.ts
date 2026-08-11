@@ -1,6 +1,71 @@
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
+// Helper to convert modern CSS oklch(...) colors to rgb/rgba/hex using HTML5 Canvas
+function convertOklchToRgb(cssText: string): string {
+  if (!cssText || !cssText.includes('oklch')) return cssText;
+  
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return cssText;
+
+  return cssText.replace(/oklch\([^)]+\)/gi, (match) => {
+    try {
+      ctx.fillStyle = '#000000';
+      ctx.fillStyle = match;
+      const resolved = ctx.fillStyle;
+      if (resolved && resolved !== '#000000') {
+        return resolved;
+      }
+      if (match.includes(' 0 0') || match.includes(' 0% 0') || match.includes(' 0%')) {
+        return '#000000';
+      }
+      return resolved || '#000000';
+    } catch {
+      return '#000000';
+    }
+  });
+}
+
+// Pre-process DOM element trees to replace any oklch colors before rendering
+function sanitizeOklchInNodeTree(root: HTMLElement) {
+  const elements = [root, ...Array.from(root.querySelectorAll('*'))];
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  const ctx = canvas.getContext('2d');
+
+  elements.forEach((node) => {
+    const el = node as HTMLElement;
+    if (el.style && el.style.cssText && el.style.cssText.includes('oklch')) {
+      el.style.cssText = convertOklchToRgb(el.style.cssText);
+    }
+
+    if (ctx) {
+      try {
+        const comp = window.getComputedStyle(el);
+        const color = comp.color;
+        const bg = comp.backgroundColor;
+        const border = comp.borderColor;
+
+        if (color && color.includes('oklch')) {
+          el.style.color = convertOklchToRgb(color);
+        }
+        if (bg && bg.includes('oklch')) {
+          el.style.backgroundColor = convertOklchToRgb(bg);
+        }
+        if (border && border.includes('oklch')) {
+          el.style.borderColor = convertOklchToRgb(border);
+        }
+      } catch {
+        // quiet catch
+      }
+    }
+  });
+}
+
 export async function generateCertificatePdf(
   elementId = 'printable-certificate-document',
   docTitle = 'Certificado_de_Autenticidade'
@@ -43,6 +108,9 @@ export async function generateCertificatePdf(
   clone.style.left = '0';
   clone.style.transform = 'none';
 
+  // Sanitize any oklch in cloned element tree
+  sanitizeOklchInNodeTree(clone);
+
   tempWrapper.appendChild(clone);
   document.body.appendChild(tempWrapper);
 
@@ -66,7 +134,25 @@ export async function generateCertificatePdf(
       scrollX: 0,
       scrollY: 0,
       windowWidth: 794,
-      windowHeight: cloneHeight
+      windowHeight: cloneHeight,
+      onclone: (clonedDoc) => {
+        // Process all <style> elements in cloned document to remove oklch
+        const styleElements = clonedDoc.querySelectorAll('style');
+        styleElements.forEach((styleEl) => {
+          if (styleEl.textContent && styleEl.textContent.includes('oklch')) {
+            styleEl.textContent = convertOklchToRgb(styleEl.textContent);
+          }
+        });
+
+        // Process all elements in cloned document
+        const allNodes = clonedDoc.querySelectorAll('*');
+        allNodes.forEach((node) => {
+          const el = node as HTMLElement;
+          if (el.style && el.style.cssText && el.style.cssText.includes('oklch')) {
+            el.style.cssText = convertOklchToRgb(el.style.cssText);
+          }
+        });
+      }
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.98);
@@ -139,6 +225,7 @@ export async function printElement(
   // In sandboxed frame or fallback, generate & download 1-page A4 PDF directly
   await generateCertificatePdf(elementId, docTitle);
 }
+
 
 
 

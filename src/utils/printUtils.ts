@@ -110,11 +110,11 @@ export async function generateCertificatePdf(
         <title>${docTitle}</title>
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          html, body { background: #ffffff; color: #0f172a; font-family: system-ui, -apple-system, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; overflow: hidden; }
+          html, body { background: #ffffff; color: #0f172a; font-family: system-ui, -apple-system, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; }
           img { max-width: 100%; height: auto; }
         </style>
       </head>
-      <body style="width: 794px; margin: 0 auto; background: #ffffff; padding: 16px;">
+      <body style="width: 794px; margin: 0 auto; background: #ffffff; padding: 0;">
       </body>
     </html>
   `);
@@ -125,7 +125,8 @@ export async function generateCertificatePdf(
   copyInlineComputedStyles(element, clone);
 
   // Force strict A4 layout bounds on cloned container, clearing any computed top margins or transforms
-  clone.style.width = '746px';
+  clone.style.width = '770px';
+  clone.style.maxWidth = '770px';
   clone.style.marginTop = '0px';
   clone.style.marginBottom = '0px';
   clone.style.marginLeft = 'auto';
@@ -134,6 +135,7 @@ export async function generateCertificatePdf(
   clone.style.position = 'relative';
   clone.style.top = '0px';
   clone.style.left = '0px';
+  clone.style.padding = '16px';
   clone.style.boxSizing = 'border-box';
   clone.style.backgroundColor = '#ffffff';
   clone.style.boxShadow = 'none';
@@ -145,7 +147,7 @@ export async function generateCertificatePdf(
     // Wait for images & fonts to settle in the iframe
     await new Promise((resolve) => setTimeout(resolve, 350));
 
-    const renderHeight = clone.offsetHeight || clone.getBoundingClientRect().height || 1050;
+    const renderHeight = clone.offsetHeight || clone.getBoundingClientRect().height || 1000;
 
     // 4. Capture with html2canvas inside the isolated iframe document with scroll offsets reset to 0
     const canvas = await html2canvas(clone, {
@@ -158,10 +160,10 @@ export async function generateCertificatePdf(
       scrollY: 0,
       x: 0,
       y: 0,
-      width: 746,
+      width: 770,
       height: renderHeight,
       windowWidth: 800,
-      windowHeight: renderHeight + 50
+      windowHeight: renderHeight + 20
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.98);
@@ -176,16 +178,20 @@ export async function generateCertificatePdf(
     const pdfWidth = 210;
     const pdfHeight = 297;
 
+    const margin = 5; // 5mm page margin
+    const maxPdfWidth = pdfWidth - margin * 2; // 200mm
+    const maxPdfHeight = pdfHeight - margin * 2; // 287mm
+
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
     const ratio = imgWidth / imgHeight;
 
-    const margin = 5; // 5mm margin
-    let fitWidth = pdfWidth - margin * 2;
+    let fitWidth = maxPdfWidth;
     let fitHeight = fitWidth / ratio;
 
-    if (fitHeight > pdfHeight - margin * 2) {
-      fitHeight = pdfHeight - margin * 2;
+    // STRICT GUARANTEE: If fitHeight exceeds maxPdfHeight, scale both width & height proportionally so it ALWAYS fits on Page 1!
+    if (fitHeight > maxPdfHeight) {
+      fitHeight = maxPdfHeight;
       fitWidth = fitHeight * ratio;
     }
 

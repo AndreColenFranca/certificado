@@ -50,6 +50,23 @@ function copyInlineComputedStyles(source: HTMLElement, target: HTMLElement) {
         const prop = computed[j];
         if (!prop || prop.startsWith('--')) continue; // Skip custom CSS variables
 
+        // NEVER copy margins, top/bottom positions, or transforms from on-screen flex layouts!
+        // These caused the cloned element to have large top offsets inside the iframe.
+        if (
+          prop === 'margin-top' ||
+          prop === 'margin-bottom' ||
+          prop === 'margin-left' ||
+          prop === 'margin-right' ||
+          prop === 'margin' ||
+          prop === 'top' ||
+          prop === 'bottom' ||
+          prop === 'position' ||
+          prop === 'transform' ||
+          prop === 'translate'
+        ) {
+          continue;
+        }
+
         let val = computed.getPropertyValue(prop);
         if (val && val.includes('oklch')) {
           val = convertOklchToRgb(val);
@@ -61,7 +78,6 @@ function copyInlineComputedStyles(source: HTMLElement, target: HTMLElement) {
 
       tgtEl.setAttribute('style', inlineCss);
     } catch (e) {
-      // Fallback: keep existing inline styles if getComputedStyle fails on special nodes
       if (tgtEl.style && tgtEl.style.cssText && tgtEl.style.cssText.includes('oklch')) {
         tgtEl.style.cssText = convertOklchToRgb(tgtEl.style.cssText);
       }
@@ -89,7 +105,7 @@ export async function generateCertificatePdf(
   iframe.style.top = '0';
   iframe.style.left = '-9999px';
   iframe.style.width = '800px';
-  iframe.style.height = '1130px';
+  iframe.style.height = '1200px';
   iframe.style.border = 'none';
   iframe.style.zIndex = '-9999';
   document.body.appendChild(iframe);
@@ -100,7 +116,7 @@ export async function generateCertificatePdf(
     return false;
   }
 
-  // 2. Initialize clean HTML structure inside iframe (no external oklch stylesheets)
+  // 2. Initialize clean HTML structure inside iframe
   iframeDoc.open();
   iframeDoc.write(`
     <!DOCTYPE html>
@@ -110,32 +126,31 @@ export async function generateCertificatePdf(
         <title>${docTitle}</title>
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          html, body { background: #ffffff; color: #0f172a; font-family: system-ui, -apple-system, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; }
+          html, body { background: #ffffff; color: #0f172a; font-family: system-ui, -apple-system, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
           img { max-width: 100%; height: auto; }
         </style>
       </head>
-      <body style="width: 794px; margin: 0 auto; background: #ffffff; padding: 0;">
+      <body style="width: 780px; margin: 0 auto; background: #ffffff; padding: 0;">
       </body>
     </html>
   `);
   iframeDoc.close();
 
-  // 3. Clone source element and copy computed RGB styles
+  // 3. Clone source element and copy computed RGB styles (ignoring top margins/offsets)
   const clone = element.cloneNode(true) as HTMLElement;
   copyInlineComputedStyles(element, clone);
 
-  // Force strict A4 layout bounds on cloned container, clearing any computed top margins or transforms
-  clone.style.width = '770px';
-  clone.style.maxWidth = '770px';
+  // Force strict A4 layout bounds on cloned container, starting directly at top 0
+  clone.style.width = '780px';
+  clone.style.maxWidth = '780px';
+  clone.style.margin = '0 auto';
   clone.style.marginTop = '0px';
   clone.style.marginBottom = '0px';
-  clone.style.marginLeft = 'auto';
-  clone.style.marginRight = 'auto';
-  clone.style.transform = 'none';
+  clone.style.padding = '16px';
   clone.style.position = 'relative';
   clone.style.top = '0px';
   clone.style.left = '0px';
-  clone.style.padding = '16px';
+  clone.style.transform = 'none';
   clone.style.boxSizing = 'border-box';
   clone.style.backgroundColor = '#ffffff';
   clone.style.boxShadow = 'none';
@@ -147,9 +162,7 @@ export async function generateCertificatePdf(
     // Wait for images & fonts to settle in the iframe
     await new Promise((resolve) => setTimeout(resolve, 350));
 
-    const renderHeight = clone.offsetHeight || clone.getBoundingClientRect().height || 1000;
-
-    // 4. Capture with html2canvas inside the isolated iframe document with scroll offsets reset to 0
+    // 4. Capture clone element directly with html2canvas
     const canvas = await html2canvas(clone, {
       scale: 2,
       useCORS: true,
@@ -157,13 +170,7 @@ export async function generateCertificatePdf(
       backgroundColor: '#ffffff',
       logging: false,
       scrollX: 0,
-      scrollY: 0,
-      x: 0,
-      y: 0,
-      width: 770,
-      height: renderHeight,
-      windowWidth: 800,
-      windowHeight: renderHeight + 20
+      scrollY: 0
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.98);
@@ -178,9 +185,10 @@ export async function generateCertificatePdf(
     const pdfWidth = 210;
     const pdfHeight = 297;
 
-    const margin = 5; // 5mm page margin
-    const maxPdfWidth = pdfWidth - margin * 2; // 200mm
-    const maxPdfHeight = pdfHeight - margin * 2; // 287mm
+    const marginTopBottom = 5; // 5mm top & bottom margins
+    const marginLeftRight = 5; // 5mm left & right margins
+    const maxPdfWidth = pdfWidth - marginLeftRight * 2; // 200mm
+    const maxPdfHeight = pdfHeight - marginTopBottom * 2; // 287mm
 
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
@@ -189,14 +197,14 @@ export async function generateCertificatePdf(
     let fitWidth = maxPdfWidth;
     let fitHeight = fitWidth / ratio;
 
-    // STRICT GUARANTEE: If fitHeight exceeds maxPdfHeight, scale both width & height proportionally so it ALWAYS fits on Page 1!
+    // Scale down proportionally if height exceeds max printable height on 1 page
     if (fitHeight > maxPdfHeight) {
       fitHeight = maxPdfHeight;
       fitWidth = fitHeight * ratio;
     }
 
     const xOffset = (pdfWidth - fitWidth) / 2;
-    const yOffset = (pdfHeight - fitHeight) / 2;
+    const yOffset = marginTopBottom;
 
     pdf.addImage(imgData, 'JPEG', xOffset, yOffset, fitWidth, fitHeight);
 
@@ -205,7 +213,6 @@ export async function generateCertificatePdf(
     return true;
   } catch (err) {
     console.error('Error in generateCertificatePdf:', err);
-    // Fallback: window.print() if canvas generation fails
     try {
       window.print();
     } catch (e) {

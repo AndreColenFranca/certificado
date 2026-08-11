@@ -1,0 +1,6 @@
+{
+  "name": "Certificado Digital de Joias",
+  "description": "Sistema de emissão, gestão e verificação de certificados digitais inteligentes para joalherias e fabricantes de joias.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

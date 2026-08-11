@@ -1,0 +1,516 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    font-size: 18.5px;
+    background-color: #09090b;
+    color: #fef3c7;
+  }
+  body {
+    font-size: 1rem;
+    line-height: 1.6;
+    letter-spacing: 0.015em;
+    background-color: #09090b;
+    color: #fef3c7;
+  }
+}
+
+/* CLASSIC LIGHT THEME OVERRIDES */
+.theme-classic-light {
+  background-color: #faf8f5 !important;
+  color: #1c1917 !important;
+}
+
+/* Headers, Navbars & Cards */
+.theme-classic-light header,
+.theme-classic-light .bg-zinc-950,
+.theme-classic-light .bg-zinc-950\/95,
+.theme-classic-light .bg-zinc-950\/90,
+.theme-classic-light .bg-zinc-950\/80,
+.theme-classic-light .bg-zinc-950\/70,
+.theme-classic-light .bg-zinc-950\/60,
+.theme-classic-light .bg-zinc-950\/50,
+.theme-classic-light .bg-black,
+.theme-classic-light .bg-black\/95,
+.theme-classic-light .bg-black\/90,
+.theme-classic-light .bg-black\/85,
+.theme-classic-light .bg-black\/80,
+.theme-classic-light .bg-black\/70,
+.theme-classic-light .bg-black\/60,
+.theme-classic-light .bg-black\/50 {
+  background-color: #ffffff !important;
+  color: #1c1917 !important;
+  border-color: #e7e5e4 !important;
+}
+
+.theme-classic-light .bg-zinc-900,
+.theme-classic-light .bg-zinc-900\/90,
+.theme-classic-light .bg-zinc-900\/80,
+.theme-classic-light .bg-zinc-900\/70,
+.theme-classic-light .bg-zinc-900\/60,
+.theme-classic-light .bg-zinc-900\/50 {
+  background-color: #f7f5f0 !important;
+  color: #1c1917 !important;
+  border-color: #e7e5e4 !important;
+}
+
+.theme-classic-light .bg-zinc-800,
+.theme-classic-light .bg-zinc-800\/80,
+.theme-classic-light .bg-zinc-800\/50,
+.theme-classic-light .bg-zinc-800\/40 {
+  background-color: #efece6 !important;
+  color: #1c1917 !important;
+  border-color: #d6d3d1 !important;
+}
+
+/* Override Dark Gradients in Light Mode (divs/sections only, not buttons) */
+.theme-classic-light div.bg-gradient-to-br,
+.theme-classic-light div.bg-gradient-to-r,
+.theme-classic-light section.bg-gradient-to-br,
+.theme-classic-light section.bg-gradient-to-r {
+  background-image: linear-gradient(to bottom right, #ffffff, #faf7f2, #fef3c7) !important;
+  border-color: #d97706 !important;
+  box-shadow: 0 10px 25px -5px rgba(217, 119, 6, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* HIGH-CONTRAST LEGIBLE BUTTONS & CARDS FOR CLASSIC LIGHT THEME */
+
+/* 1. Primary Gold Action Buttons in Light Mode */
+.theme-classic-light button.bg-amber-500,
+.theme-classic-light button.bg-amber-600,
+.theme-classic-light button.bg-gradient-to-r,
+.theme-classic-light button.bg-gradient-to-br,
+.theme-classic-light button[class*="bg-amber-500"],
+.theme-classic-light [id^="customer-btn-view-passport-"],
+.theme-classic-light #btn-print-certificate,
+.theme-classic-light #customer-btn-scan-qr,
+.theme-classic-light #btn-trigger-print,
+.theme-classic-light #header-btn-create,
+.theme-classic-light #sidebar-btn-create {
+  background-color: #d97706 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  border: 1px solid #b45309 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 8px rgba(180, 83, 9, 0.25) !important;
+}
+
+.theme-classic-light button.bg-amber-500 *,
+.theme-classic-light button.bg-amber-600 *,
+.theme-classic-light button.bg-gradient-to-r *,
+.theme-classic-light button.bg-gradient-to-br *,
+.theme-classic-light button[class*="bg-amber-500"] *,
+.theme-classic-light [id^="customer-btn-view-passport-"] *,
+.theme-classic-light #btn-print-certificate *,
+.theme-classic-light #customer-btn-scan-qr *,
+.theme-classic-light #btn-trigger-print *,
+.theme-classic-light #header-btn-create *,
+.theme-classic-light #sidebar-btn-create * {
+  color: #ffffff !important;
+}
+
+.theme-classic-light button.bg-amber-500:hover,
+.theme-classic-light button.bg-amber-600:hover,
+.theme-classic-light button.bg-gradient-to-r:hover,
+.theme-classic-light button.bg-gradient-to-br:hover,
+.theme-classic-light [id^="customer-btn-view-passport-"]:hover,
+.theme-classic-light #btn-print-certificate:hover,
+.theme-classic-light #customer-btn-scan-qr:hover,
+.theme-classic-light #btn-trigger-print:hover,
+.theme-classic-light #header-btn-create:hover,
+.theme-classic-light #sidebar-btn-create:hover {
+  background-color: #b45309 !important;
+  color: #ffffff !important;
+}
+
+/* 2. Secondary Action Buttons (Cards, Tables, Public Passports) in Light Mode */
+.theme-classic-light button.bg-zinc-800,
+.theme-classic-light button.bg-zinc-900,
+.theme-classic-light button.bg-zinc-950,
+.theme-classic-light button.bg-black,
+.theme-classic-light [id^="customer-btn-print-cert-"],
+.theme-classic-light [id^="btn-view-"],
+.theme-classic-light [id^="btn-print-"],
+.theme-classic-light [id^="btn-edit-"],
+.theme-classic-light [id^="btn-share-"],
+.theme-classic-light [id^="btn-transfer-"],
+.theme-classic-light [id^="btn-link-cust-"],
+.theme-classic-light [id^="btn-query-cust-"],
+.theme-classic-light #btn-public-edit-cert,
+.theme-classic-light #btn-back-to-customer-portal {
+  background-color: #ffffff !important;
+  color: #78350f !important;
+  border: 1.5px solid #d97706 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 4px rgba(217, 119, 6, 0.15) !important;
+}
+
+.theme-classic-light button.bg-zinc-800 *,
+.theme-classic-light button.bg-zinc-900 *,
+.theme-classic-light button.bg-zinc-950 *,
+.theme-classic-light button.bg-black *,
+.theme-classic-light [id^="customer-btn-print-cert-"] *,
+.theme-classic-light [id^="btn-view-"] *,
+.theme-classic-light [id^="btn-print-"] *,
+.theme-classic-light [id^="btn-edit-"] *,
+.theme-classic-light [id^="btn-share-"] *,
+.theme-classic-light [id^="btn-transfer-"] *,
+.theme-classic-light [id^="btn-link-cust-"] *,
+.theme-classic-light [id^="btn-query-cust-"] *,
+.theme-classic-light #btn-public-edit-cert *,
+.theme-classic-light #btn-back-to-customer-portal * {
+  color: #b45309 !important;
+}
+
+.theme-classic-light button.bg-zinc-800:hover,
+.theme-classic-light button.bg-zinc-900:hover,
+.theme-classic-light button.bg-zinc-950:hover,
+.theme-classic-light button.bg-black:hover,
+.theme-classic-light [id^="customer-btn-print-cert-"]:hover,
+.theme-classic-light [id^="btn-view-"]:hover,
+.theme-classic-light [id^="btn-print-"]:hover,
+.theme-classic-light [id^="btn-edit-"]:hover,
+.theme-classic-light [id^="btn-share-"]:hover,
+.theme-classic-light [id^="btn-transfer-"]:hover,
+.theme-classic-light [id^="btn-link-cust-"]:hover,
+.theme-classic-light [id^="btn-query-cust-"]:hover,
+.theme-classic-light #btn-public-edit-cert:hover,
+.theme-classic-light #btn-back-to-customer-portal:hover {
+  background-color: #fef3c7 !important;
+  color: #451a03 !important;
+  border-color: #b45309 !important;
+}
+
+/* 3. Delete / Danger Buttons in Light Mode */
+.theme-classic-light button.bg-red-950\/60,
+.theme-classic-light button[class*="bg-red-"],
+.theme-classic-light [id^="btn-delete-"],
+.theme-classic-light #btn-public-delete-cert {
+  background-color: #ffffff !important;
+  color: #991b1b !important;
+  border: 1.5px solid #ef4444 !important;
+  font-weight: 700 !important;
+}
+
+.theme-classic-light button.bg-red-950\/60 *,
+.theme-classic-light button[class*="bg-red-"] *,
+.theme-classic-light [id^="btn-delete-"] *,
+.theme-classic-light #btn-public-delete-cert * {
+  color: #dc2626 !important;
+}
+
+.theme-classic-light button.bg-red-950\/60:hover,
+.theme-classic-light button[class*="bg-red-"]:hover,
+.theme-classic-light [id^="btn-delete-"]:hover,
+.theme-classic-light #btn-public-delete-cert:hover {
+  background-color: #fee2e2 !important;
+  color: #7f1d1d !important;
+  border-color: #dc2626 !important;
+}
+
+/* Customer Management Banner Specific Light Overrides */
+.theme-classic-light #customer-header-banner {
+  background-image: linear-gradient(to right, #ffffff, #fefcf8, #fef3c7) !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 10px 25px -5px rgba(217, 119, 6, 0.12), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.theme-classic-light #customer-header-badge {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #f59e0b !important;
+}
+
+.theme-classic-light #customer-header-title {
+  color: #1c1917 !important;
+}
+
+.theme-classic-light #customer-header-description {
+  color: #44403c !important;
+}
+
+.theme-classic-light #btn-add-new-customer {
+  background-color: #d97706 !important;
+  color: #ffffff !important;
+  border-color: #b45309 !important;
+}
+
+.theme-classic-light #btn-add-new-customer:hover {
+  background-color: #b45309 !important;
+  color: #ffffff !important;
+}
+
+.theme-classic-light #btn-add-new-customer svg {
+  color: #ffffff !important;
+}
+
+/* Badges & Amber Highlights */
+.theme-classic-light .bg-amber-500\/15,
+.theme-classic-light .bg-amber-500\/20,
+.theme-classic-light .bg-amber-500\/30 {
+  background-color: #fef3c7 !important;
+  color: #78350f !important;
+  border-color: #fcd34d !important;
+}
+
+.theme-classic-light .bg-amber-950\/60,
+.theme-classic-light .bg-amber-950\/40,
+.theme-classic-light .bg-amber-950\/20 {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #78350f !important;
+}
+
+/* Text Colors Overrides */
+.theme-classic-light .text-amber-50,
+.theme-classic-light .text-amber-100,
+.theme-classic-light .text-amber-200 {
+  color: #78350f !important;
+  font-weight: 700 !important;
+}
+
+.theme-classic-light .text-amber-300,
+.theme-classic-light .text-amber-400 {
+  color: #92400e !important;
+  font-weight: 700 !important;
+}
+
+.theme-classic-light .text-amber-500 {
+  color: #b45309 !important;
+}
+
+.theme-classic-light .text-zinc-100,
+.theme-classic-light .text-zinc-200,
+.theme-classic-light .text-zinc-300 {
+  color: #1c1917 !important;
+  font-weight: 600 !important;
+}
+
+.theme-classic-light .text-zinc-400 {
+  color: #292524 !important;
+}
+
+.theme-classic-light .text-zinc-500 {
+  color: #44403c !important;
+  font-weight: 600 !important;
+}
+
+.theme-classic-light .text-zinc-600 {
+  color: #57534e !important;
+}
+
+.theme-classic-light .text-emerald-400,
+.theme-classic-light .text-emerald-300 {
+  color: #047857 !important;
+}
+
+.theme-classic-light .text-red-300,
+.theme-classic-light .text-red-400,
+.theme-classic-light .text-red-500 {
+  color: #b91c1c !important;
+}
+
+/* HOVER OVERRIDES FOR CLASSIC LIGHT THEME TO PREVENT UNREADABLE TEXT */
+.theme-classic-light .hover\:text-amber-100:hover,
+.theme-classic-light .hover\:text-amber-200:hover,
+.theme-classic-light .hover\:text-amber-300:hover,
+.theme-classic-light .hover\:text-amber-400:hover,
+.theme-classic-light .hover\:text-amber-500:hover {
+  color: #78350f !important;
+}
+
+.theme-classic-light .hover\:text-zinc-100:hover,
+.theme-classic-light .hover\:text-zinc-200:hover,
+.theme-classic-light .hover\:text-zinc-300:hover,
+.theme-classic-light .hover\:text-zinc-400:hover {
+  color: #0c0a09 !important;
+}
+
+.theme-classic-light .hover\:bg-zinc-950:hover,
+.theme-classic-light .hover\:bg-zinc-900:hover,
+.theme-classic-light .hover\:bg-zinc-800:hover,
+.theme-classic-light .hover\:bg-zinc-800\/40:hover,
+.theme-classic-light .hover\:bg-zinc-700:hover {
+  background-color: #f0ece1 !important;
+  color: #1c1917 !important;
+  border-color: #d6d3d1 !important;
+}
+
+.theme-classic-light .hover\:bg-amber-500:hover,
+.theme-classic-light .hover\:bg-amber-400:hover,
+.theme-classic-light .hover\:bg-amber-600:hover {
+  background-color: #d97706 !important;
+  color: #ffffff !important;
+}
+
+.theme-classic-light #header-search-submit {
+  background-color: #d97706 !important;
+  color: #ffffff !important;
+}
+.theme-classic-light #header-search-submit:hover {
+  background-color: #b45309 !important;
+  color: #ffffff !important;
+}
+
+/* Standardized Header Navigation Buttons in Light Theme */
+.theme-classic-light #nav-btn-passport,
+.theme-classic-light #nav-btn-customers,
+.theme-classic-light #nav-btn-query-jewelry,
+.theme-classic-light #nav-btn-dashboard {
+  background-color: #f5f3ef !important;
+  color: #78350f !important;
+  border-color: #d6d3d1 !important;
+}
+
+.theme-classic-light #nav-btn-passport:hover,
+.theme-classic-light #nav-btn-customers:hover,
+.theme-classic-light #nav-btn-query-jewelry:hover,
+.theme-classic-light #nav-btn-dashboard:hover {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #f59e0b !important;
+}
+
+/* Danger / Red Buttons & Badges in Light Mode */
+.theme-classic-light .bg-red-950\/60,
+.theme-classic-light .bg-red-950\/40,
+.theme-classic-light .bg-red-950\/80,
+.theme-classic-light .bg-red-950,
+.theme-classic-light .bg-red-900\/80,
+.theme-classic-light .bg-red-900\/60,
+.theme-classic-light .bg-red-900\/40,
+.theme-classic-light .bg-red-900\/20,
+.theme-classic-light .bg-red-500\/10,
+.theme-classic-light .bg-red-500\/20 {
+  background-color: #fef2f2 !important;
+  color: #991b1b !important;
+  border-color: #fca5a5 !important;
+}
+
+.theme-classic-light .hover\:bg-red-900\/80:hover,
+.theme-classic-light .hover\:bg-red-900\/60:hover,
+.theme-classic-light .hover\:bg-red-900:hover,
+.theme-classic-light .hover\:bg-red-950\/80:hover {
+  background-color: #fee2e2 !important;
+  color: #7f1d1d !important;
+}
+
+.theme-classic-light .border-red-500\/30,
+.theme-classic-light .border-red-500\/40,
+.theme-classic-light .border-red-500\/50,
+.theme-classic-light .border-red-800,
+.theme-classic-light .border-red-900 {
+  border-color: #fca5a5 !important;
+}
+
+/* Keep Dark Text on Gold/Amber Buttons */
+.theme-classic-light .text-zinc-950 {
+  color: #09090b !important;
+}
+
+/* Borders & Dividers */
+.theme-classic-light .divide-zinc-800\/80 > :not([hidden]) ~ :not([hidden]),
+.theme-classic-light .divide-zinc-800 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e7e5e4 !important;
+}
+
+.theme-classic-light .hover\:bg-zinc-800\/40:hover {
+  background-color: #f5f3ef !important;
+}
+
+.theme-classic-light .bg-zinc-800 {
+  background-color: #f5f3ef !important;
+  color: #1c1917 !important;
+  border-color: #d6d3d1 !important;
+}
+
+/* Borders */
+.theme-classic-light .border-amber-900\/50,
+.theme-classic-light .border-amber-900\/40,
+.theme-classic-light .border-amber-900\/30,
+.theme-classic-light .border-amber-500\/30,
+.theme-classic-light .border-amber-500\/40,
+.theme-classic-light .border-amber-500\/50,
+.theme-classic-light .border-zinc-800,
+.theme-classic-light .border-zinc-800\/80,
+.theme-classic-light .border-zinc-700 {
+  border-color: #e7e5e4 !important;
+}
+
+/* Form Controls */
+.theme-classic-light input,
+.theme-classic-light select,
+.theme-classic-light textarea {
+  background-color: #ffffff !important;
+  color: #1c1917 !important;
+  border-color: #d6d3d1 !important;
+}
+
+.theme-classic-light input::placeholder,
+.theme-classic-light textarea::placeholder {
+  color: #a8a29e !important;
+}
+
+/* Modals Backdrops & Panels */
+.theme-classic-light .bg-black\/60,
+.theme-classic-light .bg-black\/70 {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+}
+
+/* PRINT MEDIA STYLES FOR HIGH-QUALITY PRINT / PDF EXPORT */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide everything in body by default during print */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Reveal ONLY the printable certificate document container and all its descendants */
+  #printable-certificate-document,
+  #printable-certificate-document * {
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Position the certificate cleanly at the top-left of the printed page */
+  #printable-certificate-document {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 16px !important;
+    box-shadow: none !important;
+    border: 6px double #b45309 !important;
+    background-color: #ffffff !important;
+    color: #0c0a09 !important;
+    page-break-inside: avoid !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Strictly hide UI controls, floating bars, and navigation */
+  .print\:hidden, button, header, nav, aside, footer {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+

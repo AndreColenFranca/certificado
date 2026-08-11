@@ -110,11 +110,11 @@ export async function generateCertificatePdf(
         <title>${docTitle}</title>
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { background: #ffffff; color: #0f172a; font-family: system-ui, -apple-system, sans-serif; webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          html, body { background: #ffffff; color: #0f172a; font-family: system-ui, -apple-system, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; overflow: hidden; }
           img { max-width: 100%; height: auto; }
         </style>
       </head>
-      <body style="width: 794px; margin: 0 auto; background: #ffffff; padding: 24px;">
+      <body style="width: 794px; margin: 0 auto; background: #ffffff; padding: 16px;">
       </body>
     </html>
   `);
@@ -124,9 +124,16 @@ export async function generateCertificatePdf(
   const clone = element.cloneNode(true) as HTMLElement;
   copyInlineComputedStyles(element, clone);
 
-  // Force strict A4 layout bounds on cloned container
+  // Force strict A4 layout bounds on cloned container, clearing any computed top margins or transforms
   clone.style.width = '746px';
-  clone.style.margin = '0 auto';
+  clone.style.marginTop = '0px';
+  clone.style.marginBottom = '0px';
+  clone.style.marginLeft = 'auto';
+  clone.style.marginRight = 'auto';
+  clone.style.transform = 'none';
+  clone.style.position = 'relative';
+  clone.style.top = '0px';
+  clone.style.left = '0px';
   clone.style.boxSizing = 'border-box';
   clone.style.backgroundColor = '#ffffff';
   clone.style.boxShadow = 'none';
@@ -136,17 +143,19 @@ export async function generateCertificatePdf(
 
   try {
     // Wait for images & fonts to settle in the iframe
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 350));
 
     const renderHeight = clone.offsetHeight || clone.getBoundingClientRect().height || 1050;
 
-    // 4. Capture with html2canvas inside the isolated iframe document
+    // 4. Capture with html2canvas inside the isolated iframe document with scroll offsets reset to 0
     const canvas = await html2canvas(clone, {
       scale: 2,
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
+      scrollX: 0,
+      scrollY: 0,
       x: 0,
       y: 0,
       width: 746,

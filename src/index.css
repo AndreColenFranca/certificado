@@ -461,7 +461,7 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 8mm;
+    margin: 0;
   }
 
   html, body {
@@ -490,21 +490,24 @@
     print-color-adjust: exact !important;
   }
 
-  /* Position the certificate cleanly at the top-left of the printed page */
+  /* Position the certificate cleanly anchored at top-left of page 1 */
   #printable-certificate-document {
-    position: absolute !important;
+    position: fixed !important;
     left: 0 !important;
     top: 0 !important;
-    width: 100% !important;
+    width: 100vw !important;
     max-width: 100% !important;
+    height: auto !important;
     margin: 0 !important;
-    padding: 16px !important;
+    padding: 20px !important;
     box-shadow: none !important;
     border: 6px double #b45309 !important;
     background-color: #ffffff !important;
     color: #0c0a09 !important;
     page-break-inside: avoid !important;
+    break-inside: avoid !important;
     box-sizing: border-box !important;
+    z-index: 999999 !important;
   }
 
   /* Strictly hide UI controls, floating bars, and navigation */

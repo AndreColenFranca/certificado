@@ -117,14 +117,14 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
         
         {/* Luxury Printable Paper Layout */}
         <div 
-          className="relative w-full max-w-3xl bg-white text-zinc-900 rounded-2xl shadow-2xl p-4 sm:p-7 border-4 sm:border-6 border-double border-amber-800/90 my-auto overflow-hidden print:m-0 print:w-full print:max-w-none print:shadow-none print:border-amber-800 print:bg-white"
+          className="relative w-full max-w-3xl bg-white text-zinc-900 rounded-none shadow-2xl p-4 sm:p-7 my-auto overflow-hidden print:m-0 print:w-full print:max-w-none print:shadow-none print:bg-white"
           id="printable-certificate-document"
         >
-        {/* Decorative Corner Ornaments */}
-        <div className="absolute top-1.5 left-1.5 w-8 h-8 border-t-2 border-l-2 border-amber-800 pointer-events-none" />
-        <div className="absolute top-1.5 right-1.5 w-8 h-8 border-t-2 border-r-2 border-amber-800 pointer-events-none" />
-        <div className="absolute bottom-1.5 left-1.5 w-8 h-8 border-b-2 border-l-2 border-amber-800 pointer-events-none" />
-        <div className="absolute bottom-1.5 right-1.5 w-8 h-8 border-b-2 border-r-2 border-amber-800 pointer-events-none" />
+          {/* Decorative Corner Ornaments (Straight L-shaped corners) */}
+          <div className="absolute top-2 left-2 w-8 h-8 border-t-2 border-l-2 border-amber-800 pointer-events-none rounded-none" />
+          <div className="absolute top-2 right-2 w-8 h-8 border-t-2 border-r-2 border-amber-800 pointer-events-none rounded-none" />
+          <div className="absolute bottom-2 left-2 w-8 h-8 border-b-2 border-l-2 border-amber-800 pointer-events-none rounded-none" />
+          <div className="absolute bottom-2 right-2 w-8 h-8 border-b-2 border-r-2 border-amber-800 pointer-events-none rounded-none" />
 
         {/* Watermark Background Logo */}
         {cert.manufacturerLogoUrl ? (

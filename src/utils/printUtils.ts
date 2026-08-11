@@ -51,13 +51,8 @@ function copyInlineComputedStyles(source: HTMLElement, target: HTMLElement) {
         if (!prop || prop.startsWith('--')) continue; // Skip custom CSS variables
 
         // NEVER copy margins, top/bottom positions, or transforms from on-screen flex layouts!
-        // These caused the cloned element to have large top offsets inside the iframe.
         if (
-          prop === 'margin-top' ||
-          prop === 'margin-bottom' ||
-          prop === 'margin-left' ||
-          prop === 'margin-right' ||
-          prop === 'margin' ||
+          prop.startsWith('margin') ||
           prop === 'top' ||
           prop === 'bottom' ||
           prop === 'position' ||
@@ -86,6 +81,36 @@ function copyInlineComputedStyles(source: HTMLElement, target: HTMLElement) {
 }
 
 /**
+ * Converts images in a container to Base64 Data URLs to avoid CORS taints in html2canvas
+ */
+async function convertImagesToDataUrls(container: HTMLElement) {
+  const images = Array.from(container.querySelectorAll('img'));
+  await Promise.all(
+    images.map(async (img) => {
+      if (!img.src || img.src.startsWith('data:')) return;
+      try {
+        const res = await fetch(img.src, { mode: 'cors' });
+        if (!res.ok) return;
+        const blob = await res.blob();
+        await new Promise<void>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            if (typeof reader.result === 'string') {
+              img.src = reader.result;
+            }
+            resolve();
+          };
+          reader.onerror = () => resolve();
+          reader.readAsDataURL(blob);
+        });
+      } catch {
+        // Fallback gracefully if CORS prevents direct fetch
+      }
+    })
+  );
+}
+
+/**
  * Generates a high-quality 1-page A4 PDF for a given HTML element.
  * Uses an isolated, clean iframe to completely bypass Tailwind v4 oklch CSS stylesheet parsing errors.
  */
@@ -105,7 +130,7 @@ export async function generateCertificatePdf(
   iframe.style.top = '0';
   iframe.style.left = '-9999px';
   iframe.style.width = '800px';
-  iframe.style.height = '1200px';
+  iframe.style.height = '1130px';
   iframe.style.border = 'none';
   iframe.style.zIndex = '-9999';
   document.body.appendChild(iframe);
@@ -136,7 +161,7 @@ export async function generateCertificatePdf(
   `);
   iframeDoc.close();
 
-  // 3. Clone source element and copy computed RGB styles (ignoring top margins/offsets)
+  // 3. Clone source element and copy computed RGB styles
   const clone = element.cloneNode(true) as HTMLElement;
   copyInlineComputedStyles(element, clone);
 
@@ -156,11 +181,33 @@ export async function generateCertificatePdf(
   clone.style.boxShadow = 'none';
   clone.style.borderRadius = '0';
 
+  if (clone.firstElementChild) {
+    (clone.firstElementChild as HTMLElement).style.marginTop = '0px';
+  }
+
   iframeDoc.body.appendChild(clone);
 
   try {
+    // Inline images to Base64 Data URLs to avoid CORS taints
+    await convertImagesToDataUrls(clone);
+
     // Wait for images & fonts to settle in the iframe
-    await new Promise((resolve) => setTimeout(resolve, 350));
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    // Wait for any remaining <img> in clone to finish loading
+    const images = Array.from(clone.querySelectorAll('img'));
+    await Promise.all(
+      images.map(
+        (img) =>
+          new Promise((resolve) => {
+            if (img.complete) resolve(true);
+            else {
+              img.onload = () => resolve(true);
+              img.onerror = () => resolve(true);
+            }
+          })
+      )
+    );
 
     // 4. Capture clone element directly with html2canvas
     const canvas = await html2canvas(clone, {
@@ -170,7 +217,9 @@ export async function generateCertificatePdf(
       backgroundColor: '#ffffff',
       logging: false,
       scrollX: 0,
-      scrollY: 0
+      scrollY: 0,
+      windowWidth: 800,
+      windowHeight: 1130
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.98);

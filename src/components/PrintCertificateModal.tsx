@@ -16,20 +16,31 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
   isOpen,
   onClose
 }) => {
-  if (!isOpen || !cert) return null;
-
   const [qrUrl, setQrUrl] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   React.useEffect(() => {
-    if (cert) {
+    if (isOpen) {
+      document.body.classList.add('modal-print-active');
+    } else {
+      document.body.classList.remove('modal-print-active');
+    }
+    return () => {
+      document.body.classList.remove('modal-print-active');
+    };
+  }, [isOpen]);
+
+  React.useEffect(() => {
+    if (cert && isOpen) {
       QRCode.toDataURL(`${window.location.origin}/cert/${cert.id}`, {
         width: 180,
         margin: 1,
         color: { dark: '#18181b', light: '#ffffff' }
       }).then(setQrUrl);
     }
-  }, [cert]);
+  }, [cert, isOpen]);
+
+  if (!isOpen || !cert) return null;
 
   const handleDownloadPdf = async () => {
     setIsProcessing(true);

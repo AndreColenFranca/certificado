@@ -1,96 +1,113 @@
-import html2pdf from 'html2pdf.js';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
-export async function printElement(
+export async function generateCertificatePdf(
   elementId = 'printable-certificate-document',
   docTitle = 'Certificado_de_Autenticidade'
 ) {
-  const prevTitle = document.title;
-  if (docTitle) {
-    document.title = docTitle;
-  }
-
   const element = document.getElementById(elementId);
   if (!element) {
     console.error(`Element #${elementId} not found`);
     return;
   }
 
-  // Create an isolated temporary container at top:0 left:0
-  // This avoids scroll offsets, modal wrapper margins, or page 2/3 break issues in html2canvas
-  const tempContainer = document.createElement('div');
-  tempContainer.id = 'temp-pdf-print-container';
-  tempContainer.style.position = 'fixed';
-  tempContainer.style.top = '0';
-  tempContainer.style.left = '0';
-  tempContainer.style.width = '794px'; // A4 width at 96 DPI
-  tempContainer.style.zIndex = '-999999';
-  tempContainer.style.backgroundColor = '#ffffff';
-  tempContainer.style.margin = '0';
-  tempContainer.style.padding = '0';
-  tempContainer.style.overflow = 'hidden';
-
-  // Deep clone the certificate element
-  const clone = element.cloneNode(true) as HTMLElement;
-  clone.style.margin = '0';
-  clone.style.padding = '24px 32px';
-  clone.style.width = '794px';
-  clone.style.maxWidth = '794px';
-  clone.style.boxSizing = 'border-box';
-  clone.style.boxShadow = 'none';
-  clone.style.borderRadius = '0';
-  clone.style.border = '6px double #b45309';
-  clone.style.backgroundColor = '#ffffff';
-  clone.style.color = '#0c0a09';
-  clone.style.position = 'relative';
-  clone.style.transform = 'none';
-
-  tempContainer.appendChild(clone);
-  document.body.appendChild(tempContainer);
+  // Scroll parent container to top so html2canvas captures from top offset 0
+  const parent = element.parentElement;
+  const oldScrollTop = parent ? parent.scrollTop : 0;
+  if (parent) {
+    parent.scrollTop = 0;
+  }
 
   try {
-    // Small delay to allow images (QR code, logo) inside the cloned DOM to render
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // Allow any pending renders
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    // Capture the visible element directly
+    const canvas = await html2canvas(element, {
+      scale: 2, // High resolution
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      scrollX: 0,
+      scrollY: 0
+    });
+
+    // Restore scroll position
+    if (parent) {
+      parent.scrollTop = oldScrollTop;
+    }
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+
+    // Create a single-page A4 PDF (210mm x 297mm)
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pdfWidth = 210;
+    const pdfHeight = 297;
+
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = imgWidth / imgHeight;
+
+    // Use 6mm margins
+    let renderWidth = pdfWidth - 12;
+    let renderHeight = renderWidth / ratio;
+
+    if (renderHeight > pdfHeight - 12) {
+      renderHeight = pdfHeight - 12;
+      renderWidth = renderHeight * ratio;
+    }
+
+    const xOffset = (pdfWidth - renderWidth) / 2;
+    const yOffset = (pdfHeight - renderHeight) / 2;
+
+    pdf.addImage(imgData, 'JPEG', xOffset, yOffset, renderWidth, renderHeight);
 
     const cleanFilename = `${docTitle.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
-    const opt = {
-      margin: [4, 4, 4, 4] as [number, number, number, number],
-      filename: cleanFilename,
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        scrollY: 0,
-        scrollX: 0,
-        windowWidth: 794
-      },
-      jsPDF: {
-        unit: 'mm' as const,
-        format: 'a4' as const,
-        orientation: 'portrait' as const
-      },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    };
-
-    await html2pdf().set(opt).from(clone).save();
-  } catch (pdfErr) {
-    console.error('html2pdf generation error:', pdfErr);
-    // Fallback if html2pdf fails
+    pdf.save(cleanFilename);
+  } catch (err) {
+    console.error('Error generating PDF with html2canvas:', err);
+    if (parent) {
+      parent.scrollTop = oldScrollTop;
+    }
     try {
       window.print();
     } catch (e) {
-      console.error('Final print fallback error:', e);
+      console.error('Print fallback failed:', e);
     }
-  } finally {
-    if (document.body.contains(tempContainer)) {
-      document.body.removeChild(tempContainer);
-    }
-    setTimeout(() => {
-      document.title = prevTitle;
-    }, 500);
   }
 }
+
+export async function printElement(
+  elementId = 'printable-certificate-document',
+  docTitle = 'Certificado_de_Autenticidade'
+) {
+  const isSandboxed = window.self !== window.top;
+
+  // In standalone top window, try native print dialog first
+  if (!isSandboxed) {
+    try {
+      const prevTitle = document.title;
+      if (docTitle) document.title = docTitle;
+      window.print();
+      setTimeout(() => {
+        document.title = prevTitle;
+      }, 1000);
+      return;
+    } catch (err) {
+      console.warn('Native window.print failed, generating PDF instead:', err);
+    }
+  }
+
+  // In sandboxed frame or fallback, generate & download 1-page A4 PDF directly
+  await generateCertificatePdf(elementId, docTitle);
+}
+
 
 
 

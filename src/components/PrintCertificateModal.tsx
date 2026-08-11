@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import QRCode from 'qrcode';
 import { JewelryCertificate } from '../types';
-import { Printer, X, ShieldCheck, Award, Gem, User } from 'lucide-react';
+import { Printer, Download, X, ShieldCheck, Award, Gem, User } from 'lucide-react';
 import { formatImageUrl } from '../utils/imageUtils';
-import { printElement } from '../utils/printUtils';
+import { printElement, generateCertificatePdf } from '../utils/printUtils';
 
 interface PrintCertificateModalProps {
   cert: JewelryCertificate | null;
@@ -19,7 +19,7 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
   if (!isOpen || !cert) return null;
 
   const [qrUrl, setQrUrl] = useState<string>('');
-  const [isPrinting, setIsPrinting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   React.useEffect(() => {
     if (cert) {
@@ -31,12 +31,21 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
     }
   }, [cert]);
 
+  const handleDownloadPdf = async () => {
+    setIsProcessing(true);
+    try {
+      await generateCertificatePdf('printable-certificate-document', `Certificado_${cert.serialNumber || cert.id}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handlePrint = async () => {
-    setIsPrinting(true);
+    setIsProcessing(true);
     try {
       await printElement('printable-certificate-document', `Certificado_${cert.serialNumber || cert.id}`);
     } finally {
-      setIsPrinting(false);
+      setIsProcessing(false);
     }
   };
 
@@ -47,33 +56,44 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
       <div className="shrink-0 w-full bg-zinc-950/95 border-b border-amber-500/30 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4 shadow-2xl z-50 print:hidden">
         <div className="flex items-center gap-3 truncate">
           <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 shrink-0">
-            <Printer className="w-5 h-5" />
+            <Award className="w-5 h-5" />
           </div>
           <div className="truncate">
             <h2 className="text-amber-200 text-sm sm:text-base font-bold truncate">
               Certificado de Autenticidade #{cert.serialNumber || cert.id}
             </h2>
             <p className="text-[11px] text-zinc-400 hidden sm:block">
-              Confira todos os dados do certificado antes de imprimir ou salvar
+              Confira todos os dados do certificado antes de baixar ou imprimir
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0">
           <button
+            onClick={handleDownloadPdf}
+            disabled={isProcessing}
+            className="flex items-center gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-extrabold text-xs sm:text-sm rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+            id="btn-download-pdf"
+            title="Baixar Certificado em PDF"
+          >
+            <Download className="w-4 h-4 text-zinc-950 shrink-0" />
+            <span>{isProcessing ? 'A Gerar PDF...' : 'Baixar PDF'}</span>
+          </button>
+
+          <button
             onClick={handlePrint}
-            disabled={isPrinting}
-            className="flex items-center gap-2 px-4 sm:px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-extrabold text-xs sm:text-sm rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+            disabled={isProcessing}
+            className="flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 bg-zinc-800 hover:bg-zinc-700 text-amber-300 font-bold text-xs sm:text-sm rounded-xl border border-amber-500/30 shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
             id="btn-trigger-print"
             title="Imprimir Certificado"
           >
-            <Printer className="w-4 h-4 text-zinc-950 shrink-0" />
-            <span>{isPrinting ? 'A Gerar Certificado...' : 'Imprimir Certificado'}</span>
+            <Printer className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="hidden sm:inline">Imprimir</span>
           </button>
 
           <button
             onClick={onClose}
-            className="p-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors cursor-pointer border border-zinc-700 hover:text-white"
+            className="p-2 sm:p-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors cursor-pointer border border-zinc-700 hover:text-white"
             title="Fechar"
           >
             <X className="w-5 h-5" />

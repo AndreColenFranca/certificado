@@ -16,6 +16,7 @@ import {
   UserCheck
 } from 'lucide-react';
 import { formatImageUrl } from '../utils/imageUtils';
+import { formatUserGreeting } from '../utils/customerUtils';
 
 interface CustomerPortalViewProps {
   currentUser: AppUser;
@@ -93,7 +94,7 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             </div>
 
             <h1 className="text-3xl sm:text-4xl font-extrabold font-serif text-amber-100 tracking-tight">
-              Olá, {currentUser.name}
+              Olá, {formatUserGreeting(currentUser)}
             </h1>
 
             <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-medium">

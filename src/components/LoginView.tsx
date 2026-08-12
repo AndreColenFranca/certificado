@@ -131,10 +131,21 @@ export const LoginView: React.FC<LoginViewProps> = ({
     }
 
     // Dynamic User Fallback for any typed input
+    let derivedName = rawTrim;
+    if (derivedName.includes('@')) {
+      derivedName = derivedName.split('@')[0];
+    }
+    derivedName = derivedName
+      .replace(/[._-]+/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+
     const isCustomerCandidate = cleanDigits.length >= 8 || cleanInput.includes('@') || cleanInput.startsWith('cli');
     return {
       id: isCustomerCandidate ? `user-dyn-cust-${Date.now()}` : `user-dyn-admin-${Date.now()}`,
-      name: isCustomerCandidate ? `Cliente (${rawTrim})` : `Administrador (${rawTrim})`,
+      name: derivedName || (isCustomerCandidate ? 'Cliente' : 'Administrador'),
       email: cleanInput.includes('@') ? rawTrim : `${cleanInput}@maison.com`,
       role: isCustomerCandidate ? 'customer' : 'admin',
       createdAt: new Date().toISOString(),

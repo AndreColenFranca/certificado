@@ -195,9 +195,21 @@ const handleLoginRequest = (req: any, res: any) => {
 
     // 4. Universal Dynamic Fallback for Mobile / New Email or CPF
     const isAdminCandidate = cleanInput.includes('admin') || cleanInput.includes('gestor') || cleanInput.includes('gerente') || cleanInput.includes('maison');
+    
+    let derivedName = rawInput;
+    if (derivedName.includes('@')) {
+      derivedName = derivedName.split('@')[0];
+    }
+    derivedName = derivedName
+      .replace(/[._-]+/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+
     const dynamicUser = {
       id: isAdminCandidate ? `user-dyn-admin-${Date.now()}` : `user-dyn-cust-${Date.now()}`,
-      name: isAdminCandidate ? `Administrador (${rawInput})` : `Cliente (${rawInput})`,
+      name: derivedName || (isAdminCandidate ? 'Administrador' : 'Cliente'),
       email: cleanInput.includes('@') ? rawInput : `${cleanInput}@maison.com`,
       role: isAdminCandidate ? 'admin' : 'customer',
       createdAt: new Date().toISOString(),

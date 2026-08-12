@@ -20,6 +20,8 @@ import {
   ChevronRight
 } from 'lucide-react';
 
+import { formatUserGreeting } from '../utils/customerUtils';
+
 interface SidebarProps {
   currentMode: ViewMode;
   onSelectMode: (mode: ViewMode) => void;
@@ -274,7 +276,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <UserCheck className="w-4 h-4 text-amber-400 shrink-0" />
               )}
               <div className="min-w-0 flex-1">
-                <span className="block font-bold text-xs text-amber-100 truncate">{currentUser.name}</span>
+                <span className="block font-bold text-xs text-amber-100 truncate">{formatUserGreeting(currentUser)}</span>
                 <span className="block text-[10px] text-zinc-400 truncate">{currentUser.email}</span>
               </div>
             </div>

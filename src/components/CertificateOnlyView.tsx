@@ -47,17 +47,17 @@ export const CertificateOnlyView: React.FC<CertificateOnlyViewProps> = ({
   const primaryStone = cert.stones && cert.stones.length > 0 ? cert.stones[0] : null;
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-10 space-y-6 animate-fade-in" id="certificate-only-view">
+    <div className="max-w-4xl mx-auto px-2 sm:px-6 py-4 sm:py-10 space-y-4 sm:space-y-6 animate-fade-in w-full overflow-hidden" id="certificate-only-view">
       
       {/* Top Action Header Bar */}
-      <div className="bg-zinc-900/90 border border-amber-500/30 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl shadow-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+      <div className="bg-zinc-900/90 border border-amber-500/30 p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 overflow-hidden">
         
         {/* Left Side: Title & Optional Back button */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-start sm:items-center gap-2.5 min-w-0">
           {onBackToPreviousView && (
             <button
               onClick={onBackToPreviousView}
-              className="p-2 sm:p-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 transition-all cursor-pointer shrink-0"
+              className="p-2 sm:p-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 transition-all cursor-pointer shrink-0 mt-0.5 sm:mt-0"
               title="Voltar"
               id="btn-cert-only-back"
             >
@@ -65,46 +65,46 @@ export const CertificateOnlyView: React.FC<CertificateOnlyViewProps> = ({
             </button>
           )}
 
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-wider">
-                <Award className="w-3.5 h-3.5 text-amber-400" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-wider shrink-0">
+                <Award className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
                 Certificado Oficial
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-mono bg-zinc-800 text-emerald-400 border border-emerald-500/40 font-semibold">
+              <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-mono bg-zinc-800 text-emerald-400 border border-emerald-500/40 font-semibold break-all max-w-full">
                 Série: {cert.serialNumber}
               </span>
             </div>
-            <h1 className="text-base sm:text-xl font-bold font-serif text-amber-100 truncate mt-0.5">
-              Certificado de Autenticidade #{cert.id}
+            <h1 className="text-sm sm:text-xl font-bold font-serif text-amber-100 break-words mt-1 leading-snug">
+              Certificado de Autenticidade <span className="inline-block font-mono text-amber-300 text-xs sm:text-base break-all">#{cert.id}</span>
             </h1>
           </div>
         </div>
 
         {/* Right Side: Action buttons */}
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
           <button
             onClick={() => onOpenPrintModal(cert)}
-            className="flex-1 sm:flex-none py-2.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-extrabold text-xs sm:text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer border border-amber-400"
+            className="flex-1 sm:flex-none py-2 px-3 sm:py-2.5 sm:px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-extrabold text-xs sm:text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer border border-amber-400"
             id="btn-cert-only-print"
           >
-            <Printer className="w-4 h-4 text-zinc-950 shrink-0" />
+            <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-950 shrink-0" />
             <span>Imprimir / PDF</span>
           </button>
 
           <button
             onClick={handleShare}
-            className="py-2.5 px-3.5 bg-zinc-800 hover:bg-zinc-700 text-amber-200 font-semibold text-xs rounded-xl border border-amber-900/40 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+            className="py-2 px-3 sm:py-2.5 sm:px-3.5 bg-zinc-800 hover:bg-zinc-700 text-amber-200 font-semibold text-xs rounded-xl border border-amber-900/40 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
             id="btn-cert-only-share"
           >
             <Share2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span>{shareCopied ? 'Link Copiado!' : 'Compartilhar'}</span>
+            <span>{shareCopied ? 'Copiado!' : 'Compartilhar'}</span>
           </button>
 
           {onOpenFullPassport && (
             <button
               onClick={() => onOpenFullPassport(cert)}
-              className="py-2.5 px-3.5 bg-zinc-800 hover:bg-zinc-700 text-amber-300 font-semibold text-xs rounded-xl border border-amber-500/30 hover:border-amber-400 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              className="py-2 px-3 sm:py-2.5 sm:px-3.5 bg-zinc-800 hover:bg-zinc-700 text-amber-300 font-semibold text-xs rounded-xl border border-amber-500/30 hover:border-amber-400 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
               title="Abrir visualização interativa em 360° e inspeção de detalhes"
               id="btn-cert-only-passport"
             >
@@ -118,7 +118,7 @@ export const CertificateOnlyView: React.FC<CertificateOnlyViewProps> = ({
 
       {/* Main Luxury Paper Certificate Card */}
       <div 
-        className="bg-white text-zinc-900 rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-10 border-4 border-amber-800/30 overflow-hidden relative space-y-6"
+        className="bg-white text-zinc-900 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-10 border-2 sm:border-4 border-amber-800/30 overflow-hidden relative space-y-5 sm:space-y-6 w-full max-w-full"
         id="official-certificate-document"
       >
         {/* Background Watermark */}
@@ -126,89 +126,89 @@ export const CertificateOnlyView: React.FC<CertificateOnlyViewProps> = ({
           <img 
             src={formatImageUrl(cert.manufacturerLogoUrl)} 
             alt={cert.manufacturer} 
-            className="absolute inset-0 m-auto w-64 h-64 sm:w-80 sm:h-80 object-contain opacity-[0.04] pointer-events-none select-none grayscale"
+            className="absolute inset-0 m-auto w-52 h-52 sm:w-80 sm:h-80 object-contain opacity-[0.04] pointer-events-none select-none grayscale"
             referrerPolicy="no-referrer"
           />
         ) : (
-          <Gem className="absolute inset-0 m-auto w-72 h-72 sm:w-96 sm:h-96 text-zinc-900/[0.03] pointer-events-none -rotate-12" />
+          <Gem className="absolute inset-0 m-auto w-60 h-60 sm:w-96 sm:h-96 text-zinc-900/[0.03] pointer-events-none -rotate-12" />
         )}
 
-        <div className="relative z-10 space-y-6">
+        <div className="relative z-10 space-y-5 sm:space-y-6">
           
           {/* Document Header */}
-          <div className="text-center space-y-3 border-b-2 border-amber-800/20 pb-5">
+          <div className="text-center space-y-2 sm:space-y-3 border-b-2 border-amber-800/20 pb-4 sm:pb-5">
             {cert.manufacturerLogoUrl ? (
               <div className="flex items-center justify-center py-1">
                 <img 
                   src={formatImageUrl(cert.manufacturerLogoUrl)} 
                   alt={cert.manufacturer} 
-                  className="h-14 sm:h-20 max-w-[280px] object-contain mx-auto"
+                  className="h-12 sm:h-20 max-w-[220px] sm:max-w-[280px] object-contain mx-auto"
                   referrerPolicy="no-referrer"
                 />
               </div>
             ) : (
-              <div className="flex items-center justify-center gap-2 text-zinc-950 uppercase tracking-widest text-xl font-serif font-bold">
-                <Award className="w-6 h-6 text-amber-800" />
+              <div className="flex items-center justify-center gap-2 text-zinc-950 uppercase tracking-widest text-base sm:text-xl font-serif font-bold">
+                <Award className="w-5 h-5 sm:w-6 sm:h-6 text-amber-800" />
                 <span>{cert.manufacturer || 'Maison Lumière Joias'}</span>
               </div>
             )}
 
-            <div className="space-y-1">
-              <h2 className="font-serif text-base sm:text-xl font-extrabold tracking-widest text-zinc-900 uppercase">
+            <div className="space-y-1 px-1">
+              <h2 className="font-serif text-sm sm:text-xl font-extrabold tracking-wider sm:tracking-widest text-zinc-900 uppercase leading-snug">
                 Certificado de Autenticidade & Origem
               </h2>
-              <p className="text-xs sm:text-sm text-zinc-600 italic font-serif">
+              <p className="text-[11px] sm:text-sm text-zinc-600 italic font-serif leading-tight">
                 Documento Digital Oficial de Certificação Gemológica e Garantia Legal
               </p>
             </div>
           </div>
 
           {/* Piece Title & Summary Box */}
-          <div className="bg-amber-50/80 border border-amber-800/30 p-4 sm:p-6 rounded-2xl space-y-4 shadow-sm">
+          <div className="bg-amber-50/80 border border-amber-800/30 p-3.5 sm:p-6 rounded-2xl space-y-3 sm:space-y-4 shadow-sm min-w-0">
             
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-800/20 pb-3">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 border-b border-amber-800/20 pb-3 min-w-0">
+              <div className="min-w-0">
                 <span className="text-[10px] text-amber-900 font-bold uppercase tracking-widest block">
                   {cert.collection || 'Alta Joalheria'}
                 </span>
-                <h3 className="text-xl sm:text-2xl font-extrabold font-serif text-zinc-950">
+                <h3 className="text-lg sm:text-2xl font-extrabold font-serif text-zinc-950 break-words leading-tight">
                   {cert.title}
                 </h3>
               </div>
 
-              <div className="font-mono text-left sm:text-right">
+              <div className="font-mono text-left sm:text-right min-w-0">
                 <span className="text-[10px] text-amber-900 font-bold uppercase tracking-widest block">N° do Certificado</span>
-                <span className="text-amber-900 font-bold text-base sm:text-lg">{cert.id}</span>
+                <span className="text-amber-900 font-bold text-sm sm:text-lg break-all block">{cert.id}</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-              <div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 text-xs">
+              <div className="min-w-0">
                 <span className="text-zinc-500 block text-[10px] font-bold uppercase tracking-wider">Número de Série:</span>
-                <span className="font-mono font-bold text-zinc-900 text-sm">{cert.serialNumber}</span>
+                <span className="font-mono font-bold text-zinc-900 text-xs sm:text-sm break-all">{cert.serialNumber}</span>
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <span className="text-zinc-500 block text-[10px] font-bold uppercase tracking-wider">Data de Emissão:</span>
-                <span className="font-bold text-zinc-900">{new Date(cert.issueDate).toLocaleDateString('pt-BR')}</span>
+                <span className="font-bold text-zinc-900 text-xs sm:text-sm">{new Date(cert.issueDate).toLocaleDateString('pt-BR')}</span>
               </div>
 
-              <div className="col-span-2 sm:col-span-1">
+              <div className="col-span-2 sm:col-span-1 min-w-0">
                 <span className="text-zinc-500 block text-[10px] font-bold uppercase tracking-wider">Ateliê Responsável:</span>
-                <span className="font-bold text-zinc-900 truncate block">{cert.manufacturer}</span>
+                <span className="font-bold text-zinc-900 truncate block text-xs sm:text-sm">{cert.manufacturer}</span>
               </div>
             </div>
 
             {/* Registered Owner / Titular Section */}
             {cert.currentOwnerName && (
-              <div className="pt-3 border-t border-amber-800/20 flex items-center justify-between gap-2 flex-wrap text-xs">
-                <div className="flex items-center gap-2">
+              <div className="pt-2.5 border-t border-amber-800/20 flex items-center justify-between gap-2 flex-wrap text-xs min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
                   <User className="w-4 h-4 text-amber-800 shrink-0" />
-                  <span className="text-zinc-700 font-medium">
-                    Titular Registrado: <strong className="text-zinc-950 font-bold font-serif text-sm">{cert.currentOwnerName}</strong>
+                  <span className="text-zinc-700 font-medium text-xs break-words">
+                    Titular Registrado: <strong className="text-zinc-950 font-bold font-serif">{cert.currentOwnerName}</strong>
                   </span>
                 </div>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shrink-0">
                   <CheckCircle2 className="w-3 h-3 text-emerald-700" />
                   Posse Verificada
                 </span>

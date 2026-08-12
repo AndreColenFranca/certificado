@@ -872,19 +872,19 @@ export default function App() {
 
       if (isCertType) {
         return (
-          <div className={`min-h-screen font-sans ${
+          <div className={`min-h-screen font-sans overflow-x-hidden ${
             theme === 'classic-light' 
               ? 'theme-classic-light bg-stone-50 text-stone-900' 
               : 'theme-luxury-dark bg-zinc-950 text-amber-50'
           }`}>
-            <div className="bg-zinc-950 border-b border-amber-500/30 py-3 px-4 sm:px-8 flex flex-wrap items-center justify-between gap-3 text-xs shadow-md">
-              <div className="flex items-center gap-2.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-amber-200 font-bold uppercase tracking-wider text-xs sm:text-sm">
+            <div className="bg-zinc-950 border-b border-amber-500/30 py-2.5 px-3 sm:px-8 flex flex-wrap items-center justify-between gap-2 text-xs shadow-md">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="text-amber-200 font-bold uppercase tracking-wider text-[10px] sm:text-xs leading-snug break-words">
                   Certificado Oficial de Autenticidade da Joia • Consulta por QR Code
                 </span>
               </div>
-              <div className="px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+              <div className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shrink-0">
                 Visualização Autêntica Registrada
               </div>
             </div>

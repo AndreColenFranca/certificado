@@ -964,9 +964,8 @@ export default function App() {
     }
   };
 
-  // Render Login Screen if no user logged in AND not accessing a public certificate URL directly
-  const isDirectPublicCertUrl = Boolean(getCertIdFromUrl());
-  if (!currentUser && (!isDirectPublicCertUrl || forceLoginView)) {
+  // STRICT AUTHENTICATION GUARD: Zero system access without active login session
+  if (!currentUser) {
     return (
       <LoginView
         onLoginSuccess={handleLoginSuccess}

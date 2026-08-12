@@ -48,7 +48,7 @@ export const formatUserGreeting = (user?: { name?: string; email?: string } | nu
   const email = (user.email || '').trim();
   let rawName = (user.name || '').trim();
 
-  // 1. Clean role descriptors and parenthetical tags
+  // 1. Clean role descriptors, parenthetical tags, and titles
   rawName = rawName
     .replace(/\(Administrador Raiz\)/gi, '')
     .replace(/\(Administrador\)/gi, '')
@@ -61,31 +61,42 @@ export const formatUserGreeting = (user?: { name?: string; email?: string } | nu
   // Strip parenthetical text e.g. "(something)"
   rawName = rawName.replace(/\([^)]*\)/g, '').trim();
 
-  // 2. Check if rawName is a valid full name (NOT empty, NOT an email, NOT containing '@')
-  const isRealName =
-    rawName.length > 0 &&
-    !rawName.includes('@') &&
-    (!email || rawName.toLowerCase() !== email.toLowerCase());
+  // Strip common honorific prefixes
+  rawName = rawName.replace(/^(dra\.|dr\.|sr\.|sra\.)\s+/gi, '').trim();
 
-  if (isRealName) {
-    // Take the first two words of the "Nome Completo"
-    const words = rawName.split(/\s+/).filter(Boolean);
-    const firstTwoWords = words
-      .slice(0, 2)
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
+  // 2. Extract clean name or derive from email handle if missing or equal to email
+  let extractedName = '';
 
-    if (email) {
-      return `${firstTwoWords} (${email})`;
+  if (rawName && !rawName.includes('@') && (!email || rawName.toLowerCase() !== email.toLowerCase())) {
+    extractedName = rawName;
+  } else {
+    // Derive name from email handle
+    const emailToUse = email || (rawName.includes('@') ? rawName : '');
+    if (emailToUse.includes('@')) {
+      const handle = emailToUse.split('@')[0];
+      extractedName = handle
+        .replace(/[._-]+/g, ' ')
+        .trim()
+        .split(/\s+/)
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
     }
-    return firstTwoWords;
   }
 
-  // 3. Fallback: If no real name is registered, return email cleanly without deriving fake names from handle
+  // 3. Take only the first two words of the name
+  const words = extractedName.split(/\s+/).filter(Boolean);
+  const firstTwoWords = words
+    .slice(0, 2)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
+  const finalName = firstTwoWords || 'Usuário';
+
+  // 4. Always place the name BEFORE the email if email exists
   if (email) {
-    return email;
+    return `${finalName} (${email})`;
   }
 
-  return rawName || 'Usuário';
+  return finalName;
 };
 

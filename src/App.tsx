@@ -41,23 +41,57 @@ export default function App() {
   });
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
 
-  const [certificates, setCertificates] = useState<JewelryCertificate[]>(INITIAL_CERTIFICATES);
-  const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS);
+  const getInitialCertificates = (): JewelryCertificate[] => {
+    const stored = localStorage.getItem('aureum_certificates');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Merge initial sample certificates with stored ones (avoid duplicates by ID)
+          const storedIds = new Set(parsed.map(c => c.id));
+          const missingSamples = INITIAL_CERTIFICATES.filter(c => !storedIds.has(c.id));
+          return [...parsed, ...missingSamples];
+        }
+      } catch (e) {}
+    }
+    return INITIAL_CERTIFICATES;
+  };
+
+  const getInitialCustomers = (): Customer[] => {
+    const stored = localStorage.getItem('aureum_customers');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const storedIds = new Set(parsed.map(c => c.id));
+          const missingSamples = INITIAL_CUSTOMERS.filter(c => !storedIds.has(c.id));
+          return [...parsed, ...missingSamples];
+        }
+      } catch (e) {}
+    }
+    return INITIAL_CUSTOMERS;
+  };
+
+  const [certificates, setCertificates] = useState<JewelryCertificate[]>(getInitialCertificates);
+  const [customers, setCustomers] = useState<Customer[]>(getInitialCustomers);
+
   const [notFoundQuery, setNotFoundQuery] = useState<string | null>(() => {
     const urlCertId = getCertIdFromUrl();
     if (urlCertId) {
-      const found = findCertificateByQuery(INITIAL_CERTIFICATES, urlCertId);
+      const initialList = getInitialCertificates();
+      const found = findCertificateByQuery(initialList, urlCertId);
       if (!found) return urlCertId;
     }
     return null;
   });
   const [selectedCert, setSelectedCert] = useState<JewelryCertificate>(() => {
     const urlCertId = getCertIdFromUrl();
+    const initialList = getInitialCertificates();
     if (urlCertId) {
-      const found = findCertificateByQuery(INITIAL_CERTIFICATES, urlCertId);
+      const found = findCertificateByQuery(initialList, urlCertId);
       if (found) return found;
     }
-    return INITIAL_CERTIFICATES[0];
+    return initialList[0];
   });
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const urlCertId = getCertIdFromUrl();
@@ -181,6 +215,26 @@ export default function App() {
     fetchCustomers();
   }, []);
 
+  useEffect(() => {
+    if (certificates.length > 0) {
+      try {
+        localStorage.setItem('aureum_certificates', JSON.stringify(certificates));
+      } catch (e) {
+        console.warn('Could not save certificates to localStorage', e);
+      }
+    }
+  }, [certificates]);
+
+  useEffect(() => {
+    if (customers.length > 0) {
+      try {
+        localStorage.setItem('aureum_customers', JSON.stringify(customers));
+      } catch (e) {
+        console.warn('Could not save customers to localStorage', e);
+      }
+    }
+  }, [customers]);
+
   // Sync selected certificate when URL changes via popstate
   useEffect(() => {
     const handleLocationChange = () => {
@@ -221,9 +275,11 @@ export default function App() {
   const fetchCertificates = async () => {
     try {
       const res = await fetch('/api/certificates');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data.success && Array.isArray(data.data) && data.data.length > 0) {
         setCertificates(data.data);
+        localStorage.setItem('aureum_certificates', JSON.stringify(data.data));
         const urlCertId = getCertIdFromUrl();
         if (urlCertId) {
           const matchFromUrl = findCertificateByQuery(data.data, urlCertId);
@@ -232,19 +288,23 @@ export default function App() {
             setNotFoundQuery(null);
             return;
           } else {
-            // Try fetching specific certificate from backend API
             try {
               const singleRes = await fetch(`/api/certificates/${encodeURIComponent(urlCertId)}`);
-              const singleData = await singleRes.json();
-              if (singleData.success && singleData.data) {
-                setCertificates(prev => [singleData.data, ...prev.filter(c => c.id !== singleData.data.id)]);
-                setSelectedCert(singleData.data);
-                setNotFoundQuery(null);
-                return;
+              if (singleRes.ok) {
+                const singleData = await singleRes.json();
+                if (singleData.success && singleData.data) {
+                  setCertificates(prev => {
+                    const newList = [singleData.data, ...prev.filter(c => c.id !== singleData.data.id)];
+                    localStorage.setItem('aureum_certificates', JSON.stringify(newList));
+                    return newList;
+                  });
+                  setSelectedCert(singleData.data);
+                  setNotFoundQuery(null);
+                  return;
+                }
               }
             } catch (err) {}
 
-            // Set not found state
             setNotFoundQuery(urlCertId);
             return;
           }
@@ -255,15 +315,28 @@ export default function App() {
       }
     } catch (e) {
       console.warn('Backend API offline or loading fallback sample data for certificates:', e);
+      // Fallback check against local certificates for URL cert ID
+      const urlCertId = getCertIdFromUrl();
+      if (urlCertId) {
+        const match = findCertificateByQuery(certificates, urlCertId);
+        if (match) {
+          setSelectedCert(match);
+          setNotFoundQuery(null);
+        } else {
+          setNotFoundQuery(urlCertId);
+        }
+      }
     }
   };
 
   const fetchCustomers = async () => {
     try {
       const res = await fetch('/api/customers');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data.success && Array.isArray(data.data) && data.data.length > 0) {
         setCustomers(data.data);
+        localStorage.setItem('aureum_customers', JSON.stringify(data.data));
       }
     } catch (e) {
       console.warn('Backend API offline or loading fallback sample data for customers:', e);

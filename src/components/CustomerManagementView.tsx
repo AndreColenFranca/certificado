@@ -48,7 +48,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
 
   useEffect(() => {
     if (qrCertModal) {
-      const certUrl = `${window.location.origin}/cert/${qrCertModal.id}`;
+      const certUrl = `${window.location.origin}/cert/${encodeURIComponent(qrCertModal.id)}`;
       QRCode.toDataURL(certUrl, {
         width: 360,
         margin: 4,
@@ -86,7 +86,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
 
   const handleCopyCertLink = () => {
     if (!qrCertModal) return;
-    const certUrl = `${window.location.origin}/cert/${qrCertModal.id}`;
+    const certUrl = `${window.location.origin}/cert/${encodeURIComponent(qrCertModal.id)}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(certUrl);
       setCopiedLink(true);

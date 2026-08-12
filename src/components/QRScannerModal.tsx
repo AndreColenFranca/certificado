@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { JewelryCertificate } from '../types';
 import { X, QrCode, Search, Camera, Sparkles, CheckCircle2 } from 'lucide-react';
+import { findCertificateByQuery, extractCertIdFromInput } from '../utils/certUtils';
 
 interface QRScannerModalProps {
   isOpen: boolean;
@@ -25,16 +26,14 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
     e.preventDefault();
     if (!inputCode.trim()) return;
 
-    const query = inputCode.trim().toUpperCase();
-    const found = certificates.find(
-      c => c.id.toUpperCase() === query || c.serialNumber.toUpperCase() === query
-    );
+    const found = findCertificateByQuery(certificates, inputCode);
 
     if (found) {
       onSelectCert(found);
       onClose();
     } else {
-      setErrorMsg(`Nenhum certificado encontrado para o código: "${inputCode}"`);
+      const extracted = extractCertIdFromInput(inputCode) || inputCode;
+      setErrorMsg(`Nenhum certificado encontrado para o código ou link: "${extracted}"`);
     }
   };
 

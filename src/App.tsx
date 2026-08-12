@@ -22,36 +22,12 @@ import { JewelryCustomerQueryModal } from './components/JewelryCustomerQueryModa
 import { LoginView } from './components/LoginView';
 import { UserManagementModal } from './components/UserManagementModal';
 import { CustomerPortalView } from './components/CustomerPortalView';
+import { extractCertIdFromInput, findCertificateByQuery } from './utils/certUtils';
+import { ShieldAlert, Search, QrCode } from 'lucide-react';
 
 export const getCertIdFromUrl = (): string | null => {
   if (typeof window === 'undefined') return null;
-  try {
-    const pathname = window.location.pathname;
-    const searchParams = new URLSearchParams(window.location.search);
-    const hash = window.location.hash;
-
-    // 1. Query parameters ?cert=... or ?id=... or ?sn=...
-    if (searchParams.get('cert')) return searchParams.get('cert');
-    if (searchParams.get('id')) return searchParams.get('id');
-    if (searchParams.get('sn')) return searchParams.get('sn');
-
-    // 2. Pathname /cert/:id or /passport/:id or /c/:id
-    const certPathMatch = pathname.match(/\/(?:cert|passport|certificate|c)\/([^/]+)/i);
-    if (certPathMatch && certPathMatch[1]) {
-      return decodeURIComponent(certPathMatch[1]);
-    }
-
-    // 3. Hash #cert=... or #/cert/...
-    if (hash) {
-      const hashParamMatch = hash.match(/(?:cert|id|sn)=([^&]+)/i);
-      if (hashParamMatch && hashParamMatch[1]) return decodeURIComponent(hashParamMatch[1]);
-      const hashPathMatch = hash.match(/#(?:^\/)?(?:cert|passport)\/([^/]+)/i);
-      if (hashPathMatch && hashPathMatch[1]) return decodeURIComponent(hashPathMatch[1]);
-    }
-  } catch (e) {
-    console.error('Error parsing URL for cert ID:', e);
-  }
-  return null;
+  return extractCertIdFromInput(window.location.href);
 };
 
 export default function App() {
@@ -67,14 +43,18 @@ export default function App() {
 
   const [certificates, setCertificates] = useState<JewelryCertificate[]>(INITIAL_CERTIFICATES);
   const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS);
+  const [notFoundQuery, setNotFoundQuery] = useState<string | null>(() => {
+    const urlCertId = getCertIdFromUrl();
+    if (urlCertId) {
+      const found = findCertificateByQuery(INITIAL_CERTIFICATES, urlCertId);
+      if (!found) return urlCertId;
+    }
+    return null;
+  });
   const [selectedCert, setSelectedCert] = useState<JewelryCertificate>(() => {
     const urlCertId = getCertIdFromUrl();
     if (urlCertId) {
-      const found = INITIAL_CERTIFICATES.find(
-        c => c.id.toUpperCase() === urlCertId.toUpperCase() ||
-             c.serialNumber.toUpperCase() === urlCertId.toUpperCase() ||
-             c.authenticityHash?.toUpperCase() === urlCertId.toUpperCase()
-      );
+      const found = findCertificateByQuery(INITIAL_CERTIFICATES, urlCertId);
       if (found) return found;
     }
     return INITIAL_CERTIFICATES[0];
@@ -246,13 +226,26 @@ export default function App() {
         setCertificates(data.data);
         const urlCertId = getCertIdFromUrl();
         if (urlCertId) {
-          const matchFromUrl = data.data.find(
-            (c: any) => c.id.toUpperCase() === urlCertId.toUpperCase() ||
-                        c.serialNumber.toUpperCase() === urlCertId.toUpperCase() ||
-                        c.authenticityHash?.toUpperCase() === urlCertId.toUpperCase()
-          );
+          const matchFromUrl = findCertificateByQuery(data.data, urlCertId);
           if (matchFromUrl) {
             setSelectedCert(matchFromUrl);
+            setNotFoundQuery(null);
+            return;
+          } else {
+            // Try fetching specific certificate from backend API
+            try {
+              const singleRes = await fetch(`/api/certificates/${encodeURIComponent(urlCertId)}`);
+              const singleData = await singleRes.json();
+              if (singleData.success && singleData.data) {
+                setCertificates(prev => [singleData.data, ...prev.filter(c => c.id !== singleData.data.id)]);
+                setSelectedCert(singleData.data);
+                setNotFoundQuery(null);
+                return;
+              }
+            } catch (err) {}
+
+            // Set not found state
+            setNotFoundQuery(urlCertId);
             return;
           }
         }
@@ -329,30 +322,29 @@ export default function App() {
     }
   };
 
-  // Search Cert by ID, serial, or customer
+  // Search Cert by ID, serial, URL, or customer
   const handleSearchCert = (query: string) => {
-    const q = query.trim().toUpperCase();
-    const found = certificates.find(
-      c => c.id.toUpperCase() === q || 
-           c.serialNumber.toUpperCase() === q || 
-           c.title.toUpperCase().includes(q) ||
-           (c.currentOwnerName && c.currentOwnerName.toUpperCase().includes(q))
-    );
+    const found = findCertificateByQuery(certificates, query);
 
     if (found) {
       setSelectedCert(found);
+      setNotFoundQuery(null);
       navigateToView('public-passport');
     } else {
-      // Check if it matches a customer name/CPF
+      // Check if it matches a customer name/CPF/email
+      const q = query.trim().toUpperCase();
       const matchingCust = customers.find(c => 
         c.name.toUpperCase().includes(q) || 
         c.cpf.includes(query) || 
         c.email.toUpperCase().includes(q)
       );
       if (matchingCust) {
+        setNotFoundQuery(null);
         navigateToView('customers');
       } else {
-        alert(`Nenhum certificado ou cliente localizado para "${query}". Tente buscar por ID, N° de Série ou Nome.`);
+        const cleanCode = extractCertIdFromInput(query) || query;
+        setNotFoundQuery(cleanCode);
+        navigateToView('public-passport');
       }
     }
   };
@@ -829,7 +821,76 @@ export default function App() {
 
         {/* Main View Content Area */}
         <main className="flex-1 min-w-0 pb-16 px-3 sm:px-6 lg:px-8 pt-6 max-w-7xl mx-auto w-full">
-        {viewMode === 'public-passport' && selectedCert && (
+        {viewMode === 'public-passport' && notFoundQuery && (
+          <div className="max-w-2xl mx-auto my-12 p-8 bg-zinc-950 border border-amber-900/50 rounded-3xl shadow-2xl text-center space-y-6">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-inner">
+              <ShieldAlert className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-2xl font-serif font-bold text-amber-100">
+                Passaporte de Joia Não Encontrado
+              </h2>
+              <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
+                Não foi possível localizar nenhum certificado registrado no acervo para o código, N° de série ou link consultado:
+              </p>
+              <div className="inline-block px-4 py-2 bg-zinc-900 border border-amber-500/30 rounded-xl font-mono text-xs text-amber-300 font-bold shadow-sm">
+                "{notFoundQuery}"
+              </div>
+            </div>
+
+            {/* Search & Recovery Actions */}
+            <div className="pt-4 border-t border-zinc-900/80 max-w-md mx-auto space-y-4">
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = e.target as HTMLFormElement;
+                  const input = (form.elements.namedItem('retrySearch') as HTMLInputElement).value;
+                  if (input && input.trim()) {
+                    handleSearchCert(input.trim());
+                  }
+                }} 
+                className="flex gap-2"
+              >
+                <input
+                  name="retrySearch"
+                  type="text"
+                  placeholder="Cole o link ou digite o ID / N° de Série..."
+                  className="flex-1 p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-amber-100 placeholder-zinc-500 focus:outline-none focus:border-amber-500/80"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs rounded-xl flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+                >
+                  <Search className="w-4 h-4" />
+                  <span>Buscar</span>
+                </button>
+              </form>
+
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setNotFoundQuery(null);
+                    if (certificates.length > 0) setSelectedCert(certificates[0]);
+                    setViewMode(currentUser?.role === 'customer' ? 'customer-portal' : 'jeweler-dashboard');
+                  }}
+                  className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-amber-200 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                >
+                  Voltar ao Início
+                </button>
+                <button
+                  onClick={() => setIsScannerModalOpen(true)}
+                  className="px-4 py-2 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <QrCode className="w-4 h-4 text-amber-400" />
+                  <span>Escanear Outro QR Code</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {viewMode === 'public-passport' && !notFoundQuery && selectedCert && (
           <CertificatePublicView
             cert={{
               ...selectedCert,

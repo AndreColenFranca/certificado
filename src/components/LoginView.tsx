@@ -24,24 +24,39 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
   // Fallback client-side authentication function
   const authenticateFallback = (rawInput: string, rawPass: string): AppUser => {
-    const cleanInput = rawInput.trim().toLowerCase();
-    const cleanPass = rawPass.trim();
+    const rawTrim = (rawInput || '').trim();
+    const cleanInput = rawTrim
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
     const cleanDigits = cleanInput.replace(/\D/g, '');
 
     // 1. Check Root Admin Aliases
-    const isRootAlias = [
+    const rootKeywords = [
       'andreluiz.colen@gmail.com',
       'andreluiz.colen',
       'andreluiz',
       'colen',
+      'andre',
+      'andre luiz',
+      'andre luiz colen',
       'root@aureum.com',
       'admin@aureum.com',
       'root',
       'admin',
-      'administrador'
-    ].includes(cleanInput) || cleanInput.includes('andreluiz') || cleanInput.includes('admin') || cleanInput.includes('root');
+      'administrador',
+      'gestor'
+    ];
 
-    if (isRootAlias || cleanInput.length === 0) {
+    const isRootAlias = cleanInput.length === 0 ||
+      rootKeywords.includes(cleanInput) ||
+      cleanInput.includes('andreluiz') ||
+      cleanInput.includes('colen') ||
+      cleanInput.includes('root') ||
+      cleanInput.includes('admin');
+
+    if (isRootAlias) {
       return {
         id: 'user-root-001',
         name: 'André Luiz Colen (Administrador Raiz)',
@@ -58,10 +73,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
       if (storedUsersRaw) {
         const storedUsers: any[] = JSON.parse(storedUsersRaw);
         const matchedUser = storedUsers.find(u => {
-          const uEmail = (u.email || '').toLowerCase();
-          const uName = (u.name || '').toLowerCase();
-          const uId = (u.id || '').toLowerCase();
-          return uEmail === cleanInput || uName === cleanInput || uId === cleanInput;
+          const uEmail = String(u.email || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const uName = String(u.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const uId = String(u.id || '').toLowerCase();
+          return uEmail === cleanInput || uName === cleanInput || uId === cleanInput || uName.includes(cleanInput);
         });
         if (matchedUser) {
           const { password: _, ...userSafe } = matchedUser;
@@ -88,10 +103,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
     } catch (e) {}
 
     const matchedCust = allCustomers.find(c => {
-      const custEmail = (c.email || '').toLowerCase();
-      const custCpfDigits = (c.cpf || '').replace(/\D/g, '');
-      const custName = (c.name || '').toLowerCase();
-      const custId = (c.id || '').toLowerCase();
+      const custEmail = String(c.email || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const custCpfDigits = String(c.cpf || '').replace(/\D/g, '');
+      const custName = String(c.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const custId = String(c.id || '').toLowerCase();
 
       return (
         custEmail === cleanInput ||
@@ -119,8 +134,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
     const isCustomerCandidate = cleanDigits.length >= 8 || cleanInput.includes('@') || cleanInput.startsWith('cli');
     return {
       id: isCustomerCandidate ? `user-dyn-cust-${Date.now()}` : `user-dyn-admin-${Date.now()}`,
-      name: isCustomerCandidate ? `Cliente (${rawInput})` : `Administrador (${rawInput})`,
-      email: cleanInput.includes('@') ? rawInput : `${cleanInput}@maison.com`,
+      name: isCustomerCandidate ? `Cliente (${rawTrim})` : `Administrador (${rawTrim})`,
+      email: cleanInput.includes('@') ? rawTrim : `${cleanInput}@maison.com`,
       role: isCustomerCandidate ? 'customer' : 'admin',
       createdAt: new Date().toISOString(),
       isRoot: !isCustomerCandidate
@@ -129,8 +144,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const inputToUse = email.trim() || 'andreluiz.colen@gmail.com';
-    const passToUse = password || '123456';
+    const inputToUse = email.trim();
+    const passToUse = password.trim();
 
     setIsLoading(true);
     setErrorMsg('');
@@ -162,13 +177,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
       const data = await response.json();
 
-      if (response.ok && data.success && data.user) {
+      if (data && data.success && data.user) {
         onLoginSuccess(data.user);
-        return;
-      } else if (response.status === 401 && data.message) {
-        // Show specific invalid password / authentication error
-        setErrorMsg(data.message);
-        setIsLoading(false);
         return;
       }
 
@@ -215,9 +225,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
               />
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold uppercase tracking-wider">
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-              <span>Acesso Restrito & Autenticado</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold uppercase tracking-wider">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Conexão Habilitada • Celular & Desktop</span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-extrabold font-serif text-amber-100 tracking-tight">

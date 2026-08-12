@@ -555,5 +555,178 @@ export const INITIAL_CERTIFICATES: JewelryCertificate[] = [
     ],
     createdAt: '2026-03-12T10:00:00.000Z',
     updatedAt: '2026-03-12T10:00:00.000Z'
+  },
+  {
+    id: 'CERT-2026-A8F9-CLI1006',
+    isRoot: false,
+    parentCertId: 'CERT-2026-A8F9',
+    serialNumber: 'SN-18K-99042-02',
+    title: 'Anel Solitário Étoile Royale',
+    collection: 'High Jewelry Solitaires 2026',
+    model: 'Solitaire Étoile 1.20ct',
+    manufacturer: 'Maison Lumière Joias',
+    manufacturerLogoUrl: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=150&auto=format&fit=crop&q=80',
+    manufacturingDate: '2026-02-14',
+    issueDate: '2026-02-20',
+    currentOwnerName: 'Andre Luiz Colen',
+    ownerCpf: '999.888.777-66',
+    ownerEmail: 'andre@andre.com',
+    ownerId: 'CLI-1006',
+    metalPurity: '18K (750)',
+    metalColor: 'Ouro Amarelo',
+    grossWeightGrams: 4.85,
+    widthCm: 0.4,
+    finish: 'Polido Espelhado',
+    hasStones: true,
+    stones: [
+      {
+        id: 'st-1',
+        type: 'Diamante Natural',
+        quantity: 1,
+        caratWeight: 1.20,
+        cutShape: 'Brilhante Redondo',
+        colorGrade: 'F (Incolor Raro)',
+        clarityGrade: 'VVS1 (Praticamente Impecável)',
+        settingType: 'Garra'
+      }
+    ],
+    images: [
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&auto=format&fit=crop&q=80'
+    ],
+    frames360: [],
+    warrantyMonths: -1,
+    warrantyTerms: 'Garantia Vitalícia de Autenticidade do Ouro 18K e Diamantes Naturais.',
+    warrantyStatus: 'Vitalícia',
+    authenticityHash: '0x8f9a2e4b7c1d90a5e3f21081977a45bc3829d10e-cli6',
+    estimatedValueBRL: 42500,
+    careGuide: [],
+    maintenanceHistory: [
+      {
+        id: 'm-cli6-1',
+        date: '2026-02-20',
+        type: 'Emissão de Certificado',
+        performer: 'Atelier Central Maison Lumière',
+        notes: 'Emissão de passaporte digital individual para Andre Luiz Colen.',
+        customerId: 'CLI-1006',
+        customerName: 'Andre Luiz Colen',
+        customerEmail: 'andre@andre.com'
+      }
+    ],
+    createdAt: '2026-02-20T10:00:00.000Z',
+    updatedAt: '2026-02-20T10:00:00.000Z'
+  },
+  {
+    id: 'CERT-2026-B3K2-CLI1006',
+    isRoot: false,
+    parentCertId: 'CERT-2026-B3K2',
+    serialNumber: 'SN-PT-88310-02',
+    title: 'Colar Esmeralda Imperial Colombiana',
+    collection: 'Royal Emeralds & Platinum',
+    model: 'Goutte d\'Émeraude 2.85ct',
+    manufacturer: 'Royal Gem Craftsmen',
+    manufacturingDate: '2026-01-20',
+    issueDate: '2026-01-28',
+    currentOwnerName: 'Andre Luiz Colen',
+    ownerCpf: '999.888.777-66',
+    ownerEmail: 'andre@andre.com',
+    ownerId: 'CLI-1006',
+    metalPurity: 'Platina 950',
+    metalColor: 'Platina',
+    grossWeightGrams: 14.20,
+    finish: 'Rodinado Premium',
+    hasStones: true,
+    stones: [
+      {
+        id: 'st-col-1',
+        type: 'Esmeralda Colombiana',
+        quantity: 1,
+        caratWeight: 2.85,
+        cutShape: 'Gota (Pear)',
+        colorGrade: 'Verde Intenso (Vivid Green)',
+        clarityGrade: 'Excelente Transparência Natural',
+        settingType: 'Bisel/Inglês'
+      }
+    ],
+    images: [
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200&auto=format&fit=crop&q=80'
+    ],
+    frames360: [],
+    warrantyMonths: 60,
+    warrantyTerms: '5 anos de garantia internacional.',
+    warrantyStatus: 'Ativa',
+    authenticityHash: '0xb3k2f81a7d6e4c309081237ef82110c9a421b8d2-cli6',
+    estimatedValueBRL: 89000,
+    careGuide: [],
+    maintenanceHistory: [
+      {
+        id: 'm-cli6-2',
+        date: '2026-01-28',
+        type: 'Emissão de Certificado',
+        performer: 'Royal Gem Craftsmen Gemology Lab',
+        notes: 'Emissão do passaporte digital de aquisição para Andre Luiz Colen.',
+        customerId: 'CLI-1006',
+        customerName: 'Andre Luiz Colen',
+        customerEmail: 'andre@andre.com'
+      }
+    ],
+    createdAt: '2026-01-28T11:00:00.000Z',
+    updatedAt: '2026-01-28T11:00:00.000Z'
+  },
+  {
+    id: 'CERT-2026-E5R8-CLI1006',
+    isRoot: false,
+    parentCertId: 'CERT-2026-E5R8',
+    serialNumber: 'SN-18KP-11209-02',
+    title: 'Gargantilha Ponto de Luz Diamante Fancy Pink',
+    collection: 'High Jewelry Solitaires 2026',
+    model: 'Gargantilha Étoile Rose 0.85ct',
+    manufacturer: 'Maison Lumière Joias',
+    manufacturingDate: '2026-03-10',
+    issueDate: '2026-03-15',
+    currentOwnerName: 'Andre Luiz Colen',
+    ownerCpf: '999.888.777-66',
+    ownerEmail: 'andre@andre.com',
+    ownerId: 'CLI-1006',
+    metalPurity: '18K (750)',
+    metalColor: 'Ouro Rosa',
+    grossWeightGrams: 5.20,
+    finish: 'Polido Espelhado',
+    hasStones: true,
+    stones: [
+      {
+        id: 'st-e1',
+        type: 'Diamante Natural',
+        quantity: 1,
+        caratWeight: 0.85,
+        cutShape: 'Gota / Pera',
+        colorGrade: 'Fancy Pink Natural',
+        clarityGrade: 'VVS2',
+        settingType: 'Garra (Prong)'
+      }
+    ],
+    images: [
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200&auto=format&fit=crop&q=80'
+    ],
+    frames360: [],
+    warrantyMonths: -1,
+    warrantyTerms: 'Garantia Vitalícia Maison Lumière para Diamantes Naturais Raros.',
+    warrantyStatus: 'Vitalícia',
+    authenticityHash: '0xe5r89102c91a739d481230f8123bc910a9101ff2-cli6',
+    estimatedValueBRL: 64000,
+    careGuide: [],
+    maintenanceHistory: [
+      {
+        id: 'm-cli6-3',
+        date: '2026-03-15',
+        type: 'Emissão de Certificado',
+        performer: 'Atelier Central Maison Lumière',
+        notes: 'Emissão do passaporte digital de diamante pink raro para Andre Luiz Colen.',
+        customerId: 'CLI-1006',
+        customerName: 'Andre Luiz Colen',
+        customerEmail: 'andre@andre.com'
+      }
+    ],
+    createdAt: '2026-03-15T10:00:00.000Z',
+    updatedAt: '2026-03-15T10:00:00.000Z'
   }
 ];

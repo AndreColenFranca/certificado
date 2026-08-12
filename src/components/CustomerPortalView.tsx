@@ -52,12 +52,33 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
     const certOwnerId = cert.ownerId;
     const certOwnerName = cert.currentOwnerName?.toLowerCase().trim();
 
-    return (
+    // Direct match
+    if (
       (custId && certOwnerId === custId) ||
       (userEmail && certOwnerEmail === userEmail) ||
       (userCpf && certOwnerCpf && certOwnerCpf === userCpf) ||
       (userName && certOwnerName && certOwnerName === userName)
-    );
+    ) {
+      return true;
+    }
+
+    // Maintenance history match
+    if (cert.maintenanceHistory && cert.maintenanceHistory.length > 0) {
+      return cert.maintenanceHistory.some(m => {
+        const mEmail = m.customerEmail?.toLowerCase().trim();
+        const mCpf = m.customerCpf?.replace(/\D/g, '');
+        const mId = m.customerId;
+        const mName = m.customerName?.toLowerCase().trim();
+        return (
+          (custId && mId === custId) ||
+          (userEmail && mEmail === userEmail) ||
+          (userCpf && mCpf && mCpf === userCpf) ||
+          (userName && mName && mName === userName)
+        );
+      });
+    }
+
+    return false;
   });
 
   // Apply search query filter among customer's pieces

@@ -59,8 +59,60 @@ let usersDb: any[] = [
     cpf: '555.666.777-88',
     createdAt: new Date().toISOString(),
     isRoot: false
+  },
+  {
+    id: 'user-cli-1006',
+    name: 'Andre Luiz Colen',
+    email: 'andre@andre.com',
+    password: '123456',
+    role: 'customer',
+    customerId: 'CLI-1006',
+    cpf: '999.888.777-66',
+    createdAt: new Date().toISOString(),
+    isRoot: false
   }
 ];
+
+const DATA_FILE = path.join(process.cwd(), 'data_store.json');
+
+const loadDataStore = () => {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+      const data = JSON.parse(raw);
+      if (Array.isArray(data.certificatesDb) && data.certificatesDb.length > 0) {
+        const certMap = new Map<string, JewelryCertificate>();
+        INITIAL_CERTIFICATES.forEach(c => certMap.set(c.id, c));
+        data.certificatesDb.forEach((c: any) => certMap.set(c.id, c));
+        certificatesDb = Array.from(certMap.values());
+      }
+      if (Array.isArray(data.customersDb) && data.customersDb.length > 0) {
+        const custMap = new Map<string, Customer>();
+        INITIAL_CUSTOMERS.forEach(c => custMap.set(c.id, c));
+        data.customersDb.forEach((c: any) => custMap.set(c.id, c));
+        customersDb = Array.from(custMap.values());
+      }
+      if (Array.isArray(data.usersDb) && data.usersDb.length > 0) {
+        const userMap = new Map<string, any>();
+        usersDb.forEach(u => userMap.set(u.email ? u.email.toLowerCase() : u.id, u));
+        data.usersDb.forEach((u: any) => userMap.set(u.email ? u.email.toLowerCase() : u.id, u));
+        usersDb = Array.from(userMap.values());
+      }
+    }
+  } catch (e) {
+    console.warn('Could not load data_store.json:', e);
+  }
+};
+
+const saveDataStore = () => {
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify({ certificatesDb, customersDb, usersDb }, null, 2));
+  } catch (e) {
+    console.warn('Could not save data_store.json:', e);
+  }
+};
+
+loadDataStore();
 
 // API Routes
 
@@ -437,6 +489,8 @@ app.post('/api/customers', (req, res) => {
       }
     }
 
+    saveDataStore();
+
     res.status(201).json({ success: true, data: newCust, message: 'Cliente cadastrado com sucesso' });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message || 'Erro ao cadastrar cliente' });
@@ -505,6 +559,8 @@ app.put('/api/customers/:id', (req, res) => {
     }
   }
 
+  saveDataStore();
+
   res.json({ success: true, data: updatedCust, message: 'Cliente atualizado com sucesso' });
 });
 
@@ -533,10 +589,35 @@ app.delete('/api/customers/:id', (req, res) => {
     });
   }
 
+  saveDataStore();
+
   res.json({ success: true, message: 'Cliente e todos os seus passaportes removidos com sucesso' });
 });
 
 // --- Certificates API ---
+
+// Sync local certificates array with server database
+app.post('/api/certificates/sync', (req, res) => {
+  try {
+    const { localCertificates = [] } = req.body || {};
+    if (Array.isArray(localCertificates) && localCertificates.length > 0) {
+      localCertificates.forEach((lc: any) => {
+        if (lc && lc.id) {
+          const idx = certificatesDb.findIndex(c => c.id === lc.id);
+          if (idx === -1) {
+            certificatesDb.push(lc);
+          } else {
+            certificatesDb[idx] = { ...certificatesDb[idx], ...lc };
+          }
+        }
+      });
+      saveDataStore();
+    }
+    res.json({ success: true, count: certificatesDb.length, data: certificatesDb });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 // Get all certificates
 app.get('/api/certificates', (req, res) => {
@@ -585,6 +666,7 @@ app.post('/api/certificates', (req, res) => {
     newCert.updatedAt = now;
 
     certificatesDb.unshift(newCert);
+    saveDataStore();
 
     res.status(201).json({ success: true, data: newCert, message: 'Certificado emitido com sucesso' });
   } catch (error: any) {
@@ -608,6 +690,7 @@ app.put('/api/certificates/:id', (req, res) => {
   };
 
   certificatesDb[index] = updatedCert;
+  saveDataStore();
 
   res.json({ success: true, data: updatedCert, message: 'Certificado atualizado com sucesso' });
 });

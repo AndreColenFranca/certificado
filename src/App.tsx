@@ -346,10 +346,32 @@ export default function App() {
 
   const fetchCertificates = async () => {
     try {
-      const res = await fetch('/api/certificates');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+      let localCerts: JewelryCertificate[] = [];
+      try {
+        const stored = localStorage.getItem('aureum_certificates');
+        if (stored) {
+          localCerts = JSON.parse(stored);
+        }
+      } catch (e) {}
+
+      let data: any = null;
+      try {
+        const syncRes = await fetch('/api/certificates/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ localCertificates: localCerts })
+        });
+        if (syncRes.ok) {
+          data = await syncRes.json();
+        }
+      } catch (err) {}
+
+      if (!data || !data.success) {
+        const res = await fetch('/api/certificates');
+        if (res.ok) data = await res.json();
+      }
+
+      if (data && data.success && Array.isArray(data.data) && data.data.length > 0) {
         setCertificates(data.data);
         localStorage.setItem('aureum_certificates', JSON.stringify(data.data));
         const urlCertId = getCertIdFromUrl();

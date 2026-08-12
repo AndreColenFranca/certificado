@@ -159,18 +159,20 @@ export const Header: React.FC<HeaderProps> = ({
             
             {/* User Badge & Management (If Root user or logged in) */}
             {currentUser && (
-              <div className="hidden md:flex items-center gap-2 pr-2 border-r border-amber-900/30">
+              <div className="flex items-center gap-2 pr-1.5 sm:pr-2 border-r border-amber-900/30">
                 {currentUser.role === 'customer' ? (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs font-semibold">
+                  <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs font-semibold">
                     <Users className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <span className="max-w-[120px] truncate">{formatUserGreeting(currentUser).split(' ')[0]}</span>
-                    <span className="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 text-[9px] font-bold rounded uppercase">Cliente</span>
+                    <span className="max-w-[130px] sm:max-w-[220px] truncate" title={formatUserGreeting(currentUser)}>
+                      {formatUserGreeting(currentUser)}
+                    </span>
+                    <span className="hidden sm:inline px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 text-[9px] font-bold rounded uppercase">Cliente</span>
                   </div>
                 ) : (
                   <button
                     onClick={onOpenUsersModal}
                     title={currentUser.isRoot || currentUser.email.toLowerCase() === 'andreluiz.colen@gmail.com' ? "Gestão de Usuários (Acesso Raiz)" : "Usuário Autenticado"}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-200 text-xs font-semibold transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-200 text-xs font-semibold transition-all cursor-pointer"
                     id="header-btn-users"
                   >
                     {(currentUser.isRoot || currentUser.email.toLowerCase() === 'andreluiz.colen@gmail.com') ? (
@@ -178,9 +180,11 @@ export const Header: React.FC<HeaderProps> = ({
                     ) : (
                       <Users className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                     )}
-                    <span className="max-w-[120px] truncate">{formatUserGreeting(currentUser).split(' ')[0]}</span>
+                    <span className="max-w-[130px] sm:max-w-[220px] truncate" title={formatUserGreeting(currentUser)}>
+                      {formatUserGreeting(currentUser)}
+                    </span>
                     {(currentUser.isRoot || currentUser.email.toLowerCase() === 'andreluiz.colen@gmail.com') && (
-                      <span className="px-1.5 py-0.2 bg-amber-500/30 text-amber-300 text-[9px] font-bold rounded uppercase">Raiz</span>
+                      <span className="hidden sm:inline px-1.5 py-0.2 bg-amber-500/30 text-amber-300 text-[9px] font-bold rounded uppercase">Raiz</span>
                     )}
                   </button>
                 )}

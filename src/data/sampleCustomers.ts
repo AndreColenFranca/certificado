@@ -55,5 +55,16 @@ export const INITIAL_CUSTOMERS: Customer[] = [
     password: '123456',
     createdAt: '2025-10-01T10:00:00.000Z',
     updatedAt: '2026-03-01T10:00:00.000Z'
+  },
+  {
+    id: 'CLI-1006',
+    name: 'Andre Luiz Colen',
+    cpf: '999.888.777-66',
+    email: 'andre@andre.com',
+    phone: '(31) 99999-8888',
+    notes: 'Cliente de Alta Joalheria',
+    password: '123456',
+    createdAt: '2025-11-01T10:00:00.000Z',
+    updatedAt: '2026-03-01T10:00:00.000Z'
   }
 ];

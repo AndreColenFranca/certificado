@@ -44,5 +44,16 @@ export const INITIAL_CUSTOMERS: Customer[] = [
     password: '123456',
     createdAt: '2025-09-05T16:45:00.000Z',
     updatedAt: '2026-03-05T14:00:00.000Z'
+  },
+  {
+    id: 'CLI-1005',
+    name: 'Amanda Almeida',
+    cpf: '555.666.777-88',
+    email: 'aa@aa.com',
+    phone: '(11) 97777-8888',
+    notes: 'Cliente Especial do Ateliê',
+    password: '123456',
+    createdAt: '2025-10-01T10:00:00.000Z',
+    updatedAt: '2026-03-01T10:00:00.000Z'
   }
 ];

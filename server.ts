@@ -48,6 +48,17 @@ let usersDb: any[] = [
     cpf: '234.567.890-12',
     createdAt: new Date().toISOString(),
     isRoot: false
+  },
+  {
+    id: 'user-cli-1005',
+    name: 'Amanda Almeida',
+    email: 'aa@aa.com',
+    password: '123456',
+    role: 'customer',
+    customerId: 'CLI-1005',
+    cpf: '555.666.777-88',
+    createdAt: new Date().toISOString(),
+    isRoot: false
   }
 ];
 

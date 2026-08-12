@@ -524,6 +524,25 @@ export default function App() {
         localStorage.setItem('aureum_users_db', JSON.stringify(storedUsers));
       } catch (err) {}
 
+      // If currentUser matches the saved customer, update currentUser in state and localStorage immediately
+      if (currentUser) {
+        const currentEmail = (currentUser.email || '').trim().toLowerCase();
+        const savedEmail = (custToSave.email || '').trim().toLowerCase();
+        if (currentEmail === savedEmail || currentUser.customerId === custToSave.id) {
+          const updatedUserObj = {
+            ...currentUser,
+            name: custToSave.name, // Updated Nome Completo (Alfanumérico)
+            email: custToSave.email,
+            cpf: custToSave.cpf,
+            customerId: custToSave.id
+          };
+          setCurrentUser(updatedUserObj);
+          try {
+            localStorage.setItem('aureum_current_user', JSON.stringify(updatedUserObj));
+          } catch (e) {}
+        }
+      }
+
       setIsCustomerFormOpen(false);
       setEditingCustomer(null);
     } catch (e) {

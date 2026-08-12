@@ -141,24 +141,7 @@ const handleLoginRequest = (req: any, res: any) => {
       });
     }
 
-    // 2. Check usersDb by email, ID or Name
-    const matchedUser = usersDb.find(u => {
-      const uEmail = String(u.email || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const uName = String(u.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const uId = String(u.id || '').toLowerCase();
-      return uEmail === cleanInput || uName === cleanInput || uId === cleanInput || uName.includes(cleanInput);
-    });
-
-    if (matchedUser) {
-      const { password: _, ...userWithoutPassword } = matchedUser;
-      return res.json({
-        success: true,
-        message: 'Autenticação realizada com sucesso',
-        user: userWithoutPassword
-      });
-    }
-
-    // 3. Check customersDb by email, CPF, Name, or Customer ID
+    // 2. Check customersDb by email, CPF, Name, or Customer ID first
     const matchedCustomer = customersDb.find(c => {
       const custEmail = String(c.email || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const custCpfDigits = String(c.cpf || '').replace(/\D/g, '');
@@ -186,10 +169,33 @@ const handleLoginRequest = (req: any, res: any) => {
         isRoot: false
       };
 
+      // Also sync back to usersDb so usersDb always has the latest name
+      const uIdx = usersDb.findIndex(u => u.email && u.email.toLowerCase() === matchedCustomer.email.toLowerCase());
+      if (uIdx >= 0) {
+        usersDb[uIdx].name = matchedCustomer.name;
+      }
+
       return res.json({
         success: true,
         message: 'Autenticação de Cliente realizada com sucesso',
         user: customerUser
+      });
+    }
+
+    // 3. Check usersDb by email, ID or Name
+    const matchedUser = usersDb.find(u => {
+      const uEmail = String(u.email || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const uName = String(u.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const uId = String(u.id || '').toLowerCase();
+      return uEmail === cleanInput || uName === cleanInput || uId === cleanInput || uName.includes(cleanInput);
+    });
+
+    if (matchedUser) {
+      const { password: _, ...userWithoutPassword } = matchedUser;
+      return res.json({
+        success: true,
+        message: 'Autenticação realizada com sucesso',
+        user: userWithoutPassword
       });
     }
 

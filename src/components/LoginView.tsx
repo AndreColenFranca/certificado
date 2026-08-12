@@ -67,25 +67,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
       };
     }
 
-    // 2. Check stored users in localStorage (`aureum_users_db`)
-    try {
-      const storedUsersRaw = localStorage.getItem('aureum_users_db');
-      if (storedUsersRaw) {
-        const storedUsers: any[] = JSON.parse(storedUsersRaw);
-        const matchedUser = storedUsers.find(u => {
-          const uEmail = String(u.email || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          const uName = String(u.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          const uId = String(u.id || '').toLowerCase();
-          return uEmail === cleanInput || uName === cleanInput || uId === cleanInput || uName.includes(cleanInput);
-        });
-        if (matchedUser) {
-          const { password: _, ...userSafe } = matchedUser;
-          return userSafe;
-        }
-      }
-    } catch (e) {}
-
-    // 3. Check customers in localStorage + INITIAL_CUSTOMERS
+    // 2. Check customers in localStorage + INITIAL_CUSTOMERS first
     let allCustomers: Customer[] = [...INITIAL_CUSTOMERS];
     try {
       const storedCustomersRaw = localStorage.getItem('aureum_customers');
@@ -129,6 +111,24 @@ export const LoginView: React.FC<LoginViewProps> = ({
         isRoot: false
       };
     }
+
+    // 3. Check stored users in localStorage (`aureum_users_db`)
+    try {
+      const storedUsersRaw = localStorage.getItem('aureum_users_db');
+      if (storedUsersRaw) {
+        const storedUsers: any[] = JSON.parse(storedUsersRaw);
+        const matchedUser = storedUsers.find(u => {
+          const uEmail = String(u.email || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const uName = String(u.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const uId = String(u.id || '').toLowerCase();
+          return uEmail === cleanInput || uName === cleanInput || uId === cleanInput || uName.includes(cleanInput);
+        });
+        if (matchedUser) {
+          const { password: _, ...userSafe } = matchedUser;
+          return userSafe;
+        }
+      }
+    } catch (e) {}
 
     // 4. Check stored certificates in localStorage
     try {

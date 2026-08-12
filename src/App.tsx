@@ -25,7 +25,7 @@ import { UserManagementModal } from './components/UserManagementModal';
 import { CustomerPortalView } from './components/CustomerPortalView';
 import { extractCertIdFromInput, findCertificateByQuery } from './utils/certUtils';
 import { isRootCert, getChildCertificatesForParent } from './utils/certHierarchy';
-import { ShieldAlert, Search, QrCode } from 'lucide-react';
+import { ShieldAlert, Search, QrCode, LogIn } from 'lucide-react';
 
 export const getCertIdFromUrl = (): string | null => {
   if (typeof window === 'undefined') return null;
@@ -108,9 +108,10 @@ export default function App() {
       try {
         const parsed = JSON.parse(storedUser);
         if (parsed.role === 'customer') return 'customer-portal';
+        return 'jeweler-dashboard';
       } catch (e) {}
     }
-    return 'public-passport';
+    return 'jeweler-dashboard';
   });
 
   const [publicViewTab, setPublicViewTab] = useState<'photo-inspector' | 'specs' | 'certificate' | 'history' | 'care'>(() => {
@@ -120,11 +121,13 @@ export default function App() {
     return 'photo-inspector';
   });
 
+  const [forceLoginView, setForceLoginView] = useState<boolean>(false);
   const [viewHistory, setViewHistory] = useState<ViewMode[]>([]);
 
   const handleSelectCert = (cert: JewelryCertificate, tab: 'photo-inspector' | 'specs' | 'certificate' | 'history' | 'care' = 'photo-inspector') => {
     setSelectedCert(cert);
     setPublicViewTab(tab);
+    setForceLoginView(false);
     const isCertTab = tab === 'certificate';
     if (typeof window !== 'undefined') {
       const targetUrl = `/cert/${encodeURIComponent(cert.id)}${isCertTab ? '?type=certificate' : ''}`;
@@ -141,20 +144,23 @@ export default function App() {
     if (newMode !== viewMode) {
       setViewHistory(prev => [...prev, viewMode]);
       setViewMode(newMode);
+      if (typeof window !== 'undefined' && newMode !== 'public-passport' && newMode !== 'public-certificate') {
+        window.history.pushState(null, '', '/');
+      }
     }
   };
 
   const handleGoBack = () => {
+    let nextMode: ViewMode;
     if (viewHistory.length > 0) {
-      const lastView = viewHistory[viewHistory.length - 1];
+      nextMode = viewHistory[viewHistory.length - 1];
       setViewHistory(prev => prev.slice(0, -1));
-      setViewMode(lastView);
     } else {
-      if (viewMode === 'public-passport' || viewMode === 'customers') {
-        setViewMode(currentUser?.role === 'customer' ? 'customer-portal' : 'jeweler-dashboard');
-      } else {
-        setViewMode(currentUser?.role === 'customer' ? 'customer-portal' : 'jeweler-dashboard');
-      }
+      nextMode = currentUser?.role === 'customer' ? 'customer-portal' : 'jeweler-dashboard';
+    }
+    setViewMode(nextMode);
+    if (typeof window !== 'undefined' && nextMode !== 'public-passport' && nextMode !== 'public-certificate') {
+      window.history.pushState(null, '', '/');
     }
   };
 
@@ -163,7 +169,11 @@ export default function App() {
 
   const handleLoginSuccess = (user: AppUser) => {
     setCurrentUser(user);
+    setForceLoginView(false);
     localStorage.setItem('aureum_logged_user', JSON.stringify(user));
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/');
+    }
     if (user.role === 'customer') {
       setViewMode('customer-portal');
     } else {
@@ -174,6 +184,12 @@ export default function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('aureum_logged_user');
+    setViewHistory([]);
+    setForceLoginView(true);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/');
+    }
+    setViewMode('jeweler-dashboard');
   };
 
   // Company Brand State
@@ -854,98 +870,119 @@ export default function App() {
 
   // Render Login Screen or Public Passport if user is not authenticated
   if (!currentUser) {
-    const urlCertId = getCertIdFromUrl();
-    const publicCertToView = urlCertId 
-      ? certificates.find(c => 
-          c.id.toUpperCase() === urlCertId.toUpperCase() || 
-          c.serialNumber.toUpperCase() === urlCertId.toUpperCase() ||
-          c.authenticityHash?.toUpperCase() === urlCertId.toUpperCase()
-        )
-      : null;
+    const urlCertId = forceLoginView ? null : getCertIdFromUrl();
+    if (urlCertId) {
+      const publicCertToView = findCertificateByQuery(certificates, urlCertId) || selectedCert;
 
-    if (publicCertToView) {
-      const isCertType = typeof window !== 'undefined' && (
-        window.location.search.includes('type=certificate') || 
-        window.location.search.includes('doc=certificate') ||
-        viewMode === 'public-certificate'
-      );
+      if (publicCertToView) {
+        const isCertType = typeof window !== 'undefined' && (
+          window.location.search.includes('type=certificate') || 
+          window.location.search.includes('doc=certificate') ||
+          viewMode === 'public-certificate'
+        );
 
-      if (isCertType) {
+        const handleGoToLogin = () => {
+          if (typeof window !== 'undefined') {
+            window.history.pushState(null, '', '/');
+          }
+          setForceLoginView(true);
+        };
+
+        if (isCertType) {
+          return (
+            <div className={`min-h-screen font-sans overflow-x-hidden ${
+              theme === 'classic-light' 
+                ? 'theme-classic-light bg-stone-50 text-stone-900' 
+                : 'theme-luxury-dark bg-zinc-950 text-amber-50'
+            }`}>
+              <div className="bg-zinc-950 border-b border-amber-500/30 py-2.5 px-3 sm:px-8 flex flex-wrap items-center justify-between gap-2 text-xs shadow-md">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <span className="text-amber-200 font-bold uppercase tracking-wider text-[10px] sm:text-xs leading-snug break-words">
+                    Certificado Oficial de Autenticidade da Joia • Consulta por QR Code
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                    Visualização Autêntica Registrada
+                  </div>
+                  <button
+                    onClick={handleGoToLogin}
+                    className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    Área Restrita / Login
+                  </button>
+                </div>
+              </div>
+
+              <main className="max-w-7xl mx-auto p-3 sm:p-6">
+                <CertificateOnlyView
+                  cert={{
+                    ...publicCertToView,
+                    manufacturer: publicCertToView.manufacturer || companyName,
+                    manufacturerLogoUrl: publicCertToView.manufacturerLogoUrl || companyLogoUrl
+                  }}
+                  currentUser={null}
+                  onOpenPrintModal={(c) => {
+                    setPrintTargetCert(c);
+                    setIsPrintModalOpen(true);
+                  }}
+                />
+              </main>
+
+              <PrintCertificateModal
+                isOpen={isPrintModalOpen}
+                onClose={() => {
+                  setIsPrintModalOpen(false);
+                  setPrintTargetCert(null);
+                }}
+                cert={printTargetCert || publicCertToView}
+              />
+            </div>
+          );
+        }
+
         return (
-          <div className={`min-h-screen font-sans overflow-x-hidden ${
+          <div className={`min-h-screen font-sans ${
             theme === 'classic-light' 
               ? 'theme-classic-light bg-stone-50 text-stone-900' 
               : 'theme-luxury-dark bg-zinc-950 text-amber-50'
           }`}>
-            <div className="bg-zinc-950 border-b border-amber-500/30 py-2.5 px-3 sm:px-8 flex flex-wrap items-center justify-between gap-2 text-xs shadow-md">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                <span className="text-amber-200 font-bold uppercase tracking-wider text-[10px] sm:text-xs leading-snug break-words">
-                  Certificado Oficial de Autenticidade da Joia • Consulta por QR Code
+            <div className="bg-zinc-950 border-b border-amber-500/30 py-3 px-4 sm:px-8 flex flex-wrap items-center justify-between gap-3 text-xs shadow-md">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-amber-200 font-bold uppercase tracking-wider text-xs sm:text-sm">
+                  Passaporte Digital Autêntico da Joia • Emissão e Consulta por QR Code
                 </span>
               </div>
-              <div className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shrink-0">
-                Visualização Autêntica Registrada
+              <div className="flex items-center gap-2">
+                <div className="px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                  Visualização de Segurança Somente Leitura
+                </div>
+                <button
+                  onClick={handleGoToLogin}
+                  className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  Área Restrita / Login
+                </button>
               </div>
             </div>
 
             <main className="max-w-7xl mx-auto p-3 sm:p-6">
-              <CertificateOnlyView
+              <CertificatePublicView
                 cert={{
                   ...publicCertToView,
                   manufacturer: publicCertToView.manufacturer || companyName,
                   manufacturerLogoUrl: publicCertToView.manufacturerLogoUrl || companyLogoUrl
                 }}
                 currentUser={null}
-                onOpenPrintModal={(c) => {
-                  setPrintTargetCert(c);
-                  setIsPrintModalOpen(true);
-                }}
               />
             </main>
-
-            <PrintCertificateModal
-              isOpen={isPrintModalOpen}
-              onClose={() => {
-                setIsPrintModalOpen(false);
-                setPrintTargetCert(null);
-              }}
-              cert={printTargetCert || publicCertToView}
-            />
           </div>
         );
       }
-
-      return (
-        <div className={`min-h-screen font-sans ${
-          theme === 'classic-light' 
-            ? 'theme-classic-light bg-stone-50 text-stone-900' 
-            : 'theme-luxury-dark bg-zinc-950 text-amber-50'
-        }`}>
-          <div className="bg-zinc-950 border-b border-amber-500/30 py-3 px-4 sm:px-8 flex flex-wrap items-center justify-between gap-3 text-xs shadow-md">
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-amber-200 font-bold uppercase tracking-wider text-xs sm:text-sm">
-                Passaporte Digital Autêntico da Joia • Emissão e Consulta por QR Code
-              </span>
-            </div>
-            <div className="px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
-              Visualização de Segurança Somente Leitura
-            </div>
-          </div>
-
-          <main className="max-w-7xl mx-auto p-3 sm:p-6">
-            <CertificatePublicView
-              cert={{
-                ...publicCertToView,
-                manufacturer: publicCertToView.manufacturer || companyName,
-                manufacturerLogoUrl: publicCertToView.manufacturerLogoUrl || companyLogoUrl
-              }}
-              currentUser={null}
-            />
-          </main>
-        </div>
-      );
     }
 
     return (

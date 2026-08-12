@@ -267,6 +267,7 @@ app.put('/api/customers/:id', (req, res) => {
 // Delete customer
 app.delete('/api/customers/:id', (req, res) => {
   const id = req.params.id;
+  const targetCust = customersDb.find(c => c.id === id || c.cpf === id);
   const initialLength = customersDb.length;
   customersDb = customersDb.filter(c => c.id !== id && c.cpf !== id);
 
@@ -274,7 +275,21 @@ app.delete('/api/customers/:id', (req, res) => {
     return res.status(404).json({ success: false, message: 'Cliente não encontrado' });
   }
 
-  res.json({ success: true, message: 'Cliente removido com sucesso' });
+  // Delete all certificates/passports associated with this customer
+  if (targetCust) {
+    const custId = targetCust.id;
+    const custCpf = targetCust.cpf?.trim();
+    const custName = targetCust.name?.trim();
+
+    certificatesDb = certificatesDb.filter(c => {
+      if (c.ownerId && c.ownerId === custId) return false;
+      if (custCpf && c.ownerCpf && c.ownerCpf.trim() === custCpf) return false;
+      if (custName && c.currentOwnerName && c.currentOwnerName.trim() === custName) return false;
+      return true;
+    });
+  }
+
+  res.json({ success: true, message: 'Cliente e todos os seus passaportes removidos com sucesso' });
 });
 
 // --- Certificates API ---

@@ -99,7 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           submenuItems: [
             {
               id: 'sub-jeweler-dashboard',
-              label: 'Painel de Gestão da Joalheria Cadastro e Acervo de Joias',
+              label: 'Acervo de Joias',
               icon: LayoutDashboard,
               onClick: () => {
                 onSelectMode('jeweler-dashboard');
@@ -241,7 +241,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         key={sub.id}
                         onClick={sub.onClick}
                         id={`sidebar-subnav-${sub.id}`}
-                        className={`w-full flex items-start gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold transition-all border cursor-pointer text-left ${
+                        className={`w-full flex items-start gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all border cursor-pointer text-left ${
                           sub.isActive
                             ? 'bg-amber-500/30 text-amber-200 border-amber-500/60 font-bold'
                             : theme === 'classic-light'

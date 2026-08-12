@@ -240,16 +240,18 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                 const isSelected = selectedCustomer?.id === cust.id;
 
                 return (
-                  <button
+                  <div
                     key={cust.id}
-                    onClick={() => setSelectedCustomerId(cust.id)}
-                    className={`w-full text-left p-3.5 rounded-xl transition-all border flex items-center justify-between gap-3 group ${
+                    className={`w-full p-3.5 rounded-xl transition-all border flex items-center justify-between gap-3 group ${
                       isSelected
                         ? 'bg-amber-950/60 border-amber-500 shadow-md shadow-amber-950/40 text-amber-50'
                         : 'bg-zinc-950/60 border-zinc-800/80 hover:border-amber-900/60 hover:bg-zinc-900 text-zinc-300'
                     }`}
                   >
-                    <div className="flex items-center gap-3 min-w-0">
+                    <button
+                      onClick={() => setSelectedCustomerId(cust.id)}
+                      className="flex items-center gap-3 min-w-0 flex-1 text-left cursor-pointer"
+                    >
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-bold font-serif text-sm border ${
                         isSelected 
                           ? 'bg-amber-500 text-zinc-950 border-amber-400' 
@@ -257,7 +259,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                       }`}>
                         {cust.name.charAt(0).toUpperCase()}
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <h3 className="text-sm font-bold font-serif text-amber-100 truncate group-hover:text-amber-200">
                           {cust.name}
                         </h3>
@@ -265,9 +267,9 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                           CPF: {cust.cpf}
                         </p>
                       </div>
-                    </div>
+                    </button>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
                         piecesCount > 0 
                           ? 'bg-amber-500/15 border-amber-500/30 text-amber-300' 
@@ -275,9 +277,19 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                       }`}>
                         {piecesCount} {piecesCount === 1 ? 'joia' : 'joias'}
                       </span>
-                      <ChevronRight className={`w-4 h-4 transition-transform ${isSelected ? 'text-amber-400 translate-x-0.5' : 'text-zinc-600'}`} />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteCustomer(cust);
+                        }}
+                        className="p-2 rounded-lg bg-red-500/15 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/40 transition-colors cursor-pointer"
+                        title={`Excluir cliente ${cust.name}`}
+                        id={`btn-delete-cust-list-${cust.id}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                  </button>
+                  </div>
                 );
               })
             )}
@@ -301,11 +313,11 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                 
                 {/* Header da Ficha */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-amber-900/30">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/40 flex items-center justify-center text-amber-300 font-bold font-serif text-2xl shadow-inner">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/40 flex items-center justify-center text-amber-300 font-bold font-serif text-2xl shadow-inner shrink-0">
                       {selectedCustomer.name.charAt(0).toUpperCase()}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="px-2.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono text-xs font-semibold">
                           ID: {selectedCustomer.id}
@@ -315,9 +327,11 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                           Cadastro Ativo no Acervo
                         </span>
                       </div>
-                      <h2 className="text-2xl font-bold font-serif text-amber-100 mt-1">
-                        {selectedCustomer.name}
-                      </h2>
+                      <div className="flex items-center gap-3 mt-1 flex-wrap">
+                        <h2 className="text-2xl font-bold font-serif text-amber-100 truncate">
+                          {selectedCustomer.name}
+                        </h2>
+                      </div>
                     </div>
                   </div>
 
@@ -344,7 +358,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
 
                     <button
                       onClick={() => onEditCustomer(selectedCustomer)}
-                      className="px-3 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-amber-300 border border-zinc-700 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                      className="px-3.5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-amber-300 border border-zinc-700 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       <span>Editar</span>
@@ -352,10 +366,12 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
 
                     <button
                       onClick={() => onDeleteCustomer(selectedCustomer)}
-                      className="px-3 py-2.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                      className="px-3.5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs border border-red-400 transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+                      title="Excluir cadastro do cliente"
+                      id={`btn-delete-cust-action-${selectedCustomer.id}`}
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Excluir</span>
+                      <Trash2 className="w-3.5 h-3.5 text-white shrink-0" />
+                      <span>Excluir Cliente</span>
                     </button>
                   </div>
                 </div>

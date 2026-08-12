@@ -375,12 +375,42 @@ export default function App() {
   };
 
   const handleConfirmDeleteCustomer = async (id: string) => {
+    const targetCust = customers.find(c => c.id === id);
+    const custCpf = targetCust?.cpf?.trim();
+    const custName = targetCust?.name?.trim();
+
+    // Identify linked certificates
+    const linkedCertIds = new Set(
+      certificates
+        .filter(c => 
+          (c.ownerId && c.ownerId === id) ||
+          (custCpf && c.ownerCpf && c.ownerCpf.trim() === custCpf) ||
+          (custName && c.currentOwnerName && c.currentOwnerName.trim() === custName)
+        )
+        .map(c => c.id.toUpperCase())
+    );
+
     try {
       await fetch(`/api/customers/${id}`, { method: 'DELETE' });
     } catch (e) {
       console.error('Error deleting customer from API:', e);
     }
-    setCustomers(prev => prev.filter(c => c.id !== id));
+
+    const updatedCustomers = customers.filter(c => c.id !== id);
+    setCustomers(updatedCustomers);
+    localStorage.setItem('aureum_customers', JSON.stringify(updatedCustomers));
+
+    if (linkedCertIds.size > 0) {
+      const updatedCerts = certificates.filter(c => !linkedCertIds.has(c.id.toUpperCase()));
+      setCertificates(updatedCerts);
+      localStorage.setItem('aureum_certificates', JSON.stringify(updatedCerts));
+
+      if (selectedCert && linkedCertIds.has(selectedCert.id.toUpperCase())) {
+        if (updatedCerts.length > 0) {
+          setSelectedCert(updatedCerts[0]);
+        }
+      }
+    }
   };
 
   // Handle Mode Change

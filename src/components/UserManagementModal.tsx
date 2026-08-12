@@ -152,14 +152,18 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
     try {
       await fetch(`/api/users/${userToDelete.id}`, { method: 'DELETE' });
+      await fetch(`/api/users/${encodeURIComponent(userToDelete.email)}`, { method: 'DELETE' });
     } catch (e) {
       console.warn('Erro ao deletar usuário do servidor:', e);
     }
 
-    const filtered = usersList.filter(u => u.id !== userToDelete.id);
+    const filtered = usersList.filter(u => 
+      u.id !== userToDelete.id && 
+      u.email.toLowerCase() !== userToDelete.email.toLowerCase()
+    );
     setUsersList(filtered);
     localStorage.setItem('aureum_users_db', JSON.stringify(filtered));
-    setFeedback({ type: 'success', message: `Acesso do usuário ${userToDelete.name} foi removido com sucesso.` });
+    setFeedback({ type: 'success', message: `Acesso do usuário "${userToDelete.name}" foi removido com sucesso.` });
   };
 
   if (!isOpen) return null;
@@ -362,8 +366,14 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                                     Usuário Raiz
                                   </span>
                                 ) : (
-                                  <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 text-[10px] uppercase">
-                                    {usr.role === 'admin' ? 'Administrador' : 'Operador'}
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-semibold border ${
+                                    usr.role === 'admin'
+                                      ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+                                      : usr.role === 'customer'
+                                      ? 'bg-blue-500/10 text-blue-300 border-blue-500/30'
+                                      : 'bg-zinc-800 text-zinc-300 border-zinc-700'
+                                  }`}>
+                                    {usr.role === 'admin' ? 'Administrador' : usr.role === 'customer' ? 'Cliente' : 'Operador'}
                                   </span>
                                 )}
                               </div>

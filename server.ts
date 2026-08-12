@@ -149,8 +149,8 @@ app.post('/api/users', (req, res) => {
 
 // Delete user
 app.delete('/api/users/:id', (req, res) => {
-  const id = req.params.id;
-  const target = usersDb.find(u => u.id === id);
+  const param = req.params.id;
+  const target = usersDb.find(u => u.id === param || u.email.toLowerCase() === param.toLowerCase());
 
   if (!target) {
     return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
@@ -160,7 +160,7 @@ app.delete('/api/users/:id', (req, res) => {
     return res.status(403).json({ success: false, message: 'O Usuário Raiz principal não pode ser removido!' });
   }
 
-  usersDb = usersDb.filter(u => u.id !== id);
+  usersDb = usersDb.filter(u => u.id !== target.id && u.email.toLowerCase() !== target.email.toLowerCase());
   res.json({ success: true, message: 'Usuário removido com sucesso' });
 });
 

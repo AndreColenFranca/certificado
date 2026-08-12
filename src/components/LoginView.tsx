@@ -99,9 +99,26 @@ export const LoginView: React.FC<LoginViewProps> = ({
           isRoot: true
         };
         onLoginSuccess(rootUser);
-      } else {
-        setErrorMsg('Falha na conexão. Verifique suas credenciais.');
+        return;
       }
+
+      // Check client-side persisted users on network error
+      const storedUsersRaw = localStorage.getItem('aureum_users_db');
+      if (storedUsersRaw) {
+        try {
+          const storedUsers: any[] = JSON.parse(storedUsersRaw);
+          const matched = storedUsers.find(
+            u => u.email.toLowerCase() === cleanEmail && u.password === password
+          );
+          if (matched) {
+            const { password: _, ...userSafe } = matched;
+            onLoginSuccess(userSafe);
+            return;
+          }
+        } catch (e) {}
+      }
+
+      setErrorMsg('Falha na conexão. Verifique suas credenciais.');
     } finally {
       setIsLoading(false);
     }

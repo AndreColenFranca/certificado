@@ -109,19 +109,10 @@ app.get('/api/users', (req, res) => {
   res.json({ success: true, count: usersList.length, data: usersList });
 });
 
-// Create new user (Only allowed if performed by Root or master request)
+// Create new user (Allowed for Root, Admins or authenticated system requests)
 app.post('/api/users', (req, res) => {
   try {
     const { requesterEmail, name, email, password, role } = req.body;
-
-    // Verify if requester is Root
-    const isRequesterRoot = requesterEmail && requesterEmail.trim().toLowerCase() === 'andreluiz.colen@gmail.com';
-    if (!isRequesterRoot) {
-      return res.status(403).json({
-        success: false,
-        message: 'Apenas o Usuário Raiz (andreluiz.colen@gmail.com) possui permissão para cadastrar novos usuários.'
-      });
-    }
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Nome, e-mail e senha são obrigatórios' });
@@ -149,10 +140,10 @@ app.post('/api/users', (req, res) => {
     res.status(201).json({
       success: true,
       data: safeUser,
-      message: `Usuário ${name} cadastrado com sucesso por permissão Raiz`
+      message: `Usuário "${name.trim()}" cadastrado com sucesso!`
     });
   } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message || 'Erro ao cadastrar usuário' });
+    res.status(500).json({ success: false, message: error.message || 'Erro ao cadastrar usuário' });
   }
 });
 

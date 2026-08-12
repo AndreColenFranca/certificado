@@ -80,9 +80,35 @@ export const LoginView: React.FC<LoginViewProps> = ({
             onLoginSuccess(userSafe);
             return;
           }
-        } catch (e) {
-          // quiet catch
-        }
+        } catch (e) {}
+      }
+
+      // Check client-side persisted customers in localStorage
+      const storedCustomersRaw = localStorage.getItem('aureum_customers');
+      if (storedCustomersRaw) {
+        try {
+          const storedCustomers: any[] = JSON.parse(storedCustomersRaw);
+          const matchedCust = storedCustomers.find(
+            c => c.email.toLowerCase() === cleanEmail
+          );
+          if (matchedCust) {
+            const expectedPass = matchedCust.password || '123456';
+            if (expectedPass === password) {
+              const customerUser: AppUser = {
+                id: `user-customer-${matchedCust.id}`,
+                name: matchedCust.name,
+                email: matchedCust.email,
+                role: 'customer',
+                customerId: matchedCust.id,
+                cpf: matchedCust.cpf,
+                createdAt: matchedCust.createdAt || new Date().toISOString(),
+                isRoot: false
+              };
+              onLoginSuccess(customerUser);
+              return;
+            }
+          }
+        } catch (e) {}
       }
 
       setErrorMsg(data.message || 'E-mail ou senha inválidos. Verifique os dados digitados.');
@@ -114,6 +140,34 @@ export const LoginView: React.FC<LoginViewProps> = ({
             const { password: _, ...userSafe } = matched;
             onLoginSuccess(userSafe);
             return;
+          }
+        } catch (e) {}
+      }
+
+      // Check client-side persisted customers on network error
+      const storedCustomersRaw = localStorage.getItem('aureum_customers');
+      if (storedCustomersRaw) {
+        try {
+          const storedCustomers: any[] = JSON.parse(storedCustomersRaw);
+          const matchedCust = storedCustomers.find(
+            c => c.email.toLowerCase() === cleanEmail
+          );
+          if (matchedCust) {
+            const expectedPass = matchedCust.password || '123456';
+            if (expectedPass === password) {
+              const customerUser: AppUser = {
+                id: `user-customer-${matchedCust.id}`,
+                name: matchedCust.name,
+                email: matchedCust.email,
+                role: 'customer',
+                customerId: matchedCust.id,
+                cpf: matchedCust.cpf,
+                createdAt: matchedCust.createdAt || new Date().toISOString(),
+                isRoot: false
+              };
+              onLoginSuccess(customerUser);
+              return;
+            }
           }
         } catch (e) {}
       }

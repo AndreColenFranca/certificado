@@ -8,6 +8,7 @@ export const INITIAL_CUSTOMERS: Customer[] = [
     email: 'helena.albuquerque@maisonlumiere.com.br',
     phone: '(11) 98765-4321',
     notes: 'Cliente VIP Colecionadora Haute Joaillerie',
+    password: '123456',
     createdAt: '2025-01-10T10:00:00.000Z',
     updatedAt: '2026-02-18T10:00:00.000Z'
   },
@@ -18,6 +19,7 @@ export const INITIAL_CUSTOMERS: Customer[] = [
     email: 'beatriz.montebello@montebello.adv.br',
     phone: '(21) 99887-6655',
     notes: 'Apreciadora de Gemas Preciosas e Esmeraldas Muzo',
+    password: '123456',
     createdAt: '2025-03-15T14:20:00.000Z',
     updatedAt: '2026-01-25T11:00:00.000Z'
   },
@@ -28,6 +30,7 @@ export const INITIAL_CUSTOMERS: Customer[] = [
     email: 'isabela.mello@melloart.com',
     phone: '(31) 99123-4567',
     notes: 'Coleção Privada Safiras de Ceylon',
+    password: '123456',
     createdAt: '2025-06-20T09:15:00.000Z',
     updatedAt: '2025-11-15T09:00:00.000Z'
   },
@@ -38,6 +41,7 @@ export const INITIAL_CUSTOMERS: Customer[] = [
     email: 'mariana.vasconcelos@design.com.br',
     phone: '(41) 98844-2211',
     notes: 'Entusiasta de Ouro Rosa e Rubis Birmaneses',
+    password: '123456',
     createdAt: '2025-09-05T16:45:00.000Z',
     updatedAt: '2026-03-05T14:00:00.000Z'
   }

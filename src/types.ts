@@ -5,6 +5,8 @@ export interface AppUser {
   role: 'root' | 'admin' | 'operator' | 'customer';
   createdAt: string;
   isRoot?: boolean;
+  customerId?: string;
+  cpf?: string;
 }
 
 export type MetalPurity = string;
@@ -53,6 +55,7 @@ export interface Customer {
   email: string; // Email
   phone?: string;
   notes?: string;
+  password?: string; // Senha de acesso para o cliente efetuar login
   createdAt?: string;
   updatedAt?: string;
 }

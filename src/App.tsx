@@ -392,16 +392,73 @@ export default function App() {
   };
 
   const fetchCustomers = async () => {
+    let apiCusts: Customer[] = [];
     try {
       const res = await fetch('/api/customers');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-        setCustomers(data.data);
-        localStorage.setItem('aureum_customers', JSON.stringify(data.data));
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          apiCusts = data.data;
+        }
       }
     } catch (e) {
       console.warn('Backend API offline or loading fallback sample data for customers:', e);
+    }
+
+    // Merge with localStorage customers
+    let localCusts: Customer[] = [];
+    try {
+      const stored = localStorage.getItem('aureum_customers');
+      if (stored) {
+        localCusts = JSON.parse(stored);
+      }
+    } catch (e) {}
+
+    // Merge with localStorage customer users
+    let userCusts: Customer[] = [];
+    try {
+      const storedUsersRaw = localStorage.getItem('aureum_users_db');
+      if (storedUsersRaw) {
+        const storedUsers: any[] = JSON.parse(storedUsersRaw);
+        storedUsers.forEach(u => {
+          if (u.role === 'customer' && u.email) {
+            userCusts.push({
+              id: u.customerId || u.id || `CLI-${Math.floor(1000 + Math.random() * 9000)}`,
+              name: u.name || 'Cliente',
+              cpf: u.cpf || '',
+              email: u.email.trim().toLowerCase(),
+              phone: u.phone || '',
+              notes: 'Cliente Cadastrado no Sistema',
+              createdAt: u.createdAt || new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            });
+          }
+        });
+      }
+    } catch (e) {}
+
+    // Combine all lists uniquely by email or ID
+    const combined: Customer[] = [];
+    const seenEmails = new Set<string>();
+
+    const addUnique = (c: Customer) => {
+      const cleanEmail = (c.email || '').trim().toLowerCase();
+      if (cleanEmail) {
+        if (seenEmails.has(cleanEmail)) return;
+        seenEmails.add(cleanEmail);
+      }
+      combined.push(c);
+    };
+
+    apiCusts.forEach(addUnique);
+    localCusts.forEach(addUnique);
+    userCusts.forEach(addUnique);
+
+    if (combined.length > 0) {
+      setCustomers(combined);
+      try {
+        localStorage.setItem('aureum_customers', JSON.stringify(combined));
+      } catch (e) {}
     }
   };
 
@@ -428,6 +485,35 @@ export default function App() {
       }
 
       setCustomers(updatedList);
+      try {
+        localStorage.setItem('aureum_customers', JSON.stringify(updatedList));
+      } catch (e) {}
+
+      // Sync customer user credentials into aureum_users_db for client-side login support
+      try {
+        const storedUsersRaw = localStorage.getItem('aureum_users_db');
+        let storedUsers: any[] = storedUsersRaw ? JSON.parse(storedUsersRaw) : [];
+        const cleanEmail = custToSave.email.trim().toLowerCase();
+        const userIdx = storedUsers.findIndex(u => u.email && u.email.toLowerCase() === cleanEmail);
+        const userObj = {
+          id: `user-customer-${custToSave.id}`,
+          name: custToSave.name,
+          email: cleanEmail,
+          password: custToSave.password || '123456',
+          role: 'customer',
+          customerId: custToSave.id,
+          cpf: custToSave.cpf,
+          createdAt: custToSave.createdAt || new Date().toISOString(),
+          isRoot: false
+        };
+        if (userIdx >= 0) {
+          storedUsers[userIdx] = { ...storedUsers[userIdx], ...userObj };
+        } else {
+          storedUsers.push(userObj);
+        }
+        localStorage.setItem('aureum_users_db', JSON.stringify(storedUsers));
+      } catch (err) {}
+
       setIsCustomerFormOpen(false);
       setEditingCustomer(null);
     } catch (e) {
@@ -1288,7 +1374,11 @@ export default function App() {
 
       <UserManagementModal
         isOpen={isUsersModalOpen}
-        onClose={() => setIsUsersModalOpen(false)}
+        onClose={() => {
+          setIsUsersModalOpen(false);
+          fetchCustomers();
+        }}
+        onCustomerCreated={fetchCustomers}
         currentUser={currentUser}
       />
 

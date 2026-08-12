@@ -80,6 +80,11 @@ app.post('/api/auth/login', (req, res) => {
     // Fallback: Check if email exists in customersDb
     const matchedCustomer = customersDb.find(c => c.email.toLowerCase() === cleanEmail);
     if (matchedCustomer) {
+      const expectedPassword = matchedCustomer.password || '123456';
+      if (expectedPassword !== password) {
+        return res.status(401).json({ success: false, message: 'Senha incorreta para o cliente informado.' });
+      }
+
       const customerUser = {
         id: `user-customer-${matchedCustomer.id}`,
         name: matchedCustomer.name,
@@ -137,6 +142,24 @@ app.post('/api/users', (req, res) => {
     usersDb.push(newUser);
     const { password: _, ...safeUser } = newUser;
 
+    // Automatically sync customer role users to customersDb
+    if (newUser.role === 'customer') {
+      const existingCust = customersDb.find(c => c.email.trim().toLowerCase() === cleanEmail);
+      if (!existingCust) {
+        const newCustRecord: Customer = {
+          id: `CLI-${Math.floor(1000 + Math.random() * 9000)}`,
+          name: name.trim(),
+          cpf: '',
+          email: cleanEmail,
+          phone: '',
+          notes: 'Cliente Cadastrado via Gestão de Usuários',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        customersDb.unshift(newCustRecord);
+      }
+    }
+
     res.status(201).json({
       success: true,
       data: safeUser,
@@ -167,6 +190,26 @@ app.delete('/api/users/:id', (req, res) => {
 // --- Customers API ---
 // Get all customers
 app.get('/api/customers', (req, res) => {
+  // Sync any customer users from usersDb into customersDb if not present
+  usersDb.forEach(u => {
+    if (u.role === 'customer') {
+      const uEmail = u.email.trim().toLowerCase();
+      const found = customersDb.find(c => c.email.trim().toLowerCase() === uEmail);
+      if (!found) {
+        customersDb.unshift({
+          id: u.customerId || `CLI-${Math.floor(1000 + Math.random() * 9000)}`,
+          name: u.name,
+          cpf: u.cpf || '',
+          email: u.email,
+          phone: u.phone || '',
+          notes: 'Cliente Cadastrado no Sistema',
+          createdAt: u.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
+    }
+  });
+
   res.json({ success: true, count: customersDb.length, data: customersDb });
 });
 
@@ -206,6 +249,28 @@ app.post('/api/customers', (req, res) => {
     newCust.updatedAt = now;
 
     customersDb.unshift(newCust);
+
+    // Sync to usersDb so auth and user management endpoints see the customer user
+    if (cleanEmail) {
+      const existingUserIdx = usersDb.findIndex(u => u.email.toLowerCase() === cleanEmail);
+      const userObj = {
+        id: `user-customer-${newCust.id}`,
+        name: newCust.name,
+        email: cleanEmail,
+        password: newCust.password || '123456',
+        role: 'customer',
+        customerId: newCust.id,
+        cpf: newCust.cpf,
+        createdAt: now,
+        isRoot: false
+      };
+      if (existingUserIdx >= 0) {
+        usersDb[existingUserIdx] = { ...usersDb[existingUserIdx], ...userObj };
+      } else {
+        usersDb.push(userObj);
+      }
+    }
+
     res.status(201).json({ success: true, data: newCust, message: 'Cliente cadastrado com sucesso' });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message || 'Erro ao cadastrar cliente' });
@@ -252,6 +317,28 @@ app.put('/api/customers/:id', (req, res) => {
   };
 
   customersDb[index] = updatedCust;
+
+  // Sync to usersDb
+  if (cleanEmail) {
+    const existingUserIdx = usersDb.findIndex(u => u.email.toLowerCase() === cleanEmail || u.customerId === id);
+    const userObj = {
+      id: `user-customer-${updatedCust.id}`,
+      name: updatedCust.name,
+      email: cleanEmail,
+      password: updatedCust.password || '123456',
+      role: 'customer',
+      customerId: updatedCust.id,
+      cpf: updatedCust.cpf,
+      createdAt: updatedCust.createdAt || new Date().toISOString(),
+      isRoot: false
+    };
+    if (existingUserIdx >= 0) {
+      usersDb[existingUserIdx] = { ...usersDb[existingUserIdx], ...userObj };
+    } else {
+      usersDb.push(userObj);
+    }
+  }
+
   res.json({ success: true, data: updatedCust, message: 'Cliente atualizado com sucesso' });
 });
 

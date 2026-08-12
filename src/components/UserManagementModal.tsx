@@ -6,12 +6,14 @@ interface UserManagementModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser: AppUser | null;
+  onCustomerCreated?: () => void;
 }
 
 export const UserManagementModal: React.FC<UserManagementModalProps> = ({
   isOpen,
   onClose,
-  currentUser
+  currentUser,
+  onCustomerCreated
 }) => {
   const [usersList, setUsersList] = useState<AppUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -89,6 +91,35 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
       isRoot: false
     };
 
+    // Local helper to sync customer list if role is 'customer'
+    const syncCustomerLocal = () => {
+      if (newRole === 'customer') {
+        try {
+          const storedCustsRaw = localStorage.getItem('aureum_customers');
+          const storedCusts: any[] = storedCustsRaw ? JSON.parse(storedCustsRaw) : [];
+          if (!storedCusts.some(c => c.email && c.email.toLowerCase() === cleanEmail)) {
+            const newCustObj = {
+              id: `CLI-${Math.floor(1000 + Math.random() * 9000)}`,
+              name: newName.trim(),
+              cpf: '',
+              email: cleanEmail,
+              phone: '',
+              notes: 'Cliente Cadastrado via Gestão de Usuários',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            storedCusts.unshift(newCustObj);
+            localStorage.setItem('aureum_customers', JSON.stringify(storedCusts));
+          }
+        } catch (e) {
+          console.warn('Error syncing customer locally:', e);
+        }
+        if (onCustomerCreated) {
+          onCustomerCreated();
+        }
+      }
+    };
+
     try {
       const res = await fetch('/api/users', {
         method: 'POST',
@@ -110,31 +141,34 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
         const updatedUsers = [...usersList, { ...createdUser, password: newPassword }];
         setUsersList(updatedUsers);
         localStorage.setItem('aureum_users_db', JSON.stringify(updatedUsers));
+        syncCustomerLocal();
         setNewName('');
         setNewEmail('');
         setNewPassword('');
-        setNewRole('operator');
+        setNewRole('customer');
       } else {
         // Fallback local save if server error response
         const updatedUsers = [...usersList, newUserObj];
         setUsersList(updatedUsers);
         localStorage.setItem('aureum_users_db', JSON.stringify(updatedUsers));
+        syncCustomerLocal();
         setFeedback({ type: 'success', message: `Usuário "${newName.trim()}" cadastrado com sucesso!` });
         setNewName('');
         setNewEmail('');
         setNewPassword('');
-        setNewRole('operator');
+        setNewRole('customer');
       }
     } catch (err: any) {
       // Offline fallback: save locally so registration is never blocked
       const updatedUsers = [...usersList, newUserObj];
       setUsersList(updatedUsers);
       localStorage.setItem('aureum_users_db', JSON.stringify(updatedUsers));
+      syncCustomerLocal();
       setFeedback({ type: 'success', message: `Usuário "${newName.trim()}" cadastrado com sucesso!` });
       setNewName('');
       setNewEmail('');
       setNewPassword('');
-      setNewRole('operator');
+      setNewRole('customer');
     } finally {
       setIsSubmitting(false);
     }

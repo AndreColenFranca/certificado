@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Customer } from '../types';
 import { formatCPF, isValidCPF } from '../utils/cpfUtils';
-import { X, UserPlus, UserCheck, ShieldCheck, Mail, CreditCard, Phone, FileText } from 'lucide-react';
+import { X, UserPlus, UserCheck, ShieldCheck, Mail, CreditCard, Phone, FileText, Lock, Eye, EyeOff, KeyRound } from 'lucide-react';
 
 interface CustomerFormModalProps {
   isOpen: boolean;
@@ -23,7 +23,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
-  const [errors, setErrors] = useState<{ name?: string; cpf?: string; email?: string }>({});
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; cpf?: string; email?: string; password?: string }>({});
 
   useEffect(() => {
     if (initialCustomer) {
@@ -32,13 +34,16 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       setEmail(initialCustomer.email || '');
       setPhone(initialCustomer.phone || '');
       setNotes(initialCustomer.notes || '');
+      setPassword(initialCustomer.password || '');
     } else {
       setName('');
       setCpf('');
       setEmail('');
       setPhone('');
       setNotes('');
+      setPassword('');
     }
+    setShowPassword(false);
     setErrors({});
   }, [initialCustomer, isOpen]);
 
@@ -54,7 +59,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors: { name?: string; cpf?: string; email?: string } = {};
+    const newErrors: { name?: string; cpf?: string; email?: string; password?: string } = {};
 
     if (!name.trim()) {
       newErrors.name = 'Nome é obrigatório (campo alfanumérico).';
@@ -90,6 +95,12 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       }
     }
 
+    if (!password.trim()) {
+      newErrors.password = 'Senha de acesso é obrigatória para o login do cliente.';
+    } else if (password.trim().length < 4) {
+      newErrors.password = 'A senha deve conter no mínimo 4 caracteres.';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -102,6 +113,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       email: email.trim().toLowerCase(),
       phone: phone.trim() || undefined,
       notes: notes.trim() || undefined,
+      password: password.trim(),
       createdAt: initialCustomer?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -208,6 +220,47 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
               }`}
             />
             {errors.email && <p className="text-xs text-rose-400 mt-1">{errors.email}</p>}
+          </div>
+
+          {/* Senha */}
+          <div>
+            <label className="block text-xs font-semibold text-amber-200 mb-1 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                <span>Senha de Acesso do Cliente *</span>
+              </span>
+              <span className="text-[10px] text-amber-400/80 font-normal">Para login no sistema</span>
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors(prev => ({ ...prev, password: undefined }));
+                }}
+                placeholder="Informe a senha de acesso (ex: 123456)"
+                className={`w-full pl-3.5 pr-10 py-2.5 bg-zinc-950 border rounded-xl text-sm text-amber-100 placeholder-zinc-600 focus:outline-none focus:ring-1 transition-all ${
+                  errors.password 
+                    ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/50' 
+                    : 'border-zinc-800 focus:border-amber-500/80 focus:ring-amber-500/50'
+                }`}
+                id="input-customer-form-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-2.5 text-zinc-400 hover:text-amber-300 transition-colors cursor-pointer"
+                title={showPassword ? 'Ocultar senha' : 'Exibir senha'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {errors.password ? (
+              <p className="text-xs text-rose-400 mt-1">{errors.password}</p>
+            ) : (
+              <p className="text-[11px] text-zinc-500 mt-1">O cliente utilizará este e-mail e senha para realizar login no sistema e visualizar suas joias.</p>
+            )}
           </div>
 
           {/* Telefone & Observações */}

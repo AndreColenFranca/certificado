@@ -177,7 +177,7 @@ const handleLoginRequest = (req: any, res: any) => {
     if (matchedCustomer) {
       const customerUser = {
         id: `user-customer-${matchedCustomer.id}`,
-        name: matchedCustomer.name,
+        name: matchedCustomer.name, // "Nome Completo (Alfanumérico)" from Customer Record
         email: matchedCustomer.email,
         role: 'customer',
         customerId: matchedCustomer.id,
@@ -193,23 +193,39 @@ const handleLoginRequest = (req: any, res: any) => {
       });
     }
 
-    // 4. Universal Dynamic Fallback for Mobile / New Email or CPF
-    const isAdminCandidate = cleanInput.includes('admin') || cleanInput.includes('gestor') || cleanInput.includes('gerente') || cleanInput.includes('maison');
-    
-    let derivedName = rawInput;
-    if (derivedName.includes('@')) {
-      derivedName = derivedName.split('@')[0];
+    // 4. Check certificatesDb for matching owner
+    const matchedCert = certificatesDb.find(c => {
+      const certEmail = String(c.ownerEmail || '').toLowerCase();
+      const certCpf = String(c.ownerCpf || '').replace(/\D/g, '');
+      const certName = String(c.currentOwnerName || '').toLowerCase();
+      return certEmail === cleanInput || (cleanDigits.length >= 4 && certCpf.includes(cleanDigits)) || certName === cleanInput;
+    });
+
+    if (matchedCert && matchedCert.currentOwnerName) {
+      const customerUser = {
+        id: `user-customer-cert-${Date.now()}`,
+        name: matchedCert.currentOwnerName, // "Nome Completo (Alfanumérico)" from Certificate
+        email: matchedCert.ownerEmail || (cleanInput.includes('@') ? rawInput : `${cleanInput}@maison.com`),
+        role: 'customer',
+        customerId: matchedCert.ownerId,
+        cpf: matchedCert.ownerCpf,
+        createdAt: new Date().toISOString(),
+        isRoot: false
+      };
+
+      return res.json({
+        success: true,
+        message: 'Autenticação de Cliente realizada com sucesso',
+        user: customerUser
+      });
     }
-    derivedName = derivedName
-      .replace(/[._-]+/g, ' ')
-      .trim()
-      .split(/\s+/)
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(' ');
+
+    // 5. Universal Dynamic Fallback for Mobile / Unregistered User
+    const isAdminCandidate = cleanInput.includes('admin') || cleanInput.includes('gestor') || cleanInput.includes('gerente') || cleanInput.includes('maison');
 
     const dynamicUser = {
       id: isAdminCandidate ? `user-dyn-admin-${Date.now()}` : `user-dyn-cust-${Date.now()}`,
-      name: derivedName || (isAdminCandidate ? 'Administrador' : 'Cliente'),
+      name: rawInput, // Keep raw input/email without deriving fake names from handle
       email: cleanInput.includes('@') ? rawInput : `${cleanInput}@maison.com`,
       role: isAdminCandidate ? 'admin' : 'customer',
       createdAt: new Date().toISOString(),

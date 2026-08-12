@@ -120,7 +120,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
     if (matchedCust) {
       return {
         id: `user-customer-${matchedCust.id}`,
-        name: matchedCust.name,
+        name: matchedCust.name, // "Nome Completo (Alfanumérico)" from Customer record
         email: matchedCust.email,
         role: 'customer',
         customerId: matchedCust.id,
@@ -130,22 +130,38 @@ export const LoginView: React.FC<LoginViewProps> = ({
       };
     }
 
-    // Dynamic User Fallback for any typed input
-    let derivedName = rawTrim;
-    if (derivedName.includes('@')) {
-      derivedName = derivedName.split('@')[0];
-    }
-    derivedName = derivedName
-      .replace(/[._-]+/g, ' ')
-      .trim()
-      .split(/\s+/)
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(' ');
+    // 4. Check stored certificates in localStorage
+    try {
+      const storedCertsRaw = localStorage.getItem('aureum_certificates');
+      if (storedCertsRaw) {
+        const storedCerts: any[] = JSON.parse(storedCertsRaw);
+        const matchedCert = storedCerts.find(c => {
+          const certEmail = String(c.ownerEmail || '').toLowerCase();
+          const certCpf = String(c.ownerCpf || '').replace(/\D/g, '');
+          const certName = String(c.currentOwnerName || '').toLowerCase();
+          return certEmail === cleanInput || (cleanDigits.length >= 4 && certCpf.includes(cleanDigits)) || certName === cleanInput;
+        });
 
+        if (matchedCert && matchedCert.currentOwnerName) {
+          return {
+            id: `user-customer-cert-${Date.now()}`,
+            name: matchedCert.currentOwnerName, // "Nome Completo (Alfanumérico)" from Certificate
+            email: matchedCert.ownerEmail || (cleanInput.includes('@') ? rawTrim : `${cleanInput}@maison.com`),
+            role: 'customer',
+            customerId: matchedCert.ownerId,
+            cpf: matchedCert.ownerCpf,
+            createdAt: new Date().toISOString(),
+            isRoot: false
+          };
+        }
+      }
+    } catch (e) {}
+
+    // Fallback: Use raw email/input without deriving fake names from email handle
     const isCustomerCandidate = cleanDigits.length >= 8 || cleanInput.includes('@') || cleanInput.startsWith('cli');
     return {
       id: isCustomerCandidate ? `user-dyn-cust-${Date.now()}` : `user-dyn-admin-${Date.now()}`,
-      name: derivedName || (isCustomerCandidate ? 'Cliente' : 'Administrador'),
+      name: rawTrim, // Keep raw input or email, formatUserGreeting will display email cleanly if no real name
       email: cleanInput.includes('@') ? rawTrim : `${cleanInput}@maison.com`,
       role: isCustomerCandidate ? 'customer' : 'admin',
       createdAt: new Date().toISOString(),

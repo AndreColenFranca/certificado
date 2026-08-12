@@ -206,10 +206,10 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-amber-900/40 text-amber-400 font-semibold uppercase tracking-wider bg-zinc-950/80">
-                <th className="p-4">Joia Pai (Modelo Base)</th>
-                <th className="p-4">ID Raiz / Série Base</th>
+                <th className="p-4">Peça</th>
+                <th className="p-4">Certificado / SN</th>
                 <th className="p-4">Metal & Peso</th>
-                <th className="p-4">Joias Filhas / Clientes</th>
+                <th className="p-4">Certificados Emitidos</th>
                 <th className="p-4">Coleção / Marca</th>
                 <th className="p-4">Garantia Base</th>
                 <th className="p-4 text-right">Ações</th>
@@ -232,12 +232,7 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
                             referrerPolicy="no-referrer"
                           />
                         </div>
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase">
-                              Joia Pai / Raiz
-                            </span>
-                          </div>
+                        <div>
                           <span 
                             onClick={() => onSelectCertificate(cert)}
                             className="font-bold text-amber-200 hover:text-amber-100 hover:underline cursor-pointer text-sm block"
@@ -268,13 +263,13 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
                         <div 
                           onClick={() => onOpenQueryCustomersModal && onOpenQueryCustomersModal(cert)}
                           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 font-semibold cursor-pointer hover:bg-amber-500/20 transition-colors"
-                          title="Clique para ver todas as joias filhas dos clientes"
+                          title="Clique para ver todos os certificados emitidos"
                         >
                           <Users className="w-3.5 h-3.5 text-amber-400" />
-                          <span>{childCerts.length} Joia(s) Filha(s) Emitida(s)</span>
+                          <span>{childCerts.length} Certificado(s) Emitido(s)</span>
                         </div>
                       ) : (
-                        <span className="text-zinc-500 italic text-[11px]">Nenhuma filha emitida</span>
+                        <span className="text-zinc-500 italic text-[11px]">Nenhum certificado emitido</span>
                       )}
                     </td>
 

@@ -75,11 +75,11 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
     setActiveTab(tab);
   };
 
-  // Generate QR code URL pointing to Certificate
+  // Generate QR code URL pointing to Passaporte Digital
   useEffect(() => {
     const generateQR = async () => {
       try {
-        const url = `${window.location.origin}/cert/${encodeURIComponent(cert.id)}?type=certificate`;
+        const url = `${window.location.origin}/cert/${encodeURIComponent(cert.id)}`;
         const qrData = await QRCode.toDataURL(url, {
           width: 240,
           margin: 1,

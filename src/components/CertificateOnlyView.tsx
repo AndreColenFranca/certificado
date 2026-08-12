@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import QRCode from 'qrcode';
 import { JewelryCertificate, AppUser } from '../types';
 import { formatImageUrl } from '../utils/imageUtils';
 import { 
@@ -34,6 +35,24 @@ export const CertificateOnlyView: React.FC<CertificateOnlyViewProps> = ({
 }) => {
   const [shareCopied, setShareCopied] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string>(cert.images?.[0] || '');
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+
+  useEffect(() => {
+    const generatePassportQr = async () => {
+      try {
+        const passportUrl = `${window.location.origin}/cert/${encodeURIComponent(cert.id)}`;
+        const qrData = await QRCode.toDataURL(passportUrl, {
+          width: 200,
+          margin: 1,
+          color: { dark: '#18181b', light: '#ffffff' }
+        });
+        setQrCodeUrl(qrData);
+      } catch (err) {
+        console.error('Error generating passport QR in CertificateOnlyView:', err);
+      }
+    };
+    generatePassportQr();
+  }, [cert]);
 
   const handleShare = () => {
     const shareUrl = `${window.location.origin}/cert/${encodeURIComponent(cert.id)}?type=certificate`;
@@ -384,16 +403,50 @@ export const CertificateOnlyView: React.FC<CertificateOnlyViewProps> = ({
             </div>
           </div>
 
-          {/* Footer Statement & Signature Line */}
-          <div className="pt-4 border-t border-amber-800/20 text-center space-y-4">
-            <p className="text-[11px] text-zinc-600 italic max-w-xl mx-auto leading-relaxed">
+          {/* Footer Statement & Signature Line with Bottom Left QR Code */}
+          <div className="pt-4 border-t border-amber-800/20 space-y-4">
+            <p className="text-[11px] text-zinc-600 italic text-center max-w-xl mx-auto leading-relaxed">
               Atestamos a veracidade e exatidão de todas as especificações técnicas, teor dos metais e autenticidade das pedras preciosas identificadas neste certificado.
             </p>
 
-            <div className="pt-2 flex flex-col items-center justify-center">
-              <div className="w-48 border-b border-zinc-950 mb-1" />
-              <span className="text-xs font-bold text-zinc-900 font-serif uppercase tracking-wider">{cert.manufacturer}</span>
-              <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">Ateliê Central de Certificação</span>
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
+              {/* Bottom Left QR Code to Passport */}
+              <div className="flex items-center gap-3">
+                {qrCodeUrl && (
+                  <a 
+                    href={`${window.location.origin}/cert/${encodeURIComponent(cert.id)}`}
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    title="Acessar Passaporte Digital da Joia"
+                    className="hover:scale-105 transition-transform"
+                  >
+                    <img 
+                      src={qrCodeUrl} 
+                      alt="QR Code do Passaporte Digital" 
+                      className="w-16 h-16 sm:w-20 sm:h-20 p-1 bg-white border border-amber-800/30 rounded-xl shadow-md shrink-0 cursor-pointer" 
+                    />
+                  </a>
+                )}
+                <div className="text-xs text-zinc-900 space-y-0.5">
+                  <span className="font-bold flex items-center gap-1 text-emerald-800 text-[11px]">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                    Selo de Garantia & Rastreabilidade
+                  </span>
+                  <p className="text-[9px] text-zinc-600 max-w-xs leading-tight">
+                    Escaneie ou clique no código QR para consultar o passaporte digital interativo, foto HD e histórico.
+                  </p>
+                  <span className="text-[9px] font-mono text-zinc-500 block truncate max-w-xs">
+                    Hash: {cert.authenticityHash}
+                  </span>
+                </div>
+              </div>
+
+              {/* Signature Line */}
+              <div className="text-center space-y-1 min-w-[160px] shrink-0 self-center sm:self-auto">
+                <div className="w-48 border-b border-zinc-950 mb-1 mx-auto" />
+                <span className="text-xs font-bold text-zinc-900 font-serif uppercase tracking-wider block">{cert.manufacturer}</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono block">Ateliê Central de Certificação</span>
+              </div>
             </div>
           </div>
 

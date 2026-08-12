@@ -33,7 +33,9 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
 
   React.useEffect(() => {
     if (cert && isOpen) {
-      QRCode.toDataURL(`${window.location.origin}/cert/${encodeURIComponent(cert.id)}?type=certificate`, {
+      // QR code on the certificate points directly to the Passaporte Digital
+      const passportUrl = `${window.location.origin}/cert/${encodeURIComponent(cert.id)}`;
+      QRCode.toDataURL(passportUrl, {
         width: 180,
         margin: 1,
         color: { dark: '#18181b', light: '#ffffff' }
@@ -283,21 +285,19 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
           {/* Bottom Stamp & QR Code */}
           <div className="pt-3 border-t border-amber-800/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
             
-            {/* Stamp Seal */}
+            {/* Stamp Seal & QR Code to Passport */}
             <div className="flex items-center gap-3">
-              {isLinked && qrUrl && (
-                <img src={qrUrl} alt="QR" className="w-16 h-16 sm:w-20 sm:h-20 p-1 bg-white border border-zinc-300 rounded-lg shadow-xs shrink-0" />
+              {qrUrl && (
+                <img src={qrUrl} alt="QR Code do Passaporte" className="w-16 h-16 sm:w-20 sm:h-20 p-1 bg-white border border-zinc-300 rounded-lg shadow-xs shrink-0" />
               )}
               <div className="text-xs text-zinc-900 space-y-0.5">
                 <span className="font-bold flex items-center gap-1 text-emerald-800 text-[11px]">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
                   Selo de Garantia Vitalícia
                 </span>
-                {isLinked && (
-                  <p className="text-[9px] text-zinc-600 max-w-xs leading-tight">
-                    Escaneie o código QR para consultar o passaporte digital interativo e histórico.
-                  </p>
-                )}
+                <p className="text-[9px] text-zinc-600 max-w-xs leading-tight">
+                  Escaneie o código QR para consultar o passaporte digital interativo e histórico.
+                </p>
                 <span className="text-[9px] font-mono text-zinc-500 block truncate max-w-xs">
                   Hash: {cert.authenticityHash}
                 </span>

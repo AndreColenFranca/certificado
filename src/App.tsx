@@ -170,9 +170,15 @@ export default function App() {
   const handleLoginSuccess = (user: AppUser) => {
     setCurrentUser(user);
     setForceLoginView(false);
-    localStorage.setItem('aureum_logged_user', JSON.stringify(user));
+    try {
+      localStorage.setItem('aureum_logged_user', JSON.stringify(user));
+    } catch (e) {
+      console.warn('Could not save logged user to localStorage:', e);
+    }
     if (typeof window !== 'undefined') {
-      window.history.replaceState(null, '', '/');
+      try {
+        window.history.replaceState(null, '', '/');
+      } catch (e) {}
     }
     if (user.role === 'customer') {
       setViewMode('customer-portal');
@@ -183,11 +189,15 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('aureum_logged_user');
+    try {
+      localStorage.removeItem('aureum_logged_user');
+    } catch (e) {}
     setViewHistory([]);
     setForceLoginView(true);
     if (typeof window !== 'undefined') {
-      window.history.replaceState(null, '', '/');
+      try {
+        window.history.replaceState(null, '', '/');
+      } catch (e) {}
     }
     setViewMode('jeweler-dashboard');
   };
@@ -954,8 +964,9 @@ export default function App() {
     }
   };
 
-  // Render Login Screen - Strict Authentication Required
-  if (!currentUser) {
+  // Render Login Screen if no user logged in AND not accessing a public certificate URL directly
+  const isDirectPublicCertUrl = Boolean(getCertIdFromUrl());
+  if (!currentUser && (!isDirectPublicCertUrl || forceLoginView)) {
     return (
       <LoginView
         onLoginSuccess={handleLoginSuccess}

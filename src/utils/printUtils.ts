@@ -29,58 +29,6 @@ function convertOklchToRgb(cssValue: string): string {
 }
 
 /**
- * Copies computed inline styles from a source DOM subtree to a target DOM subtree,
- * converting any lingering oklch values to browser-compatible RGB values.
- */
-function copyInlineComputedStyles(source: HTMLElement, target: HTMLElement) {
-  const sourceNodes = [source, ...Array.from(source.querySelectorAll('*'))];
-  const targetNodes = [target, ...Array.from(target.querySelectorAll('*'))];
-
-  for (let i = 0; i < sourceNodes.length; i++) {
-    const srcEl = sourceNodes[i] as HTMLElement;
-    const tgtEl = targetNodes[i] as HTMLElement;
-
-    if (!srcEl || !tgtEl || srcEl.nodeType !== Node.ELEMENT_NODE) continue;
-
-    try {
-      const computed = window.getComputedStyle(srcEl);
-      let inlineCss = '';
-
-      for (let j = 0; j < computed.length; j++) {
-        const prop = computed[j];
-        if (!prop || prop.startsWith('--')) continue; // Skip custom CSS variables
-
-        // NEVER copy margins, top/bottom positions, or transforms from on-screen flex layouts!
-        if (
-          prop.startsWith('margin') ||
-          prop === 'top' ||
-          prop === 'bottom' ||
-          prop === 'position' ||
-          prop === 'transform' ||
-          prop === 'translate'
-        ) {
-          continue;
-        }
-
-        let val = computed.getPropertyValue(prop);
-        if (val && val.includes('oklch')) {
-          val = convertOklchToRgb(val);
-        }
-        if (val) {
-          inlineCss += `${prop}:${val};`;
-        }
-      }
-
-      tgtEl.setAttribute('style', inlineCss);
-    } catch (e) {
-      if (tgtEl.style && tgtEl.style.cssText && tgtEl.style.cssText.includes('oklch')) {
-        tgtEl.style.cssText = convertOklchToRgb(tgtEl.style.cssText);
-      }
-    }
-  }
-}
-
-/**
  * Converts images in a container to Base64 Data URLs to avoid CORS taints in html2canvas
  */
 async function convertImagesToDataUrls(container: HTMLElement) {
@@ -112,7 +60,7 @@ async function convertImagesToDataUrls(container: HTMLElement) {
 
 /**
  * Generates a high-quality 1-page A4 PDF for a given HTML element.
- * Uses an isolated, clean iframe to completely bypass Tailwind v4 oklch CSS stylesheet parsing errors.
+ * Uses an isolated, clean iframe with embedded app stylesheets (oklch converted to RGB).
  */
 export async function generateCertificatePdf(
   elementId = 'printable-certificate-document',
@@ -132,6 +80,7 @@ export async function generateCertificatePdf(
   iframe.style.width = '800px';
   iframe.style.height = '1130px';
   iframe.style.border = 'none';
+  iframe.style.visibility = 'hidden';
   iframe.style.zIndex = '-9999';
   document.body.appendChild(iframe);
 
@@ -141,7 +90,28 @@ export async function generateCertificatePdf(
     return false;
   }
 
-  // 2. Initialize clean HTML structure inside iframe
+  // 2. Extract application stylesheets and convert any oklch color codes
+  let cssRulesText = '';
+  try {
+    const sheets = Array.from(document.styleSheets);
+    for (const sheet of sheets) {
+      try {
+        if (sheet.cssRules) {
+          for (const rule of Array.from(sheet.cssRules)) {
+            cssRulesText += rule.cssText + '\n';
+          }
+        }
+      } catch {
+        // Ignore cross-origin stylesheet errors
+      }
+    }
+  } catch {
+    // Fallback
+  }
+
+  cssRulesText = convertOklchToRgb(cssRulesText);
+
+  // 3. Initialize clean HTML structure inside iframe with Tailwind styles
   iframeDoc.open();
   iframeDoc.write(`
     <!DOCTYPE html>
@@ -150,40 +120,45 @@ export async function generateCertificatePdf(
         <meta charset="utf-8">
         <title>${docTitle}</title>
         <style>
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          html, body { background: #ffffff; color: #0f172a; font-family: system-ui, -apple-system, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+          * { box-sizing: border-box; }
+          html, body {
+            background-color: #ffffff !important;
+            color: #09090b !important;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 800px !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
           img { max-width: 100%; height: auto; }
+          ${cssRulesText}
         </style>
       </head>
-      <body style="width: 780px; margin: 0 auto; background: #ffffff; padding: 0;">
+      <body style="width: 800px; margin: 0; padding: 0; background-color: #ffffff;">
       </body>
     </html>
   `);
   iframeDoc.close();
 
-  // 3. Clone source element and copy computed RGB styles
+  // 4. Clone source element and append into iframe body
   const clone = element.cloneNode(true) as HTMLElement;
-  copyInlineComputedStyles(element, clone);
+  clone.id = 'printable-certificate-pdf-clone';
 
-  // Force strict A4 layout bounds on cloned container, starting directly at top 0
+  // Apply clean 1-page document bounds to clone
   clone.style.width = '780px';
   clone.style.maxWidth = '780px';
   clone.style.margin = '0 auto';
-  clone.style.marginTop = '0px';
-  clone.style.marginBottom = '0px';
-  clone.style.padding = '16px';
+  clone.style.padding = '24px';
+  clone.style.boxSizing = 'border-box';
+  clone.style.backgroundColor = '#ffffff';
+  clone.style.boxShadow = 'none';
+  clone.style.borderRadius = '0px';
+  clone.style.border = 'none';
   clone.style.position = 'relative';
   clone.style.top = '0px';
   clone.style.left = '0px';
   clone.style.transform = 'none';
-  clone.style.boxSizing = 'border-box';
-  clone.style.backgroundColor = '#ffffff';
-  clone.style.boxShadow = 'none';
-  clone.style.borderRadius = '0';
-
-  if (clone.firstElementChild) {
-    (clone.firstElementChild as HTMLElement).style.marginTop = '0px';
-  }
 
   iframeDoc.body.appendChild(clone);
 
@@ -192,7 +167,7 @@ export async function generateCertificatePdf(
     await convertImagesToDataUrls(clone);
 
     // Wait for images & fonts to settle in the iframe
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 350));
 
     // Wait for any remaining <img> in clone to finish loading
     const images = Array.from(clone.querySelectorAll('img'));
@@ -209,7 +184,7 @@ export async function generateCertificatePdf(
       )
     );
 
-    // 4. Capture clone element directly with html2canvas
+    // 5. Capture clone element directly with html2canvas
     const canvas = await html2canvas(clone, {
       scale: 2,
       useCORS: true,
@@ -218,13 +193,12 @@ export async function generateCertificatePdf(
       logging: false,
       scrollX: 0,
       scrollY: 0,
-      windowWidth: 800,
-      windowHeight: 1130
+      windowWidth: 800
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.98);
 
-    // 5. Construct A4 PDF in jsPDF (210mm x 297mm)
+    // 6. Construct A4 PDF in jsPDF (210mm x 297mm)
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -234,10 +208,10 @@ export async function generateCertificatePdf(
     const pdfWidth = 210;
     const pdfHeight = 297;
 
-    const marginTopBottom = 5; // 5mm top & bottom margins
-    const marginLeftRight = 5; // 5mm left & right margins
-    const maxPdfWidth = pdfWidth - marginLeftRight * 2; // 200mm
-    const maxPdfHeight = pdfHeight - marginTopBottom * 2; // 287mm
+    const marginTopBottom = 6; // 6mm top & bottom margins
+    const marginLeftRight = 6; // 6mm left & right margins
+    const maxPdfWidth = pdfWidth - marginLeftRight * 2; // 198mm
+    const maxPdfHeight = pdfHeight - marginTopBottom * 2; // 285mm
 
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;

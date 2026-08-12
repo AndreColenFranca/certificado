@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { JewelryCertificate, AppUser } from '../types';
 import { HighResPhotoInspector } from './HighResPhotoInspector';
 import { formatImageUrl } from '../utils/imageUtils';
+import { isCustomerLinkedToCertificate } from '../utils/customerUtils';
 import { 
   ShieldCheck, 
   Award, 
@@ -56,6 +57,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
   const [selectedGalleryImage, setSelectedGalleryImage] = useState<string>(cert.images[0] || '');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [shareCopied, setShareCopied] = useState<boolean>(false);
+  const isLinked = isCustomerLinkedToCertificate(cert);
 
   // Generate QR code URL
   useEffect(() => {
@@ -194,7 +196,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
           {/* QR Code Card & Quick Actions */}
           <div className="flex flex-col sm:flex-row items-center gap-4 bg-zinc-900/90 border border-amber-500/30 p-4 rounded-2xl backdrop-blur-md self-stretch lg:self-auto justify-between sm:justify-start">
-            {qrCodeDataUrl && (
+            {isLinked && qrCodeDataUrl && (
               <div className="flex flex-col items-center">
                 <img 
                   src={qrCodeDataUrl} 

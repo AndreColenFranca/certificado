@@ -4,6 +4,7 @@ import { JewelryCertificate } from '../types';
 import { Printer, Download, X, ShieldCheck, Award, Gem, User } from 'lucide-react';
 import { formatImageUrl } from '../utils/imageUtils';
 import { printElement, generateCertificatePdf } from '../utils/printUtils';
+import { isCustomerLinkedToCertificate } from '../utils/customerUtils';
 
 interface PrintCertificateModalProps {
   cert: JewelryCertificate | null;
@@ -60,6 +61,8 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
     }
   };
 
+  const isLinked = isCustomerLinkedToCertificate(cert);
+
   return (
     <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col print:static print:bg-white print:p-0">
       
@@ -113,19 +116,13 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
       </div>
 
       {/* Main Document Viewer Container */}
-      <div className="flex-1 overflow-y-auto px-2 sm:px-6 py-4 sm:py-8 flex justify-center print:p-0 print:overflow-visible">
+      <div className="flex-1 overflow-y-auto px-2 sm:px-6 py-4 sm:py-8 flex flex-col items-center print:p-0 print:m-0 print:overflow-visible">
         
         {/* Luxury Printable Paper Layout */}
         <div 
-          className="relative w-full max-w-3xl bg-white text-zinc-900 rounded-none shadow-2xl p-4 sm:p-7 my-auto overflow-hidden print:m-0 print:w-full print:max-w-none print:shadow-none print:bg-white"
+          className="relative w-full max-w-3xl bg-white text-zinc-900 rounded-none shadow-2xl p-5 sm:p-8 overflow-hidden print:m-0 print:w-full print:max-w-none print:shadow-none print:bg-white print:border-none"
           id="printable-certificate-document"
         >
-          {/* Decorative Corner Ornaments (Straight L-shaped corners) */}
-          <div className="absolute top-2 left-2 w-8 h-8 border-t-2 border-l-2 border-amber-800 pointer-events-none rounded-none" />
-          <div className="absolute top-2 right-2 w-8 h-8 border-t-2 border-r-2 border-amber-800 pointer-events-none rounded-none" />
-          <div className="absolute bottom-2 left-2 w-8 h-8 border-b-2 border-l-2 border-amber-800 pointer-events-none rounded-none" />
-          <div className="absolute bottom-2 right-2 w-8 h-8 border-b-2 border-r-2 border-amber-800 pointer-events-none rounded-none" />
-
         {/* Watermark Background Logo */}
         {cert.manufacturerLogoUrl ? (
           <img 
@@ -162,7 +159,7 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
             )}
 
             {/* Proportional, refined title smaller than logo above */}
-            <h1 className="font-serif text-xs sm:text-sm font-extrabold tracking-widest text-zinc-900 uppercase py-0.5 border-t border-b border-amber-800/20 max-w-lg mx-auto">
+            <h1 className="font-serif text-xs sm:text-sm font-extrabold tracking-widest text-zinc-900 uppercase py-1 max-w-lg mx-auto">
               Certificado de Autenticidade & Origem
             </h1>
 
@@ -288,7 +285,7 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
             
             {/* Stamp Seal */}
             <div className="flex items-center gap-3">
-              {qrUrl && (
+              {isLinked && qrUrl && (
                 <img src={qrUrl} alt="QR" className="w-16 h-16 sm:w-20 sm:h-20 p-1 bg-white border border-zinc-300 rounded-lg shadow-xs shrink-0" />
               )}
               <div className="text-xs text-zinc-900 space-y-0.5">
@@ -296,9 +293,11 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
                   Selo de Garantia Vitalícia
                 </span>
-                <p className="text-[9px] text-zinc-600 max-w-xs leading-tight">
-                  Escaneie o código QR para consultar o passaporte digital interativo e histórico.
-                </p>
+                {isLinked && (
+                  <p className="text-[9px] text-zinc-600 max-w-xs leading-tight">
+                    Escaneie o código QR para consultar o passaporte digital interativo e histórico.
+                  </p>
+                )}
                 <span className="text-[9px] font-mono text-zinc-500 block truncate max-w-xs">
                   Hash: {cert.authenticityHash}
                 </span>

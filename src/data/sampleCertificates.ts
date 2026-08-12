@@ -387,5 +387,59 @@ export const INITIAL_CERTIFICATES: JewelryCertificate[] = [
     ],
     createdAt: '2026-03-12T10:00:00.000Z',
     updatedAt: '2026-03-12T10:00:00.000Z'
+  },
+  {
+    id: 'CERT-2026-ACERVO',
+    serialNumber: 'SN-18KW-00990',
+    title: 'Anel Solitário Diamante Cushion 1.50ct',
+    collection: 'High Jewelry Solitaires 2026',
+    model: 'Solitaire Cushion Prestige',
+    manufacturer: 'Maison Lumière Joias',
+    manufacturerLogoUrl: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=150&auto=format&fit=crop&q=80',
+    manufacturingDate: '2026-03-15',
+    issueDate: '2026-03-15',
+    currentOwnerName: 'Ateliê Central (Em Estoque)',
+    ownerCpf: undefined,
+    ownerEmail: undefined,
+    ownerId: undefined,
+    metalPurity: '18K (750)',
+    metalColor: 'Ouro Branco',
+    grossWeightGrams: 5.10,
+    widthCm: 0.4,
+    finish: 'Polido Espelhado',
+    hasStones: true,
+    stones: [
+      {
+        id: 'st-ac1',
+        type: 'Diamante Natural',
+        quantity: 1,
+        caratWeight: 1.50,
+        cutShape: 'Cushion',
+        colorGrade: 'E - Incolor',
+        clarityGrade: 'VVS1',
+        settingType: 'Garra'
+      }
+    ],
+    images: [
+      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=1200&auto=format&fit=crop&q=80'
+    ],
+    frames360: [],
+    warrantyMonths: -1,
+    warrantyTerms: 'Garantia Vitalícia Maison Lumière.',
+    warrantyStatus: 'Ativa',
+    authenticityHash: '0xf9x200192c91a739d481230f8123bc910a9101aa3',
+    estimatedValueBRL: 52000,
+    careGuide: [],
+    maintenanceHistory: [
+      {
+        id: 'm-ac1',
+        date: '2026-03-15',
+        type: 'Certificação Inicial',
+        performer: 'Atelier Central Maison Lumière',
+        notes: 'Joia cadastrada no acervo da joalheria sem cliente vinculado.'
+      }
+    ],
+    createdAt: '2026-03-15T10:00:00.000Z',
+    updatedAt: '2026-03-15T10:00:00.000Z'
   }
 ];

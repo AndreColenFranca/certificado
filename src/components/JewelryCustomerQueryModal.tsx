@@ -15,7 +15,7 @@ interface JewelryCustomerQueryModalProps {
   initialCertId?: string | null;
   onOpenLinkModal?: (cert: JewelryCertificate) => void;
   onSelectCustomer?: (customer: Customer) => void;
-  onSelectCertForView?: (cert: JewelryCertificate) => void;
+  onSelectCertForView?: (cert: JewelryCertificate, tab?: 'photo-inspector' | 'specs' | 'certificate' | 'history' | 'care') => void;
 }
 
 export const JewelryCustomerQueryModal: React.FC<JewelryCustomerQueryModalProps> = ({
@@ -274,16 +274,29 @@ export const JewelryCustomerQueryModal: React.FC<JewelryCustomerQueryModalProps>
 
                           <div className="flex items-center gap-2">
                             {onSelectCertForView && (
-                              <button
-                                onClick={() => {
-                                  onSelectCertForView(child);
-                                  onClose();
-                                }}
-                                className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-amber-300 font-semibold text-xs flex items-center gap-1 border border-amber-900/40 transition-colors"
-                              >
-                                <span>Ver Passaporte Digital</span>
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </button>
+                              <>
+                                <button
+                                  onClick={() => {
+                                    onSelectCertForView(child, 'photo-inspector');
+                                    onClose();
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-amber-300 font-semibold text-xs flex items-center gap-1 border border-amber-900/40 transition-colors cursor-pointer"
+                                >
+                                  <span>Ver Passaporte</span>
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    onSelectCertForView(child, 'certificate');
+                                    onClose();
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-zinc-950 font-bold text-xs flex items-center gap-1 border border-amber-400 transition-colors shadow-sm cursor-pointer"
+                                >
+                                  <Award className="w-3.5 h-3.5" />
+                                  <span>Ver Certificado</span>
+                                </button>
+                              </>
                             )}
 
                             {matchedCustomer && onSelectCustomer && (

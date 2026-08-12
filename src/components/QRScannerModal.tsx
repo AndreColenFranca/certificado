@@ -7,7 +7,7 @@ interface QRScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
   certificates: JewelryCertificate[];
-  onSelectCert: (cert: JewelryCertificate) => void;
+  onSelectCert: (cert: JewelryCertificate, tab?: 'photo-inspector' | 'specs' | 'certificate' | 'history' | 'care') => void;
 }
 
 export const QRScannerModal: React.FC<QRScannerModalProps> = ({
@@ -29,7 +29,10 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
     const found = findCertificateByQuery(certificates, inputCode);
 
     if (found) {
-      onSelectCert(found);
+      if (typeof window !== 'undefined') {
+        window.history.pushState(null, '', `/cert/${encodeURIComponent(found.id)}?type=certificate`);
+      }
+      onSelectCert(found, 'certificate');
       onClose();
     } else {
       const extracted = extractCertIdFromInput(inputCode) || inputCode;
@@ -41,7 +44,10 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
     setIsScanningSim(true);
     setTimeout(() => {
       setIsScanningSim(false);
-      onSelectCert(cert);
+      if (typeof window !== 'undefined') {
+        window.history.pushState(null, '', `/cert/${encodeURIComponent(cert.id)}?type=certificate`);
+      }
+      onSelectCert(cert, 'certificate');
       onClose();
     }, 600);
   };

@@ -20,7 +20,7 @@ import { formatImageUrl } from '../utils/imageUtils';
 interface CustomerPortalViewProps {
   currentUser: AppUser;
   certificates: JewelryCertificate[];
-  onSelectCertificate: (cert: JewelryCertificate) => void;
+  onSelectCertificate: (cert: JewelryCertificate, tab?: 'photo-inspector' | 'specs' | 'certificate' | 'history' | 'care') => void;
   onOpenPrintModal: (cert: JewelryCertificate) => void;
   onOpenScanner: () => void;
   companyName: string;
@@ -259,22 +259,43 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   {/* Action Buttons for Customer */}
                   <div className="space-y-2 pt-1">
                     <button
-                      onClick={() => onSelectCertificate(cert)}
-                      className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs uppercase tracking-wider shadow-md hover:scale-[1.01] transition-all flex items-center justify-center gap-2 cursor-pointer border border-amber-400"
-                      id={`customer-btn-view-passport-${cert.id}`}
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          window.history.pushState(null, '', `/cert/${encodeURIComponent(cert.id)}?type=certificate`);
+                        }
+                        onSelectCertificate(cert, 'certificate');
+                      }}
+                      className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs uppercase tracking-wider shadow-md hover:scale-[1.01] transition-all flex items-center justify-center gap-2 cursor-pointer border border-amber-400"
+                      id={`customer-btn-view-cert-${cert.id}`}
                     >
-                      <Eye className="w-4 h-4" />
-                      <span>Ver Passaporte Digital</span>
+                      <Award className="w-4 h-4 text-zinc-950" />
+                      <span>Ver Certificado da Peça</span>
                     </button>
 
-                    <button
-                      onClick={() => onOpenPrintModal(cert)}
-                      className="w-full py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-amber-200 font-semibold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer border border-amber-900/40"
-                      id={`customer-btn-print-cert-${cert.id}`}
-                    >
-                      <Printer className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Imprimir Certificado</span>
-                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          if (typeof window !== 'undefined') {
+                            window.history.pushState(null, '', `/cert/${encodeURIComponent(cert.id)}`);
+                          }
+                          onSelectCertificate(cert, 'photo-inspector');
+                        }}
+                        className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-amber-200 font-semibold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-amber-900/40"
+                        id={`customer-btn-view-passport-${cert.id}`}
+                      >
+                        <Eye className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span className="truncate">Passaporte</span>
+                      </button>
+
+                      <button
+                        onClick={() => onOpenPrintModal(cert)}
+                        className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-amber-200 font-semibold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-amber-900/40"
+                        id={`customer-btn-print-cert-${cert.id}`}
+                      >
+                        <Printer className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span className="truncate">Imprimir</span>
+                      </button>
+                    </div>
                   </div>
 
                 </div>

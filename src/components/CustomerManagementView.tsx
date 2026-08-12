@@ -15,7 +15,7 @@ interface CustomerManagementViewProps {
   onOpenCreateCustomer: () => void;
   onEditCustomer: (customer: Customer) => void;
   onDeleteCustomer: (customer: Customer) => void;
-  onSelectCertificate: (cert: JewelryCertificate) => void;
+  onSelectCertificate: (cert: JewelryCertificate, tab?: 'photo-inspector' | 'specs' | 'certificate' | 'history' | 'care') => void;
   onEditCertificate: (cert: JewelryCertificate) => void;
   onTransferCertificate: (cert: JewelryCertificate) => void;
   onUnlinkCertificate: (cert: JewelryCertificate, customerId?: string) => void;
@@ -48,7 +48,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
 
   useEffect(() => {
     if (qrCertModal) {
-      const certUrl = `${window.location.origin}/cert/${encodeURIComponent(qrCertModal.id)}`;
+      const certUrl = `${window.location.origin}/cert/${encodeURIComponent(qrCertModal.id)}?type=certificate`;
       QRCode.toDataURL(certUrl, {
         width: 360,
         margin: 4,
@@ -86,7 +86,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
 
   const handleCopyCertLink = () => {
     if (!qrCertModal) return;
-    const certUrl = `${window.location.origin}/cert/${encodeURIComponent(qrCertModal.id)}`;
+    const certUrl = `${window.location.origin}/cert/${encodeURIComponent(qrCertModal.id)}?type=certificate`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(certUrl);
       setCopiedLink(true);
@@ -539,18 +539,11 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                           {/* Botões de Ação */}
                           <div className="grid grid-cols-2 gap-2 pt-3 border-t border-zinc-800 w-full">
                             <button
-                              onClick={() => onSelectCertificate(cert)}
+                              onClick={() => onSelectCertificate(cert, 'photo-inspector')}
                               className="py-2.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                             >
                               <ExternalLink className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                               <span className="truncate">Passaporte</span>
-                            </button>
-                            <button
-                              onClick={() => setQrCertModal(cert)}
-                              className="py-2.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                            >
-                              <QrCode className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                              <span className="truncate">QRCode</span>
                             </button>
                             {onOpenPrintModal && (
                               <button
@@ -578,6 +571,15 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                             >
                               <ArrowRightLeft className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                               <span className="truncate">Transferir</span>
+                            </button>
+                            <button
+                              onClick={() => setQrCertModal(cert)}
+                              className="col-span-2 py-2.5 px-3 rounded-xl bg-zinc-800 hover:bg-amber-900/60 text-amber-300 hover:text-amber-200 border border-zinc-700 hover:border-amber-500/50 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                              title="Gerar QRCode do Certificado do Cliente"
+                              id={`btn-qrcode-cert-${cert.id}`}
+                            >
+                              <QrCode className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                              <span className="truncate">QRCode do Certificado</span>
                             </button>
                             <button
                               onClick={() => setUnlinkCertModal(cert)}
@@ -723,13 +725,13 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
 
             <div className="space-y-2">
               <label className="text-[11px] font-semibold text-zinc-400 block">
-                Link direto do Passaporte / Certificado:
+                Link direto do Certificado do Cliente:
               </label>
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   readOnly
-                  value={`${window.location.origin}/cert/${qrCertModal.id}`}
+                  value={`${window.location.origin}/cert/${qrCertModal.id}?type=certificate`}
                   className="flex-1 bg-black/80 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-mono text-amber-200 focus:outline-none"
                 />
                 <button

@@ -32,6 +32,7 @@ import {
 
 interface CertificatePublicViewProps {
   cert: JewelryCertificate;
+  initialTab?: 'photo-inspector' | 'specs' | 'history' | 'care';
   onOpenPrintModal: (cert: JewelryCertificate) => void;
   onOpenMaintenanceModal: (cert: JewelryCertificate) => void;
   onOpenTransferModal: (cert: JewelryCertificate) => void;
@@ -44,6 +45,7 @@ interface CertificatePublicViewProps {
 
 export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
   cert,
+  initialTab,
   onOpenPrintModal,
   onOpenMaintenanceModal,
   onOpenTransferModal,
@@ -53,17 +55,31 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
   currentUser,
   onBackToCustomerPortal
 }) => {
-  const [activeTab, setActiveTab] = useState<'photo-inspector' | 'specs' | 'history' | 'care'>('photo-inspector');
+  const [activeTab, setActiveTab] = useState<'photo-inspector' | 'specs' | 'history' | 'care'>(() => {
+    if (initialTab && initialTab !== ('certificate' as any)) return initialTab;
+    return 'photo-inspector';
+  });
   const [selectedGalleryImage, setSelectedGalleryImage] = useState<string>(cert.images[0] || '');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [shareCopied, setShareCopied] = useState<boolean>(false);
   const isLinked = isCustomerLinkedToCertificate(cert);
 
-  // Generate QR code URL
+  // Synchronize activeTab if initialTab changes
+  useEffect(() => {
+    if (initialTab && initialTab !== ('certificate' as any)) {
+      setActiveTab(initialTab);
+    }
+  }, [cert, initialTab]);
+
+  const handleTabChange = (tab: 'photo-inspector' | 'specs' | 'history' | 'care') => {
+    setActiveTab(tab);
+  };
+
+  // Generate QR code URL pointing to Certificate
   useEffect(() => {
     const generateQR = async () => {
       try {
-        const url = `${window.location.origin}/cert/${encodeURIComponent(cert.id)}`;
+        const url = `${window.location.origin}/cert/${encodeURIComponent(cert.id)}?type=certificate`;
         const qrData = await QRCode.toDataURL(url, {
           width: 240,
           margin: 1,
@@ -140,7 +156,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/40">
                 <ShieldCheck className="w-4 h-4 text-amber-400" />
-                Passaporte Digital de Autenticidade
+                {activeTab === 'certificate' ? 'Certificado de Autenticidade da Joia' : 'Passaporte Digital de Autenticidade'}
               </span>
 
               <span className="px-2.5 py-1 rounded-full text-xs font-mono bg-zinc-800 text-zinc-300 border border-zinc-700">
@@ -278,7 +294,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
       {/* Navigation Tabs - Modern Segmented Grid Layout */}
       <div className="bg-zinc-900/90 border border-amber-500/30 p-2 sm:p-2.5 rounded-2xl shadow-xl grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3" id="public-view-tabs">
         <button
-          onClick={() => setActiveTab('photo-inspector')}
+          onClick={() => handleTabChange('photo-inspector')}
           className={`flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'photo-inspector'
               ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-zinc-950 shadow-lg shadow-amber-500/20 ring-1 ring-amber-300 scale-[1.01]'
@@ -291,7 +307,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('specs')}
+          onClick={() => handleTabChange('specs')}
           className={`flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'specs'
               ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-zinc-950 shadow-lg shadow-amber-500/20 ring-1 ring-amber-300 scale-[1.01]'
@@ -304,7 +320,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('history')}
+          onClick={() => handleTabChange('history')}
           className={`flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'history'
               ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-zinc-950 shadow-lg shadow-amber-500/20 ring-1 ring-amber-300 scale-[1.01]'
@@ -317,7 +333,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('care')}
+          onClick={() => handleTabChange('care')}
           className={`flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'care'
               ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-zinc-950 shadow-lg shadow-amber-500/20 ring-1 ring-amber-300 scale-[1.01]'

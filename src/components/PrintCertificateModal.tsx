@@ -33,7 +33,7 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
 
   React.useEffect(() => {
     if (cert && isOpen) {
-      QRCode.toDataURL(`${window.location.origin}/cert/${encodeURIComponent(cert.id)}`, {
+      QRCode.toDataURL(`${window.location.origin}/cert/${encodeURIComponent(cert.id)}?type=certificate`, {
         width: 180,
         margin: 1,
         color: { dark: '#18181b', light: '#ffffff' }

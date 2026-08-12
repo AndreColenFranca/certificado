@@ -105,4 +105,4 @@ export interface JewelryCertificate {
   updatedAt: string;
 }
 
-export type ViewMode = 'public-passport' | 'jeweler-dashboard' | 'scanner' | 'create-new' | 'customers' | 'customer-portal';
+export type ViewMode = 'public-passport' | 'public-certificate' | 'jeweler-dashboard' | 'scanner' | 'create-new' | 'customers' | 'customer-portal';

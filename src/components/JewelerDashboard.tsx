@@ -24,7 +24,7 @@ import {
 
 interface JewelerDashboardProps {
   certificates: JewelryCertificate[];
-  onSelectCertificate: (cert: JewelryCertificate) => void;
+  onSelectCertificate: (cert: JewelryCertificate, tab?: 'photo-inspector' | 'specs' | 'certificate' | 'history' | 'care') => void;
   onOpenCreateModal: () => void;
   onOpenPrintModal: (cert: JewelryCertificate) => void;
   onDeleteCertificate: (cert: JewelryCertificate) => void;

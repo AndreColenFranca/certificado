@@ -5,6 +5,7 @@ import { INITIAL_CUSTOMERS } from './data/sampleCustomers';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { CertificatePublicView } from './components/CertificatePublicView';
+import { CertificateOnlyView } from './components/CertificateOnlyView';
 import { JewelerDashboard } from './components/JewelerDashboard';
 import { CustomerManagementView } from './components/CustomerManagementView';
 import { CertificateFormModal } from './components/CertificateFormModal';
@@ -96,7 +97,12 @@ export default function App() {
   });
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const urlCertId = getCertIdFromUrl();
-    if (urlCertId) return 'public-passport';
+    if (urlCertId) {
+      if (typeof window !== 'undefined' && (window.location.search.includes('type=certificate') || window.location.search.includes('doc=certificate') || window.location.pathname.startsWith('/certificate/'))) {
+        return 'public-certificate';
+      }
+      return 'public-passport';
+    }
     const storedUser = localStorage.getItem('aureum_logged_user');
     if (storedUser) {
       try {
@@ -107,7 +113,29 @@ export default function App() {
     return 'public-passport';
   });
 
+  const [publicViewTab, setPublicViewTab] = useState<'photo-inspector' | 'specs' | 'certificate' | 'history' | 'care'>(() => {
+    if (typeof window !== 'undefined' && (window.location.search.includes('type=certificate') || window.location.search.includes('doc=certificate'))) {
+      return 'certificate';
+    }
+    return 'photo-inspector';
+  });
+
   const [viewHistory, setViewHistory] = useState<ViewMode[]>([]);
+
+  const handleSelectCert = (cert: JewelryCertificate, tab: 'photo-inspector' | 'specs' | 'certificate' | 'history' | 'care' = 'photo-inspector') => {
+    setSelectedCert(cert);
+    setPublicViewTab(tab);
+    const isCertTab = tab === 'certificate';
+    if (typeof window !== 'undefined') {
+      const targetUrl = `/cert/${encodeURIComponent(cert.id)}${isCertTab ? '?type=certificate' : ''}`;
+      window.history.pushState(null, '', targetUrl);
+    }
+    if (isCertTab) {
+      navigateToView('public-certificate');
+    } else {
+      navigateToView('public-passport');
+    }
+  };
 
   const navigateToView = (newMode: ViewMode) => {
     if (newMode !== viewMode) {
@@ -236,10 +264,14 @@ export default function App() {
     }
   }, [customers]);
 
-  // Sync selected certificate when URL changes via popstate
+  // Sync selected certificate and tab when URL changes via popstate
   useEffect(() => {
     const handleLocationChange = () => {
       const urlCertId = getCertIdFromUrl();
+      const isCertType = typeof window !== 'undefined' && (window.location.search.includes('type=certificate') || window.location.search.includes('doc=certificate') || window.location.pathname.startsWith('/certificate/'));
+      if (isCertType) {
+        setPublicViewTab('certificate');
+      }
       if (urlCertId && certificates.length > 0) {
         const found = certificates.find(
           c => c.id.toUpperCase() === urlCertId.toUpperCase() ||
@@ -248,7 +280,9 @@ export default function App() {
         );
         if (found) {
           setSelectedCert(found);
-          if (viewMode === 'public-passport') {
+          if (isCertType) {
+            setViewMode('public-certificate');
+          } else if (viewMode === 'public-passport' || viewMode === 'public-certificate') {
             setViewMode('public-passport');
           }
         }
@@ -259,19 +293,30 @@ export default function App() {
     return () => window.removeEventListener('popstate', handleLocationChange);
   }, [certificates, viewMode]);
 
-  // Keep URL path synchronized when viewing public passport or other views
+  // Keep URL path synchronized when viewing public passport or public certificate
   useEffect(() => {
-    if (viewMode === 'public-passport' && selectedCert) {
-      const targetPath = `/cert/${selectedCert.id}`;
-      if (window.location.pathname !== targetPath) {
+    if ((viewMode === 'public-passport' || viewMode === 'public-certificate') && selectedCert) {
+      const isCertType = viewMode === 'public-certificate' || publicViewTab === 'certificate' || window.location.search.includes('type=certificate');
+      const targetPath = `/cert/${encodeURIComponent(selectedCert.id)}${isCertType ? '?type=certificate' : ''}`;
+      if (window.location.pathname + window.location.search !== targetPath) {
         window.history.replaceState(null, '', targetPath);
       }
-    } else if (viewMode !== 'public-passport') {
+    } else if (viewMode !== 'public-passport' && viewMode !== 'public-certificate') {
       if (window.location.pathname.startsWith('/cert/') || window.location.pathname.startsWith('/passport/')) {
         window.history.replaceState(null, '', '/');
       }
     }
-  }, [selectedCert, viewMode]);
+  }, [selectedCert, viewMode, publicViewTab]);
+
+  // Ensure public certificate view is active when requested via URL parameter
+  useEffect(() => {
+    if (selectedCert && (window.location.search.includes('type=certificate') || window.location.search.includes('doc=certificate'))) {
+      setPublicViewTab('certificate');
+      if (viewMode !== 'public-certificate') {
+        setViewMode('public-certificate');
+      }
+    }
+  }, [selectedCert]);
 
   const fetchCertificates = async () => {
     try {
@@ -819,6 +864,58 @@ export default function App() {
       : null;
 
     if (publicCertToView) {
+      const isCertType = typeof window !== 'undefined' && (
+        window.location.search.includes('type=certificate') || 
+        window.location.search.includes('doc=certificate') ||
+        viewMode === 'public-certificate'
+      );
+
+      if (isCertType) {
+        return (
+          <div className={`min-h-screen font-sans ${
+            theme === 'classic-light' 
+              ? 'theme-classic-light bg-stone-50 text-stone-900' 
+              : 'theme-luxury-dark bg-zinc-950 text-amber-50'
+          }`}>
+            <div className="bg-zinc-950 border-b border-amber-500/30 py-3 px-4 sm:px-8 flex flex-wrap items-center justify-between gap-3 text-xs shadow-md">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-amber-200 font-bold uppercase tracking-wider text-xs sm:text-sm">
+                  Certificado Oficial de Autenticidade da Joia • Consulta por QR Code
+                </span>
+              </div>
+              <div className="px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                Visualização Autêntica Registrada
+              </div>
+            </div>
+
+            <main className="max-w-7xl mx-auto p-3 sm:p-6">
+              <CertificateOnlyView
+                cert={{
+                  ...publicCertToView,
+                  manufacturer: publicCertToView.manufacturer || companyName,
+                  manufacturerLogoUrl: publicCertToView.manufacturerLogoUrl || companyLogoUrl
+                }}
+                currentUser={null}
+                onOpenPrintModal={(c) => {
+                  setPrintTargetCert(c);
+                  setIsPrintModalOpen(true);
+                }}
+              />
+            </main>
+
+            <PrintCertificateModal
+              isOpen={isPrintModalOpen}
+              onClose={() => {
+                setIsPrintModalOpen(false);
+                setPrintTargetCert(null);
+              }}
+              cert={printTargetCert || publicCertToView}
+            />
+          </div>
+        );
+      }
+
       return (
         <div className={`min-h-screen font-sans ${
           theme === 'classic-light' 
@@ -988,6 +1085,27 @@ export default function App() {
           </div>
         )}
 
+        {viewMode === 'public-certificate' && !notFoundQuery && selectedCert && (
+          <CertificateOnlyView
+            cert={{
+              ...selectedCert,
+              manufacturer: selectedCert.manufacturer || companyName,
+              manufacturerLogoUrl: selectedCert.manufacturerLogoUrl || companyLogoUrl
+            }}
+            currentUser={currentUser}
+            onOpenPrintModal={(c) => {
+              setPrintTargetCert(c);
+              setIsPrintModalOpen(true);
+            }}
+            onBackToPreviousView={canGoBack ? handleGoBack : undefined}
+            onOpenFullPassport={(c) => {
+              setSelectedCert(c);
+              setPublicViewTab('photo-inspector');
+              navigateToView('public-passport');
+            }}
+          />
+        )}
+
         {viewMode === 'public-passport' && !notFoundQuery && selectedCert && (
           <CertificatePublicView
             cert={{
@@ -995,6 +1113,7 @@ export default function App() {
               manufacturer: selectedCert.manufacturer || companyName,
               manufacturerLogoUrl: selectedCert.manufacturerLogoUrl || companyLogoUrl
             }}
+            initialTab={publicViewTab}
             currentUser={currentUser}
             onBackToCustomerPortal={handleGoBack}
             onOpenPrintModal={(c) => {
@@ -1021,14 +1140,11 @@ export default function App() {
           />
         )}
 
-        {(viewMode === 'customer-portal' || (currentUser?.role === 'customer' && viewMode !== 'public-passport' && viewMode !== 'scanner')) && currentUser && (
+        {(viewMode === 'customer-portal' || (currentUser?.role === 'customer' && viewMode !== 'public-passport' && viewMode !== 'public-certificate' && viewMode !== 'scanner')) && currentUser && (
           <CustomerPortalView
             currentUser={currentUser}
             certificates={certificates}
-            onSelectCertificate={(c) => {
-              setSelectedCert(c);
-              navigateToView('public-passport');
-            }}
+            onSelectCertificate={handleSelectCert}
             onOpenPrintModal={(c) => {
               setPrintTargetCert(c);
               setIsPrintModalOpen(true);
@@ -1042,10 +1158,7 @@ export default function App() {
         {viewMode === 'jeweler-dashboard' && currentUser?.role !== 'customer' && (
           <JewelerDashboard
             certificates={certificates}
-            onSelectCertificate={(c) => {
-              setSelectedCert(c);
-              navigateToView('public-passport');
-            }}
+            onSelectCertificate={handleSelectCert}
             onOpenCreateModal={() => {
               setEditingCert(null);
               setSelectedCustomerForNewCert(null);
@@ -1090,10 +1203,7 @@ export default function App() {
               setCustomerToDelete(cust);
               setIsCustomerDeleteOpen(true);
             }}
-            onSelectCertificate={(c) => {
-              setSelectedCert(c);
-              navigateToView('public-passport');
-            }}
+            onSelectCertificate={handleSelectCert}
             onEditCertificate={(c) => {
               setEditingCert(c);
               setIsFormModalOpen(true);
@@ -1194,10 +1304,7 @@ export default function App() {
         isOpen={isScannerModalOpen}
         onClose={() => setIsScannerModalOpen(false)}
         certificates={certificates}
-        onSelectCert={(c) => {
-          setSelectedCert(c);
-          setViewMode('public-passport');
-        }}
+        onSelectCert={handleSelectCert}
       />
 
       <MaintenanceModal
@@ -1251,10 +1358,9 @@ export default function App() {
           setIsQueryModalOpen(false);
           setViewMode('customers');
         }}
-        onSelectCertForView={(cert) => {
+        onSelectCertForView={(cert, tab) => {
           setIsQueryModalOpen(false);
-          setSelectedCert(cert);
-          setViewMode('public-passport');
+          handleSelectCert(cert, tab || 'certificate');
         }}
       />
 

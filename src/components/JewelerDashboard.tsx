@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { JewelryCertificate } from '../types';
 import { formatImageUrl } from '../utils/imageUtils';
+import { isRootCert, isChildCert, getChildCertificatesForParent } from '../utils/certHierarchy';
 import { 
   PlusCircle, 
   Search, 
@@ -48,15 +49,19 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
   const [selectedMetalFilter, setSelectedMetalFilter] = useState<string>('todos');
   const [selectedCollectionFilter, setSelectedCollectionFilter] = useState<string>('todas');
 
-  // Metrics Calculations
-  const totalCertificates = certificates.length;
-  const totalValueBRL = certificates.reduce((acc, c) => acc + (c.estimatedValueBRL || 0), 0);
-  const activeWarranties = certificates.filter(c => c.warrantyStatus === 'Ativa' || c.warrantyStatus === 'Vitalícia').length;
-  
-  const collectionsList = Array.from(new Set(certificates.map(c => c.collection)));
+  // Strictly separate Root/Parent catalog items from Child certificates
+  const rootCertificates = certificates.filter(isRootCert);
+  const childCertificates = certificates.filter(isChildCert);
 
-  // Filtered list
-  const filteredCertificates = certificates.filter(c => {
+  // Metrics Calculations
+  const totalRootCertificates = rootCertificates.length;
+  const totalChildIssued = childCertificates.length;
+  const totalValueBRL = rootCertificates.reduce((acc, c) => acc + (c.estimatedValueBRL || 0), 0);
+  
+  const collectionsList = Array.from(new Set(rootCertificates.map(c => c.collection)));
+
+  // Filtered list of Root/Parent certificates for "Cadastro de Joias"
+  const filteredCertificates = rootCertificates.filter(c => {
     const matchesSearch = 
       c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,11 +84,25 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
               Ateliê & Fabricante
             </span>
-            <span className="text-xs text-zinc-400">Painel de Gestão da Joalheria</span>
+            <span className="text-xs text-zinc-400">Cadastro de Joias Pai / Matrizes</span>
           </div>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold text-amber-100 mt-1">
-            Cadastro e Acervo de Joias
+            Cadastro e Acervo de Joias (Joias Pai / Raiz)
           </h1>
+          <p className="text-xs text-zinc-400 mt-1">
+            Exibindo os modelos originais do acervo. As Joias Pai são a base para a emissão das Joias Filhas dos clientes.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={onOpenCreateModal}
+            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs flex items-center gap-2 shadow-lg transition-transform hover:scale-105 cursor-pointer"
+            id="btn-create-new-cert"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>Cadastrar Nova Joia Pai</span>
+          </button>
         </div>
       </div>
 
@@ -92,11 +111,20 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
         
         <div className="bg-zinc-900/80 border border-amber-900/40 p-5 rounded-2xl space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-zinc-400 font-medium">Total de Joias Registradas</span>
+            <span className="text-xs text-zinc-400 font-medium">Modelos Pai / Raiz</span>
             <Award className="w-5 h-5 text-amber-400" />
           </div>
-          <p className="text-2xl font-bold font-mono text-amber-100">{totalCertificates}</p>
-          <span className="text-[10px] text-zinc-500">Com QR Code e Selo Cryptográfico</span>
+          <p className="text-2xl font-bold font-mono text-amber-100">{totalRootCertificates}</p>
+          <span className="text-[10px] text-zinc-500">1 Joia Pai principal por modelo</span>
+        </div>
+
+        <div className="bg-zinc-900/80 border border-amber-900/40 p-5 rounded-2xl space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-zinc-400 font-medium">Joias Filhas Emitidas</span>
+            <Users className="w-5 h-5 text-amber-400" />
+          </div>
+          <p className="text-2xl font-bold font-mono text-amber-300">{totalChildIssued}</p>
+          <span className="text-[10px] text-zinc-500">Passaportes vinculados a clientes</span>
         </div>
 
         <div className="bg-zinc-900/80 border border-amber-900/40 p-5 rounded-2xl space-y-1">
@@ -112,20 +140,11 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
 
         <div className="bg-zinc-900/80 border border-amber-900/40 p-5 rounded-2xl space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-zinc-400 font-medium">Garantias Ativas / Vitalícias</span>
-            <ShieldCheck className="w-5 h-5 text-cyan-400" />
-          </div>
-          <p className="text-2xl font-bold font-mono text-cyan-300">{activeWarranties}</p>
-          <span className="text-[10px] text-zinc-500">Cobertura do Ateliê em dia</span>
-        </div>
-
-        <div className="bg-zinc-900/80 border border-amber-900/40 p-5 rounded-2xl space-y-1">
-          <div className="flex items-center justify-between">
             <span className="text-xs text-zinc-400 font-medium">Coleções Ativas</span>
             <Layers className="w-5 h-5 text-amber-400" />
           </div>
           <p className="text-2xl font-bold font-mono text-amber-300">{collectionsList.length}</p>
-          <span className="text-[10px] text-zinc-500">Modelos cadastrados no sistema</span>
+          <span className="text-[10px] text-zinc-500">Linhas de catálogo registradas</span>
         </div>
 
       </div>
@@ -137,7 +156,7 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
         <div className="relative w-full md:w-80">
           <input
             type="text"
-            placeholder="Buscar por título, ID, número de série..."
+            placeholder="Buscar joia pai por título, ID ou série..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-amber-100 placeholder-zinc-500 focus:outline-none focus:border-amber-500"
@@ -187,161 +206,166 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-amber-900/40 text-amber-400 font-semibold uppercase tracking-wider bg-zinc-950/80">
-                <th className="p-4">Joia / Título</th>
-                <th className="p-4">ID / N° Série</th>
+                <th className="p-4">Joia Pai (Modelo Base)</th>
+                <th className="p-4">ID Raiz / Série Base</th>
                 <th className="p-4">Metal & Peso</th>
-                <th className="p-4">Gemas Preciosas</th>
+                <th className="p-4">Joias Filhas / Clientes</th>
                 <th className="p-4">Coleção / Marca</th>
-                <th className="p-4">Garantia</th>
+                <th className="p-4">Garantia Base</th>
                 <th className="p-4 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/80">
-              {filteredCertificates.map((cert) => (
-                <tr key={cert.id} className="hover:bg-zinc-800/50 transition-colors text-zinc-200">
-                  
-                  {/* Title & Image */}
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-black border border-zinc-800 p-0.5 shrink-0 overflow-hidden">
-                        <img 
-                          src={formatImageUrl(cert.images[0])} 
-                          alt={cert.title} 
-                          className="w-full h-full object-cover rounded"
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
-                      <div>
-                        <span 
-                          onClick={() => onSelectCertificate(cert)}
-                          className="font-bold text-amber-200 hover:text-amber-100 hover:underline cursor-pointer text-sm block"
-                        >
-                          {cert.title}
-                        </span>
-                        <span className="text-[10px] text-zinc-500">
-                          {cert.currentOwnerName ? `Cliente: ${cert.currentOwnerName}` : 'Sem Titular Registrado'}
-                        </span>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* ID & Serial */}
-                  <td className="p-4 font-mono">
-                    <span className="block font-semibold text-amber-300">{cert.id}</span>
-                    <span className="text-[10px] text-zinc-500">{cert.serialNumber}</span>
-                  </td>
-
-                  {/* Metal & Weight */}
-                  <td className="p-4">
-                    <span className="font-semibold text-zinc-300 block">{cert.metalPurity}</span>
-                    <span className="text-[10px] text-zinc-500">
-                      {cert.grossWeightGrams}g{cert.widthCm && cert.widthCm > 0 ? ` • ${cert.widthCm}cm` : ''} ({cert.finish})
-                    </span>
-                  </td>
-
-                  {/* Gems */}
-                  <td className="p-4">
-                    {cert.hasStones && cert.stones.length > 0 ? (
-                      <div className="space-y-0.5">
-                        {cert.stones.map((s, idx) => (
-                          <div key={idx} className="flex items-center gap-1 text-[11px] text-zinc-300">
-                            <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
-                            <span>{s.quantity}x {s.type} {s.caratWeight > 0 ? `(${s.caratWeight}ct)` : ''}</span>
+              {filteredCertificates.map((cert) => {
+                const childCerts = getChildCertificatesForParent(cert, certificates);
+                return (
+                  <tr key={cert.id} className="hover:bg-zinc-800/50 transition-colors text-zinc-200">
+                    
+                    {/* Title & Image */}
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-lg bg-black border border-zinc-800 p-0.5 shrink-0 overflow-hidden relative">
+                          <img 
+                            src={formatImageUrl(cert.images[0])} 
+                            alt={cert.title} 
+                            className="w-full h-full object-cover rounded"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase">
+                              Joia Pai / Raiz
+                            </span>
                           </div>
-                        ))}
+                          <span 
+                            onClick={() => onSelectCertificate(cert)}
+                            className="font-bold text-amber-200 hover:text-amber-100 hover:underline cursor-pointer text-sm block"
+                          >
+                            {cert.title}
+                          </span>
+                        </div>
                       </div>
-                    ) : (
-                      <span className="text-zinc-500 italic text-[11px]">Sem pedras</span>
-                    )}
-                  </td>
+                    </td>
 
-                  {/* Collection */}
-                  <td className="p-4">
-                    <span className="text-zinc-300 block">{cert.collection}</span>
-                    <span className="text-[10px] text-zinc-500">{cert.manufacturer}</span>
-                  </td>
+                    {/* ID & Serial */}
+                    <td className="p-4 font-mono">
+                      <span className="block font-semibold text-amber-300">{cert.id}</span>
+                      <span className="text-[10px] text-zinc-500">{cert.serialNumber}</span>
+                    </td>
 
-                  {/* Warranty Status */}
-                  <td className="p-4">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                      cert.warrantyStatus === 'Ativa' || cert.warrantyStatus === 'Vitalícia'
-                        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                        : 'bg-zinc-800 text-zinc-400 border-zinc-700'
-                    }`}>
-                      {cert.warrantyStatus}
-                    </span>
-                  </td>
+                    {/* Metal & Weight */}
+                    <td className="p-4">
+                      <span className="font-semibold text-zinc-300 block">{cert.metalPurity}</span>
+                      <span className="text-[10px] text-zinc-500">
+                        {cert.grossWeightGrams}g{cert.widthCm && cert.widthCm > 0 ? ` • ${cert.widthCm}cm` : ''} ({cert.finish})
+                      </span>
+                    </td>
 
-                  {/* Action buttons */}
-                  <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      {onOpenQueryCustomersModal && (
-                        <button
-                          onClick={() => onOpenQueryCustomersModal(cert)}
-                          className="p-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-colors"
-                          title="Consultar Clientes que adquiriram esta joia"
-                          id={`btn-query-cust-${cert.id}`}
+                    {/* Child Certificates issued count */}
+                    <td className="p-4">
+                      {childCerts.length > 0 ? (
+                        <div 
+                          onClick={() => onOpenQueryCustomersModal && onOpenQueryCustomersModal(cert)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 font-semibold cursor-pointer hover:bg-amber-500/20 transition-colors"
+                          title="Clique para ver todas as joias filhas dos clientes"
                         >
-                          <Users className="w-4 h-4" />
-                        </button>
+                          <Users className="w-3.5 h-3.5 text-amber-400" />
+                          <span>{childCerts.length} Joia(s) Filha(s) Emitida(s)</span>
+                        </div>
+                      ) : (
+                        <span className="text-zinc-500 italic text-[11px]">Nenhuma filha emitida</span>
                       )}
+                    </td>
 
-                      {onOpenLinkCustomerModal && (
+                    {/* Collection */}
+                    <td className="p-4">
+                      <span className="text-zinc-300 block">{cert.collection}</span>
+                      <span className="text-[10px] text-zinc-500">{cert.manufacturer}</span>
+                    </td>
+
+                    {/* Warranty Status */}
+                    <td className="p-4">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        cert.warrantyStatus === 'Ativa' || cert.warrantyStatus === 'Vitalícia'
+                          ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                          : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                      }`}>
+                        {cert.warrantyStatus}
+                      </span>
+                    </td>
+
+                    {/* Action buttons */}
+                    <td className="p-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {onOpenQueryCustomersModal && (
+                          <button
+                            onClick={() => onOpenQueryCustomersModal(cert)}
+                            className="p-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-colors"
+                            title="Consultar Joia Pai e exibir todas as Joias Filhas dos clientes"
+                            id={`btn-query-cust-${cert.id}`}
+                          >
+                            <Users className="w-4 h-4" />
+                          </button>
+                        )}
+
+                        {onOpenLinkCustomerModal && (
+                          <button
+                            onClick={() => onOpenLinkCustomerModal(cert)}
+                            className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-amber-300 transition-colors"
+                            title="Emitir/Vincular nova Joia Filha a um Cliente"
+                            id={`btn-link-cust-${cert.id}`}
+                          >
+                            <UserPlus className="w-4 h-4" />
+                          </button>
+                        )}
+
                         <button
-                          onClick={() => onOpenLinkCustomerModal(cert)}
+                          onClick={() => onSelectCertificate(cert)}
                           className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-amber-300 transition-colors"
-                          title="Vincular esta joia a um Cliente"
-                          id={`btn-link-cust-${cert.id}`}
+                          title="Ver Passaporte Modelo Base"
+                          id={`btn-view-${cert.id}`}
                         >
-                          <UserPlus className="w-4 h-4" />
+                          <Eye className="w-4 h-4" />
                         </button>
-                      )}
 
-                      <button
-                        onClick={() => onSelectCertificate(cert)}
-                        className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-amber-300 transition-colors"
-                        title="Ver Passaporte Público"
-                        id={`btn-view-${cert.id}`}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                        <button
+                          onClick={() => onOpenPrintModal(cert)}
+                          className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-amber-300 transition-colors cursor-pointer"
+                          title="Imprimir Ficha de Matriz"
+                          id={`btn-print-${cert.id}`}
+                        >
+                          <Printer className="w-4 h-4" />
+                        </button>
 
-                      <button
-                        onClick={() => onOpenPrintModal(cert)}
-                        className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-amber-300 transition-colors cursor-pointer"
-                        title="Imprimir Certificado"
-                        id={`btn-print-${cert.id}`}
-                      >
-                        <Printer className="w-4 h-4" />
-                      </button>
+                        <button
+                          onClick={() => onEditCertificate(cert)}
+                          className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
+                          title="Editar Joia Pai"
+                          id={`btn-edit-${cert.id}`}
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
 
-                      <button
-                        onClick={() => onEditCertificate(cert)}
-                        className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
-                        title="Editar Joia"
-                        id={`btn-edit-${cert.id}`}
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
+                        <button
+                          onClick={() => onDeleteCertificate(cert)}
+                          className="p-1.5 rounded-lg bg-zinc-800 hover:bg-red-900/60 text-zinc-400 hover:text-red-300 transition-colors"
+                          title="Excluir Joia Pai"
+                          id={`btn-delete-${cert.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
 
-                      <button
-                        onClick={() => onDeleteCertificate(cert)}
-                        className="p-1.5 rounded-lg bg-zinc-800 hover:bg-red-900/60 text-zinc-400 hover:text-red-300 transition-colors"
-                        title="Excluir Certificado"
-                        id={`btn-delete-${cert.id}`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-
-                </tr>
-              ))}
+                  </tr>
+                );
+              })}
 
               {filteredCertificates.length === 0 && (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-zinc-500">
-                    Nenhum certificado de joia foi encontrado para os filtros selecionados.
+                    Nenhuma Joia Pai / Modelo Base encontrada para os filtros selecionados.
                   </td>
                 </tr>
               )}
@@ -353,3 +377,4 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
     </div>
   );
 };
+

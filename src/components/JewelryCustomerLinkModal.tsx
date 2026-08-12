@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { JewelryCertificate, Customer } from '../types';
 import { 
   X, ArrowRightLeft, ShieldCheck, CheckCircle2, User, Users, Gem, 
-  Sparkles, Calendar, FileText, ExternalLink, AlertCircle 
+  Sparkles, Calendar, FileText, ExternalLink, AlertCircle, Award 
 } from 'lucide-react';
 import { formatImageUrl } from '../utils/imageUtils';
+import { isRootCert } from '../utils/certHierarchy';
 
 interface JewelryCustomerLinkModalProps {
   isOpen: boolean;
@@ -32,8 +33,13 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
 }) => {
   if (!isOpen) return null;
 
+  // Filter root certs for priority display in dropdown
+  const rootCertificates = certificates.filter(isRootCert);
+
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>(preSelectedCustomer?.id || (customers[0]?.id || ''));
-  const [selectedCertId, setSelectedCertId] = useState<string>(preSelectedCert?.id || '');
+  const [selectedCertId, setSelectedCertId] = useState<string>(
+    preSelectedCert?.id || (rootCertificates[0]?.id || (certificates[0]?.id || ''))
+  );
   const [notes, setNotes] = useState('');
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
   const [submitted, setSubmitted] = useState(false);
@@ -48,12 +54,15 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
 
     if (preSelectedCert) {
       setSelectedCertId(preSelectedCert.id);
+    } else if (rootCertificates.length > 0 && (!selectedCertId || !certificates.some(c => c.id === selectedCertId))) {
+      setSelectedCertId(rootCertificates[0].id);
     }
   }, [preSelectedCustomer, preSelectedCert, isOpen]);
 
   // Derived objects from selection
   const currentCustomer = customers.find(c => c.id === selectedCustomerId) || null;
   const currentCert = certificates.find(c => c.id === selectedCertId) || null;
+  const isSelectedRoot = currentCert ? isRootCert(currentCert) : false;
 
   const handleCertSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const certId = e.target.value;
@@ -90,10 +99,10 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
             </div>
             <div>
               <h2 className="font-serif text-xl font-bold text-amber-100">
-                Nova Funcionalidade: Vincular Joia ao Cliente
+                Emitir Joia Filha & Vincular ao Cliente
               </h2>
               <p className="text-xs text-zinc-400">
-                Relacione uma joia do estoque/acervo ao cadastro do cliente e emita o certificado de propriedade.
+                Selecione a Joia Pai/Raiz do acervo e o cliente. O sistema criará uma Joia Filha com Passaporte Digital exclusivo.
               </p>
             </div>
           </div>
@@ -109,9 +118,9 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
         {submitted ? (
           <div className="py-12 text-center space-y-4">
             <CheckCircle2 className="w-16 h-16 text-emerald-400 mx-auto animate-bounce" />
-            <h3 className="text-2xl font-bold text-amber-200 font-serif">Vínculo Registrado com Sucesso!</h3>
+            <h3 className="text-2xl font-bold text-amber-200 font-serif">Joia Filha Emitida com Sucesso!</h3>
             <p className="text-sm text-zinc-300 max-w-md mx-auto">
-              A joia <strong className="text-amber-300">{currentCert?.title}</strong> foi vinculada a <strong className="text-amber-300">{currentCustomer?.name}</strong>. O passaporte digital de autenticidade foi atualizado no sistema.
+              A nova Joia Filha baseada em <strong className="text-amber-300">{currentCert?.title}</strong> foi gerada e vinculada com sucesso a <strong className="text-amber-300">{currentCustomer?.name}</strong>. A Joia Pai permaneceu intacta no catálogo.
             </p>
           </div>
         ) : (
@@ -151,11 +160,11 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
               )}
             </div>
 
-            {/* ETAPA 2: SELEÇÃO DA JOIA A SER VINCULADA */}
+            {/* ETAPA 2: SELEÇÃO DA JOIA PAI / RAIZ */}
             <div className="space-y-2 bg-zinc-900/80 p-4 rounded-2xl border border-zinc-800">
               <label className="block text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
                 <Gem className="w-4 h-4 text-amber-400" />
-                <span>2. Selecionar Joia a ser Vinculada</span>
+                <span>2. Selecionar Joia Pai / Raiz do Catálogo</span>
               </label>
 
               {certificates.length === 0 ? (
@@ -164,12 +173,12 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
                 <select
                   value={selectedCertId}
                   onChange={handleCertSelectChange}
-                  className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-amber-100 text-sm focus:outline-none focus:border-amber-500 font-semibold"
+                  className="w-full p-3 bg-zinc-950 border border-amber-900/60 rounded-xl text-amber-100 text-sm focus:outline-none focus:border-amber-500 font-bold"
                 >
-                  <option value="">-- Selecione a peça do acervo/estoque --</option>
-                  {certificates.map(cert => (
+                  <option value="">-- Selecione a Joia Pai (Matriz) --</option>
+                  {rootCertificates.map(cert => (
                     <option key={cert.id} value={cert.id}>
-                      {cert.serialNumber} — {cert.title} ({cert.metalPurity}) {cert.currentOwnerName ? `[Atual: ${cert.currentOwnerName}]` : '[Em Estoque]'}
+                      [Joia Pai] {cert.title} ({cert.id}) — Série: {cert.serialNumber}
                     </option>
                   ))}
                 </select>
@@ -182,27 +191,37 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
                 <div className="flex items-center justify-between border-b border-amber-900/30 pb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-amber-400" />
-                    <span>3. Informações Preenchidas Automáticas da Joia</span>
+                    <span>3. Especificações Herdados da Joia Pai</span>
                   </span>
                   <span className="text-[11px] font-mono text-emerald-400 font-semibold">
-                    * Dados carregados do acervo
+                    * Joia Pai intacta no catálogo
                   </span>
                 </div>
 
                 {/* Resumo Visual da Joia Selecionada */}
                 <div className="flex items-start gap-4 bg-zinc-950 p-3.5 rounded-xl border border-zinc-800">
-                  <div className="w-20 h-20 rounded-xl bg-zinc-900 overflow-hidden border border-zinc-800 shrink-0">
+                  <div className="w-20 h-20 rounded-xl bg-zinc-900 overflow-hidden border border-zinc-800 shrink-0 relative">
                     <img 
                       src={formatImageUrl(currentCert.images[0])} 
                       alt={currentCert.title}
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
                     />
+                    {isSelectedRoot && (
+                      <span className="absolute bottom-1 right-1 bg-amber-500 text-zinc-950 p-0.5 rounded text-[9px] font-bold">
+                        Pai
+                      </span>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0 space-y-1 text-xs">
-                    <span className="font-mono text-amber-400 text-[11px] font-bold block">
-                      N° SÉRIE BASE: {currentCert.serialNumber}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-amber-400 text-[11px] font-bold">
+                        ID RAIZ: {currentCert.id}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/30">
+                        Matriz Base
+                      </span>
+                    </div>
                     <h4 className="font-serif font-bold text-amber-100 text-base truncate">
                       {currentCert.title}
                     </h4>
@@ -215,13 +234,13 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
                   </div>
                 </div>
 
-                {/* Warning / Informative Badge if Piece already has another owner */}
-                {currentCert.currentOwnerName && currentCustomer && currentCert.currentOwnerName.trim().toLowerCase() !== currentCustomer.name.trim().toLowerCase() && (
-                  <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-2.5 text-xs text-amber-200">
-                    <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                {/* Informative Badge about Child Certificate Generation */}
+                {currentCustomer && (
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/40 rounded-xl flex items-start gap-2.5 text-xs text-amber-200">
+                    <Award className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                     <div>
-                      <strong className="block font-bold text-amber-300">Emissão de Novo Passaporte Individual</strong>
-                      Esta joia possui como titular original <span className="underline font-semibold">{currentCert.currentOwnerName}</span>. Ao confirmar o vínculo para <span className="font-bold text-amber-100">{currentCustomer.name}</span>, o sistema criará um <strong>novo Certificado e N° de Série exclusivo</strong> para este comprador, mantendo a autenticidade e independência de ambos os passaportes.
+                      <strong className="block font-bold text-amber-300 text-sm">Geração de Joia Filha Individual</strong>
+                      Ao confirmar, o sistema gerará uma <strong>Joia Filha</strong> com N° de Série e Passaporte Digital exclusivos para o cliente <span className="font-bold text-amber-100 underline">{currentCustomer.name}</span>. A Joia Pai (<span className="font-mono text-amber-300">{currentCert.title}</span>) permanecerá no acervo como modelo principal, sem ser alterada ou vinculada diretamente.
                     </div>
                   </div>
                 )}
@@ -244,11 +263,11 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
                   <div>
                     <label className="block text-xs font-semibold text-amber-200 mb-1 flex items-center gap-1">
                       <FileText className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Observações Especiais do Vínculo</span>
+                      <span>Observações da Emissão para o Cliente</span>
                     </label>
                     <input
                       type="text"
-                      placeholder="Ex: Presente de Aniversário de Casamento / Ajuste de Aro Gratuito"
+                      placeholder="Ex: Emissão especial / Presente de Aniversário de Casamento"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       className="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500"
@@ -260,7 +279,7 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
             ) : (
               <div className="p-4 bg-amber-950/20 border border-amber-900/30 rounded-2xl text-xs text-amber-300/80 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Selecione uma joia no menu acima para visualizar o preenchimento automático de informações.</span>
+                <span>Selecione uma joia pai no menu acima para visualizar os dados herdados.</span>
               </div>
             )}
 
@@ -279,7 +298,7 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
                 className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-zinc-950 font-bold text-xs shadow-lg shadow-amber-950/60 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Confirmar Vínculo & Gerar Passaporte</span>
+                <span>Emitir Joia Filha & Passaporte</span>
               </button>
             </div>
 
@@ -290,3 +309,4 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
     </div>
   );
 };
+

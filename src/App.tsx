@@ -23,6 +23,7 @@ import { LoginView } from './components/LoginView';
 import { UserManagementModal } from './components/UserManagementModal';
 import { CustomerPortalView } from './components/CustomerPortalView';
 import { extractCertIdFromInput, findCertificateByQuery } from './utils/certUtils';
+import { isRootCert, getChildCertificatesForParent } from './utils/certHierarchy';
 import { ShieldAlert, Search, QrCode } from 'lucide-react';
 
 export const getCertIdFromUrl = (): string | null => {
@@ -641,21 +642,13 @@ export default function App() {
 
     const issueDateStr = customIssueDate || new Date().toISOString().split('T')[0];
 
-    // Check if target ALREADY belongs to another customer
-    const isAlreadyOwnedByOther = Boolean(
-      target.currentOwnerName &&
-      target.currentOwnerName.trim().length > 0 &&
-      (
-        (target.ownerId && target.ownerId !== customer.id) ||
-        (target.ownerCpf && target.ownerCpf.replace(/\D/g, '') !== customer.cpf.replace(/\D/g, '')) ||
-        (target.currentOwnerName.trim().toLowerCase() !== customer.name.trim().toLowerCase())
-      )
-    );
+    const targetIsRoot = isRootCert(target);
 
-    if (isAlreadyOwnedByOther) {
-      // Create a NEW independent Certificate & Serial Number instance for this new buyer!
-      const countOfSameTitle = certificates.filter(c => c.title.trim().toLowerCase() === target.title.trim().toLowerCase()).length;
-      const newSuffix = countOfSameTitle + 1;
+    // If target is ROOT/PAI or ALREADY owned by another customer, create a NEW CHILD Certificate!
+    if (targetIsRoot || (target.currentOwnerName && target.currentOwnerName.trim().length > 0 && target.ownerId !== customer.id)) {
+      const parentRootId = targetIsRoot ? target.id : (target.parentCertId || target.id);
+      const existingChildren = certificates.filter(c => c.parentCertId === parentRootId || c.title.trim().toLowerCase() === target.title.trim().toLowerCase());
+      const newSuffix = existingChildren.length + 1;
       const newCertId = `CERT-2026-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
       const baseSerial = target.serialNumber.replace(/-\d+$/, '');
       const newSerialNumber = `${baseSerial}-${newSuffix}`;
@@ -665,16 +658,18 @@ export default function App() {
         date: issueDateStr,
         type: 'Emissão de Certificado' as const,
         performer: companyName || 'Maison Lumière',
-        notes: notes || `Emissão de passaporte digital individual para a joia "${target.title}" adquirida por "${customer.name}".`,
+        notes: notes || `Emissão de passaporte digital (Joia Filha) para "${target.title}" adquirida por "${customer.name}".`,
         customerId: customer.id,
         customerName: customer.name,
         customerCpf: customer.cpf,
         customerEmail: customer.email
       };
 
-      const newCert: JewelryCertificate = {
+      const childCert: JewelryCertificate = {
         ...target,
         id: newCertId,
+        isRoot: false,
+        parentCertId: parentRootId,
         serialNumber: newSerialNumber,
         issueDate: issueDateStr,
         currentOwnerName: customer.name,
@@ -687,19 +682,19 @@ export default function App() {
         updatedAt: new Date().toISOString()
       };
 
-      setCertificates(prev => [newCert, ...prev]);
+      setCertificates(prev => [childCert, ...prev]);
 
       try {
         await fetch('/api/certificates', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newCert)
+          body: JSON.stringify(childCert)
         });
       } catch (e) {
-        console.error('Error creating new certificate clone for customer:', e);
+        console.error('Error creating child certificate for customer:', e);
       }
     } else {
-      // In stock or already owned by this same customer - update directly
+      // It's already a child certificate in stock or owned by same customer - update directly
       const linkRecord: MaintenanceRecord = {
         id: `m-link-${Date.now()}`,
         date: issueDateStr,
@@ -1225,6 +1220,11 @@ export default function App() {
         onSelectCustomer={(cust) => {
           setIsQueryModalOpen(false);
           setViewMode('customers');
+        }}
+        onSelectCertForView={(cert) => {
+          setIsQueryModalOpen(false);
+          setSelectedCert(cert);
+          setViewMode('public-passport');
         }}
       />
 

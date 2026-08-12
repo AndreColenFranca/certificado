@@ -284,11 +284,13 @@ app.get('/api/certificates', (req, res) => {
   res.json({ success: true, count: certificatesDb.length, data: certificatesDb });
 });
 
-// Get certificate by ID or Serial Number
+// Get certificate by ID, Serial Number or Authenticity Hash
 app.get('/api/certificates/:id', (req, res) => {
   const query = req.params.id.trim().toUpperCase();
   const cert = certificatesDb.find(
-    c => c.id.toUpperCase() === query || c.serialNumber.toUpperCase() === query
+    c => c.id.toUpperCase() === query ||
+         c.serialNumber.toUpperCase() === query ||
+         (c.authenticityHash && c.authenticityHash.toUpperCase() === query)
   );
 
   if (!cert) {
@@ -449,6 +451,21 @@ async function startServer() {
       appType: 'spa',
     });
     app.use(vite.middlewares);
+
+    app.get('*', async (req, res, next) => {
+      if (req.originalUrl.startsWith('/api')) {
+        return next();
+      }
+      try {
+        const url = req.originalUrl;
+        let template = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf-8');
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+      } catch (e) {
+        vite.ssrFixStacktrace(e as Error);
+        next(e);
+      }
+    });
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));

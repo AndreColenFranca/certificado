@@ -80,6 +80,8 @@ export default function App() {
     return INITIAL_CERTIFICATES[0];
   });
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const urlCertId = getCertIdFromUrl();
+    if (urlCertId) return 'public-passport';
     const storedUser = localStorage.getItem('aureum_logged_user');
     if (storedUser) {
       try {

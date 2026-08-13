@@ -1,0 +1,17 @@
+﻿{
+    "version":  "0.1.0",
+    "name":  "certificado",
+    "description":  "Created with Synkra AIOX",
+    "scripts":  {
+                    "typecheck":  "echo \u0027Add your typecheck script\u0027",
+                    "lint":  "echo \u0027Add your lint script\u0027",
+                    "build":  "echo \u0027Add your build script\u0027",
+                    "dev":  "echo \u0027Add your dev script\u0027",
+                    "test":  "echo \u0027Add your test script\u0027"
+                },
+    "author":  "",
+    "keywords":  [
+
+                 ],
+    "license":  "ISC"
+}

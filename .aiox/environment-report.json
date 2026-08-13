@@ -1,0 +1,59 @@
+﻿{
+    "cli_tools":  {
+                      "gh":  {
+                                 "authenticated":  true,
+                                 "version":  "2.86.0 (2026-01-21)",
+                                 "installed":  true
+                             },
+                      "supabase":  {
+                                       "authenticated":  true,
+                                       "version":  "2.114.0",
+                                       "installed":  true
+                                   },
+                      "docker":  {
+                                     "running":  true,
+                                     "version":  "29.5.3",
+                                     "installed":  true
+                                 },
+                      "node":  {
+                                   "path":  "C:\\Program Files\\nodejs\\node.exe",
+                                   "version":  "22.22.0",
+                                   "installed":  true
+                               },
+                      "git":  {
+                                  "path":  "C:\\Program Files\\Git\\cmd\\git.exe",
+                                  "version":  "2.52.0.windows.1",
+                                  "installed":  true
+                              },
+                      "railway":  {
+                                      "installed":  true,
+                                      "version":  [
+                                                      "railway 5.38.0",
+                                                      ""
+                                                  ]
+                                  },
+                      "npm":  {
+                                  "installed":  true,
+                                  "version":  "10.9.4"
+                              }
+                  },
+    "generated_at":  "2026-08-13T01:40:07",
+    "repository":  {
+                       "branch":  "master",
+                       "initialized":  true,
+                       "url":  "https://github.com/AndreColenFranca/certificado",
+                       "remote":  "origin"
+                   },
+    "validation":  {
+                       "recommended_partial":  true,
+                       "ready_for_development":  true,
+                       "essential_complete":  true
+                   },
+    "system":  {
+                   "architecture":  "x64",
+                   "user":  "andre",
+                   "os":  "Microsoft Windows NT 10.0.26200.0",
+                   "hostname":  "ANDRE"
+               },
+    "project_name":  "certificado"
+}

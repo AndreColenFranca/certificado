@@ -33,6 +33,11 @@ const PORT = 3000;
 
 app.use(express.json({ limit: '10mb' }));
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({ message: 'API Certificado de Joias', status: 'online', version: '1.0' });
+});
+
 // Initialize Supabase Client
 const supabaseUrl = process.env.SUPABASE_URL || 'https://btnxzffcuvwhuxdeshpk.supabase.co';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';

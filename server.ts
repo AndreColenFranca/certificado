@@ -682,9 +682,10 @@ app.get('/api/users', (req, res) => {
 });
 
 // Create new user (Allowed for Root, Admins or authenticated system requests)
-app.post('/api/users', (req, res) => {
+app.post('/api/users', async (req, res) => {
   try {
-    const { requesterEmail, name, email, password, role } = req.body;
+    const { requesterEmail, name, email, password, role, orgId } = req.body;
+    const userOrgId = (req as any).user?.org_id || orgId || DEFAULT_ORG_ID;
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Nome, e-mail e senha são obrigatórios' });
@@ -709,6 +710,27 @@ app.post('/api/users', (req, res) => {
     usersDb.push(newUser);
     const { password: _, ...safeUser } = newUser;
 
+    // Criar entry em auth_users com org_id (vinculação automática)
+    try {
+      const { error: authUserError } = await supabase
+        .from('auth_users')
+        .insert({
+          id: newUser.id,
+          email: cleanEmail,
+          name: name.trim(),
+          org_id: userOrgId,
+          role: role || 'operator',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      if (authUserError) {
+        console.warn('Erro ao criar entry em auth_users:', authUserError);
+      }
+    } catch (supabaseErr) {
+      console.warn('Supabase error creating auth_users:', supabaseErr);
+    }
+
     // Automatically sync customer role users to customersDb
     if (newUser.role === 'customer') {
       const existingCust = customersDb.find(c => c.email.trim().toLowerCase() === cleanEmail);
@@ -730,7 +752,7 @@ app.post('/api/users', (req, res) => {
     res.status(201).json({
       success: true,
       data: safeUser,
-      message: `Usuário "${name.trim()}" cadastrado com sucesso!`
+      message: `Usuário "${name.trim()}" cadastrado com sucesso na org ${userOrgId}!`
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message || 'Erro ao cadastrar usuário' });

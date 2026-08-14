@@ -15,7 +15,7 @@ interface JewelryCustomerQueryModalProps {
   initialCertId?: string | null;
   onOpenLinkModal?: (cert: JewelryCertificate) => void;
   onSelectCustomer?: (customer: Customer) => void;
-  onSelectCertForView?: (cert: JewelryCertificate, tab?: 'photo-inspector' | 'specs' | 'certificate' | 'history' | 'care') => void;
+  onSelectCertForView?: (cert: JewelryCertificate, tab?: 'photo-inspector' | 'specs' | 'history' | 'care') => void;
 }
 
 export const JewelryCustomerQueryModal: React.FC<JewelryCustomerQueryModalProps> = ({
@@ -288,7 +288,7 @@ export const JewelryCustomerQueryModal: React.FC<JewelryCustomerQueryModalProps>
 
                                 <button
                                   onClick={() => {
-                                    onSelectCertForView(child, 'certificate');
+                                    onSelectCertForView(child, 'photo-inspector');
                                     onClose();
                                   }}
                                   className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-zinc-950 font-bold text-xs flex items-center gap-1 border border-amber-400 transition-colors shadow-sm cursor-pointer"

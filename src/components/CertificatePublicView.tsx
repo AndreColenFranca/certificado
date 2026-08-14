@@ -156,7 +156,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/40">
                 <ShieldCheck className="w-4 h-4 text-amber-400" />
-                {activeTab === 'certificate' ? 'Certificado de Autenticidade da Joia' : 'Passaporte Digital de Autenticidade'}
+                Passaporte Digital de Autenticidade
               </span>
 
               <span className="px-2.5 py-1 rounded-full text-xs font-mono bg-zinc-800 text-zinc-300 border border-zinc-700">

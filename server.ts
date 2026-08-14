@@ -43,7 +43,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 let certificatesDb: JewelryCertificate[] = [...INITIAL_CERTIFICATES];
 let customersDb: Customer[] = [...INITIAL_CUSTOMERS];
 
-// Predefined Users DB with Root User and Sample Customer Users
+// Only Admin User - All customer users come from Supabase
 let usersDb: any[] = [
   {
     id: 'user-root-001',
@@ -53,50 +53,6 @@ let usersDb: any[] = [
     role: 'root',
     createdAt: new Date().toISOString(),
     isRoot: true
-  },
-  {
-    id: 'user-cli-1001',
-    name: 'Helena Cavalcanti de Albuquerque',
-    email: 'helena.albuquerque@maisonlumiere.com.br',
-    password: '123456',
-    role: 'customer',
-    customerId: 'CLI-1001',
-    cpf: '123.456.789-01',
-    createdAt: new Date().toISOString(),
-    isRoot: false
-  },
-  {
-    id: 'user-cli-1002',
-    name: 'Dra. Beatriz Montebello',
-    email: 'beatriz.montebello@montebello.adv.br',
-    password: '123456',
-    role: 'customer',
-    customerId: 'CLI-1002',
-    cpf: '234.567.890-12',
-    createdAt: new Date().toISOString(),
-    isRoot: false
-  },
-  {
-    id: 'user-cli-1005',
-    name: 'Amanda Almeida',
-    email: 'aa@aa.com',
-    password: '123456',
-    role: 'customer',
-    customerId: 'CLI-1005',
-    cpf: '555.666.777-88',
-    createdAt: new Date().toISOString(),
-    isRoot: false
-  },
-  {
-    id: 'user-cli-1006',
-    name: 'Andre Luiz Colen',
-    email: 'andre@andre.com',
-    password: '123456',
-    role: 'customer',
-    customerId: 'CLI-1006',
-    cpf: '999.888.777-66',
-    createdAt: new Date().toISOString(),
-    isRoot: false
   }
 ];
 
@@ -744,31 +700,18 @@ app.delete('/api/users/:id', (req, res) => {
 // Get all customers
 app.get('/api/customers', async (req, res) => {
   try {
-    // Use local database as source of truth, sync any customer users from usersDb
-    // Note: Supabase sync disabled to ensure local deletions are reflected immediately
-    usersDb.forEach(u => {
-      if (u.role === 'customer') {
-        const uEmail = u.email.trim().toLowerCase();
-        const found = customersDb.find(c => c.email.trim().toLowerCase() === uEmail);
-        if (!found) {
-          customersDb.unshift({
-            id: u.customerId || `CLI-${Math.floor(1000 + Math.random() * 9000)}`,
-            name: u.name,
-            cpf: u.cpf || '',
-            email: u.email,
-            phone: u.phone || '',
-            notes: 'Cliente Cadastrado no Sistema',
-            createdAt: u.createdAt || new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          });
-        }
-      }
-    });
+    // ALWAYS load from Supabase - no local data
+    const result = await getCustomers(supabase);
 
-    res.json({ success: true, count: customersDb.length, data: customersDb });
+    if (result.success && result.data) {
+      return res.json({ success: true, count: result.data.length, data: result.data });
+    }
+
+    // If Supabase fails, return empty (not local data)
+    res.json({ success: true, count: 0, data: [] });
   } catch (err: any) {
     console.error('Error fetching customers:', err);
-    res.json({ success: true, count: customersDb.length, data: customersDb });
+    res.status(500).json({ success: false, error: err.message, data: [] });
   }
 });
 
@@ -1003,12 +946,18 @@ app.post('/api/certificates/sync', (req, res) => {
   }
 });
 
-// Get all certificates (using local database)
+// Get all certificates (ALWAYS from Supabase)
 app.get('/api/certificates', async (req, res) => {
   try {
-    // Use local database as source of truth
-    // Note: Supabase sync disabled to ensure local deletions are reflected immediately
-    res.json({ success: true, count: certificatesDb.length, data: certificatesDb });
+    // ALWAYS load from Supabase - no local data
+    const result = await getCertificates(supabase);
+
+    if (result.success && result.data) {
+      return res.json({ success: true, count: result.data.length, data: result.data });
+    }
+
+    // If Supabase fails, return empty (not local data)
+    res.json({ success: true, count: 0, data: [] });
   } catch (err: any) {
     console.error('Error fetching certificates:', err);
     res.json({ success: true, count: certificatesDb.length, data: certificatesDb });

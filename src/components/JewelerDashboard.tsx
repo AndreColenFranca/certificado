@@ -24,7 +24,7 @@ import {
 
 interface JewelerDashboardProps {
   certificates: JewelryCertificate[];
-  onSelectCertificate: (cert: JewelryCertificate, tab?: 'photo-inspector' | 'specs' | 'certificate' | 'history' | 'care') => void;
+  onSelectCertificate: (cert: JewelryCertificate, tab?: 'photo-inspector' | 'specs' | 'history' | 'care') => void;
   onOpenCreateModal: () => void;
   onOpenPrintModal: (cert: JewelryCertificate) => void;
   onDeleteCertificate: (cert: JewelryCertificate) => void;
@@ -225,12 +225,18 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-lg bg-black border border-zinc-800 p-0.5 shrink-0 overflow-hidden relative">
-                          <img 
-                            src={formatImageUrl(cert.images[0])} 
-                            alt={cert.title} 
-                            className="w-full h-full object-cover rounded"
-                            referrerPolicy="no-referrer"
-                          />
+                          {cert.images?.[0] ? (
+                            <img
+                              src={formatImageUrl(cert.images[0])}
+                              alt={cert.title}
+                              className="w-full h-full object-cover rounded"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                              <Gem className="w-6 h-6 text-zinc-600" />
+                            </div>
+                          )}
                         </div>
                         <div>
                           <span 

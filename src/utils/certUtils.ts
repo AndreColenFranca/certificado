@@ -33,8 +33,22 @@ export const extractCertIdFromInput = (input: string | null | undefined): string
     console.error('Error parsing cert input:', e);
   }
 
-  // Fallback to the raw string if no URL pattern matched
-  return trimmed;
+  // Don't return URLs, paths, or invalid patterns
+  if (trimmed.startsWith('/') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return null;
+  }
+
+  // Don't return empty or whitespace-only strings
+  if (!trimmed || !trimmed.trim()) {
+    return null;
+  }
+
+  // Only return if it looks like a valid ID (contains alphanumeric, dash, underscore)
+  if (/^[a-zA-Z0-9\-_]+$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  return null;
 };
 
 /**

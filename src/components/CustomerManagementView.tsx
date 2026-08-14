@@ -15,7 +15,7 @@ interface CustomerManagementViewProps {
   onOpenCreateCustomer: () => void;
   onEditCustomer: (customer: Customer) => void;
   onDeleteCustomer: (customer: Customer) => void;
-  onSelectCertificate: (cert: JewelryCertificate, tab?: 'photo-inspector' | 'specs' | 'certificate' | 'history' | 'care') => void;
+  onSelectCertificate: (cert: JewelryCertificate, tab?: 'photo-inspector' | 'specs' | 'history' | 'care') => void;
   onEditCertificate: (cert: JewelryCertificate) => void;
   onTransferCertificate: (cert: JewelryCertificate) => void;
   onUnlinkCertificate: (cert: JewelryCertificate, customerId?: string) => void;

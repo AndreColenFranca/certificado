@@ -1,0 +1,19 @@
+﻿{
+    "usersDb":  [
+                    {
+                        "id":  "user-root-001",
+                        "name":  "André Luiz Colen (Administrador Raiz)",
+                        "createdAt":  "2026-08-14T00:00:00.000Z",
+                        "isRoot":  true,
+                        "password":  "fofa!@#",
+                        "email":  "andreluiz.colen@gmail.com",
+                        "role":  "root"
+                    }
+                ],
+    "certificatesDb":  [
+
+                       ],
+    "customersDb":  [
+
+                    ]
+}

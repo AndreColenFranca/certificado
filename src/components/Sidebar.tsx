@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { ViewMode, AppUser } from '../types';
-import { 
-  ShieldCheck, 
-  Users, 
-  Search, 
-  LayoutDashboard, 
-  PlusCircle, 
-  Sun, 
-  Moon, 
+import {
+  ShieldCheck,
+  Users,
+  Search,
+  LayoutDashboard,
+  PlusCircle,
+  Sun,
+  Moon,
   X,
   Sparkles,
   LogOut,
@@ -17,7 +17,9 @@ import {
   ArrowRightLeft,
   FileText,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Building2,
+  Gem
 } from 'lucide-react';
 
 import { formatUserGreeting } from '../utils/customerUtils';
@@ -37,6 +39,7 @@ interface SidebarProps {
   onToggleTheme?: () => void;
   currentUser?: AppUser | null;
   onOpenUsersModal?: () => void;
+  onOpenOrganizationsView?: () => void;
   onLogout?: () => void;
 }
 
@@ -55,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleTheme,
   currentUser,
   onOpenUsersModal,
+  onOpenOrganizationsView,
   onLogout
 }) => {
   const isCustomer = currentUser?.role === 'customer';
@@ -148,6 +152,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 if (onCloseMobile) onCloseMobile();
               },
               isActive: false
+            },
+            {
+              id: 'sub-attributes',
+              label: 'Atributos Peças',
+              icon: Gem,
+              onClick: () => {
+                onSelectMode('attributes');
+                if (onCloseMobile) onCloseMobile();
+              },
+              isActive: currentMode === 'attributes'
             }
           ]
         },
@@ -234,14 +248,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </button>
 
               {/* Submenu rendering */}
-              {item.hasSubmenu && isDashboardSubmenuOpen && item.submenuItems && (
+              {item.hasSubmenu && ((item.id === 'jeweler-dashboard' && isDashboardSubmenuOpen)) && item.submenuItems && (
                 <div className="ml-4 pl-2 border-l-2 border-amber-500/30 space-y-1 my-1 animate-fade-in">
-                  {item.submenuItems.map(sub => {
+                  {item.submenuItems.map((sub: any) => {
                     const SubIcon = sub.icon;
+                    const handleSubClick = () => {
+                      if (sub.attributeKey) {
+                        // For attributes: store in sessionStorage and navigate
+                        sessionStorage.setItem('selectedAttributeKey', sub.attributeKey);
+                        onSelectMode('attributes');
+                      } else if (sub.onClick) {
+                        sub.onClick();
+                      }
+                      if (onCloseMobile) onCloseMobile();
+                    };
                     return (
                       <button
                         key={sub.id}
-                        onClick={sub.onClick}
+                        onClick={handleSubClick}
                         id={`sidebar-subnav-${sub.id}`}
                         className={`w-full flex items-start gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all border cursor-pointer text-left ${
                           sub.isActive
@@ -292,6 +316,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <Users className="w-3.5 h-3.5 text-amber-400" />
                 <span>Gestão de Usuários</span>
+              </button>
+            )}
+
+            {onOpenOrganizationsView && currentUser?.isRoot && (
+              <button
+                onClick={() => {
+                  if (onOpenOrganizationsView) onOpenOrganizationsView();
+                  if (onCloseMobile) onCloseMobile();
+                }}
+                className="w-full py-1.5 px-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                id="sidebar-btn-organizations"
+              >
+                <Building2 className="w-3.5 h-3.5 text-amber-400" />
+                <span>Gerenciar Joalherias</span>
               </button>
             )}
           </div>

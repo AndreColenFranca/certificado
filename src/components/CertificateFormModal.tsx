@@ -72,190 +72,6 @@ const compressAndResizeImage = (file: File): Promise<string> => {
   });
 };
 
-// Reusable component to Manage (Cadastrar, Alterar, Excluir) options for metal purities, colors, finishes & gem types
-interface OptionManagerSelectProps {
-  label: string;
-  value: string;
-  onChange: (val: string) => void;
-  options: string[];
-  onAddOption: (newOpt: string) => void;
-  onEditOption: (oldOpt: string, newOpt: string) => void;
-  onDeleteOption: (optToDelete: string) => void;
-}
-
-const OptionManagerSelect: React.FC<OptionManagerSelectProps> = ({
-  label,
-  value,
-  onChange,
-  options,
-  onAddOption,
-  onEditOption,
-  onDeleteOption
-}) => {
-  const [mode, setMode] = useState<'select' | 'add' | 'edit'>('select');
-  const [inputVal, setInputVal] = useState('');
-
-  const handleStartAdd = () => {
-    setInputVal('');
-    setMode('add');
-  };
-
-  const handleStartEdit = () => {
-    setInputVal(value);
-    setMode('edit');
-  };
-
-  const handleSaveAdd = () => {
-    const trimmed = inputVal.trim();
-    if (trimmed) {
-      onAddOption(trimmed);
-      onChange(trimmed);
-    }
-    setMode('select');
-  };
-
-  const handleSaveEdit = () => {
-    const trimmed = inputVal.trim();
-    if (trimmed && trimmed !== value) {
-      onEditOption(value, trimmed);
-      onChange(trimmed);
-    }
-    setMode('select');
-  };
-
-  const handleDelete = () => {
-    if (options.length <= 1) {
-      alert('Você precisa ter pelo menos uma opção cadastrada.');
-      return;
-    }
-    onDeleteOption(value);
-  };
-
-  return (
-    <div className="flex flex-col justify-between h-full space-y-1">
-      <div>
-        <label className="block text-zinc-400 text-xs font-medium mb-0.5">{label}</label>
-
-        {mode === 'select' && (
-          <div className="flex items-center justify-start gap-1 flex-wrap pb-0.5 min-h-[24px]">
-            <button
-              type="button"
-              onClick={handleStartAdd}
-              className="px-1 py-0.5 rounded hover:bg-zinc-800 text-amber-400 text-[10px] flex items-center gap-0.5 transition-colors whitespace-nowrap"
-              title="Cadastrar nova opção"
-            >
-              <Plus className="w-3 h-3" />
-              <span>Cadastrar</span>
-            </button>
-
-            {options.length > 0 && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleStartEdit}
-                  className="px-1 py-0.5 rounded hover:bg-zinc-800 text-zinc-300 text-[10px] flex items-center gap-0.5 transition-colors whitespace-nowrap"
-                  title="Alterar opção selecionada"
-                >
-                  <Edit3 className="w-3 h-3" />
-                  <span>Alterar</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  className="px-1 py-0.5 rounded hover:bg-red-950/60 text-red-400 text-[10px] flex items-center gap-0.5 transition-colors whitespace-nowrap"
-                  title="Excluir opção selecionada"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  <span>Excluir</span>
-                </button>
-              </>
-            )}
-          </div>
-        )}
-
-        {mode === 'add' && (
-          <div className="flex items-center gap-1.5 pt-0.5 min-h-[24px]">
-            <input
-              type="text"
-              autoFocus
-              placeholder={`Novo ${label}...`}
-              value={inputVal}
-              onChange={(e) => setInputVal(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSaveAdd())}
-              className="flex-1 p-2 bg-zinc-900 border border-amber-500/50 rounded-xl text-amber-100 text-xs focus:outline-none"
-            />
-            <button
-              type="button"
-              onClick={handleSaveAdd}
-              className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded-xl text-xs"
-            >
-              Salvar
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('select')}
-              className="px-2 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
-        {mode === 'edit' && (
-          <div className="flex items-center gap-1.5 pt-0.5 min-h-[24px]">
-            <input
-              type="text"
-              autoFocus
-              value={inputVal}
-              onChange={(e) => setInputVal(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSaveEdit())}
-              className="flex-1 p-2 bg-zinc-900 border border-amber-500/50 rounded-xl text-amber-100 text-xs focus:outline-none"
-            />
-            <button
-              type="button"
-              onClick={handleSaveEdit}
-              className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded-xl text-xs"
-            >
-              Salvar
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('select')}
-              className="px-2 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-auto">
-        {mode === 'select' && (
-          <select
-            value={value}
-            onChange={(e) => {
-              if (e.target.value === '__ADD_NEW__') {
-                handleStartAdd();
-              } else {
-                onChange(e.target.value);
-              }
-            }}
-            className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 focus:outline-none focus:border-amber-500 text-xs"
-          >
-            {options.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-            <option value="__ADD_NEW__">+ Cadastrar Novo...</option>
-          </select>
-        )}
-      </div>
-    </div>
-  );
-};
-
 export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   isOpen,
   onClose,
@@ -267,79 +83,62 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const defaultCompanyName = localStorage.getItem('aureum_company_name') || 'Maison Lumière Joias';
-  const defaultCompanyLogo = localStorage.getItem('aureum_company_logo_url') || '';
+  const defaultCompanyName = 'Maison Lumière Joias';
+  const defaultCompanyLogo = '';
 
-  // Custom Options Management State
-  const [purityOptions, setPurityOptions] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('aureum_purities');
-      return saved ? JSON.parse(saved) : DEFAULT_PURITIES;
-    } catch { return DEFAULT_PURITIES; }
-  });
+  const [purityOptions, setPurityOptions] = useState<string[]>(DEFAULT_PURITIES);
+  const [colorOptions, setColorOptions] = useState<string[]>(DEFAULT_COLORS);
+  const [collectionOptions, setCollectionOptions] = useState<string[]>(DEFAULT_COLLECTIONS);
+  const [manufacturerOptions, setManufacturerOptions] = useState<string[]>(DEFAULT_MANUFACTURERS);
+  const [finishOptions, setFinishOptions] = useState<string[]>(DEFAULT_FINISHES);
+  const [stoneTypeOptions, setStoneTypeOptions] = useState<string[]>(DEFAULT_STONE_TYPES);
+  const [settingTypeOptions, setSettingTypeOptions] = useState<string[]>(DEFAULT_SETTING_TYPES);
+  const [cutShapeOptions, setCutShapeOptions] = useState<string[]>(DEFAULT_CUT_SHAPES);
+  const [colorGradeOptions, setColorGradeOptions] = useState<string[]>(DEFAULT_COLOR_GRADES);
+  const [clarityGradeOptions, setClarityGradeOptions] = useState<string[]>(DEFAULT_CLARITY_GRADES);
 
-  const [colorOptions, setColorOptions] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('aureum_colors');
-      return saved ? JSON.parse(saved) : DEFAULT_COLORS;
-    } catch { return DEFAULT_COLORS; }
-  });
+  // Load attributes from Supabase
+  useEffect(() => {
+    const loadAttributes = async () => {
+      try {
+        const endpoints = [
+          { key: 'metal_purities', setState: setPurityOptions },
+          { key: 'metal_colors', setState: setColorOptions },
+          { key: 'collections', setState: setCollectionOptions },
+          { key: 'manufacturers', setState: setManufacturerOptions },
+          { key: 'finishes', setState: setFinishOptions },
+          { key: 'stone_types', setState: setStoneTypeOptions },
+          { key: 'setting_types', setState: setSettingTypeOptions },
+          { key: 'cut_shapes', setState: setCutShapeOptions },
+          { key: 'color_grades', setState: setColorGradeOptions }
+        ];
 
-  const [collectionOptions, setCollectionOptions] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('aureum_collections');
-      return saved ? JSON.parse(saved) : DEFAULT_COLLECTIONS;
-    } catch { return DEFAULT_COLLECTIONS; }
-  });
+        for (const endpoint of endpoints) {
+          try {
+            const url = `/api/${endpoint.key.replace(/_/g, '-')}`;
+            console.log(`Loading ${endpoint.key} from ${url}`);
+            const res = await fetch(url);
+            const data = await res.json();
+            console.log(`Response for ${endpoint.key}:`, data);
+            if (data.success && Array.isArray(data.data)) {
+              const sorted = [...data.data].sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+              const names = sorted.map((item: any) => item.name);
+              console.log(`Loaded ${endpoint.key}:`, names);
+              endpoint.setState(names);
+            } else {
+              console.warn(`Invalid response for ${endpoint.key}, keeping defaults`);
+            }
+          } catch (err: any) {
+            console.warn(`Failed to load ${endpoint.key}: ${err.message}`);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load attributes from Supabase');
+      }
+    };
 
-  const [manufacturerOptions, setManufacturerOptions] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('aureum_manufacturers');
-      return saved ? JSON.parse(saved) : DEFAULT_MANUFACTURERS;
-    } catch { return DEFAULT_MANUFACTURERS; }
-  });
-
-  const [finishOptions, setFinishOptions] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('aureum_finishes');
-      return saved ? JSON.parse(saved) : DEFAULT_FINISHES;
-    } catch { return DEFAULT_FINISHES; }
-  });
-
-  const [stoneTypeOptions, setStoneTypeOptions] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('aureum_stone_types');
-      return saved ? JSON.parse(saved) : DEFAULT_STONE_TYPES;
-    } catch { return DEFAULT_STONE_TYPES; }
-  });
-
-  const [settingTypeOptions, setSettingTypeOptions] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('aureum_setting_types');
-      return saved ? JSON.parse(saved) : DEFAULT_SETTING_TYPES;
-    } catch { return DEFAULT_SETTING_TYPES; }
-  });
-
-  const [cutShapeOptions, setCutShapeOptions] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('aureum_cut_shapes');
-      return saved ? JSON.parse(saved) : DEFAULT_CUT_SHAPES;
-    } catch { return DEFAULT_CUT_SHAPES; }
-  });
-
-  const [colorGradeOptions, setColorGradeOptions] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('aureum_color_grades');
-      return saved ? JSON.parse(saved) : DEFAULT_COLOR_GRADES;
-    } catch { return DEFAULT_COLOR_GRADES; }
-  });
-
-  const [clarityGradeOptions, setClarityGradeOptions] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('aureum_clarity_grades');
-      return saved ? JSON.parse(saved) : DEFAULT_CLARITY_GRADES;
-    } catch { return DEFAULT_CLARITY_GRADES; }
-  });
+    loadAttributes();
+  }, []);
 
   // Certificate Fields
   const [title, setTitle] = useState(initialCert?.title || '');
@@ -411,191 +210,6 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
       setFinishOptions(prev => [...prev, initialCert.finish]);
     }
   }, [initialCert]);
-
-  // Option Handlers: Purities
-  const handleAddPurity = (newOpt: string) => {
-    const updated = [...purityOptions, newOpt];
-    setPurityOptions(updated);
-    localStorage.setItem('aureum_purities', JSON.stringify(updated));
-  };
-  const handleEditPurity = (oldOpt: string, newOpt: string) => {
-    const updated = purityOptions.map(p => p === oldOpt ? newOpt : p);
-    setPurityOptions(updated);
-    localStorage.setItem('aureum_purities', JSON.stringify(updated));
-  };
-  const handleDeletePurity = (optToDelete: string) => {
-    const updated = purityOptions.filter(p => p !== optToDelete);
-    setPurityOptions(updated);
-    localStorage.setItem('aureum_purities', JSON.stringify(updated));
-    if (metalPurity === optToDelete && updated.length > 0) {
-      setMetalPurity(updated[0]);
-    }
-  };
-
-  // Option Handlers: Colors
-  const handleAddColor = (newOpt: string) => {
-    const updated = [...colorOptions, newOpt];
-    setColorOptions(updated);
-    localStorage.setItem('aureum_colors', JSON.stringify(updated));
-  };
-  const handleEditColor = (oldOpt: string, newOpt: string) => {
-    const updated = colorOptions.map(c => c === oldOpt ? newOpt : c);
-    setColorOptions(updated);
-    localStorage.setItem('aureum_colors', JSON.stringify(updated));
-  };
-  const handleDeleteColor = (optToDelete: string) => {
-    const updated = colorOptions.filter(c => c !== optToDelete);
-    setColorOptions(updated);
-    localStorage.setItem('aureum_colors', JSON.stringify(updated));
-    if (metalColor === optToDelete && updated.length > 0) {
-      setMetalColor(updated[0]);
-    }
-  };
-
-  // Option Handlers: Collections
-  const handleAddCollection = (newOpt: string) => {
-    const updated = [...collectionOptions, newOpt];
-    setCollectionOptions(updated);
-    localStorage.setItem('aureum_collections', JSON.stringify(updated));
-  };
-  const handleEditCollection = (oldOpt: string, newOpt: string) => {
-    const updated = collectionOptions.map(c => c === oldOpt ? newOpt : c);
-    setCollectionOptions(updated);
-    localStorage.setItem('aureum_collections', JSON.stringify(updated));
-  };
-  const handleDeleteCollection = (optToDelete: string) => {
-    const updated = collectionOptions.filter(c => c !== optToDelete);
-    setCollectionOptions(updated);
-    localStorage.setItem('aureum_collections', JSON.stringify(updated));
-    if (collection === optToDelete && updated.length > 0) {
-      setCollection(updated[0]);
-    }
-  };
-
-  // Option Handlers: Finishes
-  const handleAddFinish = (newOpt: string) => {
-    const updated = [...finishOptions, newOpt];
-    setFinishOptions(updated);
-    localStorage.setItem('aureum_finishes', JSON.stringify(updated));
-  };
-  const handleEditFinish = (oldOpt: string, newOpt: string) => {
-    const updated = finishOptions.map(f => f === oldOpt ? newOpt : f);
-    setFinishOptions(updated);
-    localStorage.setItem('aureum_finishes', JSON.stringify(updated));
-  };
-  const handleDeleteFinish = (optToDelete: string) => {
-    const updated = finishOptions.filter(f => f !== optToDelete);
-    setFinishOptions(updated);
-    localStorage.setItem('aureum_finishes', JSON.stringify(updated));
-    if (finish === optToDelete && updated.length > 0) {
-      setFinish(updated[0]);
-    }
-  };
-
-  // Option Handlers: Manufacturer (Fabricante / Marca)
-  const handleAddManufacturer = (newOpt: string) => {
-    const updated = [...manufacturerOptions, newOpt];
-    setManufacturerOptions(updated);
-    setManufacturer(newOpt);
-    localStorage.setItem('aureum_manufacturers', JSON.stringify(updated));
-  };
-  const handleEditManufacturer = (oldOpt: string, newOpt: string) => {
-    const updated = manufacturerOptions.map(s => (s === oldOpt ? newOpt : s));
-    setManufacturerOptions(updated);
-    if (manufacturer === oldOpt) setManufacturer(newOpt);
-    localStorage.setItem('aureum_manufacturers', JSON.stringify(updated));
-  };
-  const handleDeleteManufacturer = (optToDelete: string) => {
-    const updated = manufacturerOptions.filter(s => s !== optToDelete);
-    setManufacturerOptions(updated);
-    if (manufacturer === optToDelete) setManufacturer(updated[0] || '');
-    localStorage.setItem('aureum_manufacturers', JSON.stringify(updated));
-  };
-
-  // Option Handlers: Stone Types
-  const handleAddStoneType = (newOpt: string) => {
-    const updated = [...stoneTypeOptions, newOpt];
-    setStoneTypeOptions(updated);
-    localStorage.setItem('aureum_stone_types', JSON.stringify(updated));
-  };
-  const handleEditStoneType = (oldOpt: string, newOpt: string) => {
-    const updated = stoneTypeOptions.map(s => s === oldOpt ? newOpt : s);
-    setStoneTypeOptions(updated);
-    localStorage.setItem('aureum_stone_types', JSON.stringify(updated));
-  };
-  const handleDeleteStoneType = (optToDelete: string) => {
-    const updated = stoneTypeOptions.filter(s => s !== optToDelete);
-    setStoneTypeOptions(updated);
-    localStorage.setItem('aureum_stone_types', JSON.stringify(updated));
-  };
-
-  // Option Handlers: Setting Types (Tipos de Cravação)
-  const handleAddSettingType = (newOpt: string) => {
-    const updated = [...settingTypeOptions, newOpt];
-    setSettingTypeOptions(updated);
-    localStorage.setItem('aureum_setting_types', JSON.stringify(updated));
-  };
-  const handleEditSettingType = (oldOpt: string, newOpt: string) => {
-    const updated = settingTypeOptions.map(s => s === oldOpt ? newOpt : s);
-    setSettingTypeOptions(updated);
-    localStorage.setItem('aureum_setting_types', JSON.stringify(updated));
-  };
-  const handleDeleteSettingType = (optToDelete: string) => {
-    const updated = settingTypeOptions.filter(s => s !== optToDelete);
-    setSettingTypeOptions(updated);
-    localStorage.setItem('aureum_setting_types', JSON.stringify(updated));
-  };
-
-  // Option Handlers: Cut Shapes (Lapidações/Formatos)
-  const handleAddCutShape = (newOpt: string) => {
-    const updated = [...cutShapeOptions, newOpt];
-    setCutShapeOptions(updated);
-    localStorage.setItem('aureum_cut_shapes', JSON.stringify(updated));
-  };
-  const handleEditCutShape = (oldOpt: string, newOpt: string) => {
-    const updated = cutShapeOptions.map(s => s === oldOpt ? newOpt : s);
-    setCutShapeOptions(updated);
-    localStorage.setItem('aureum_cut_shapes', JSON.stringify(updated));
-  };
-  const handleDeleteCutShape = (optToDelete: string) => {
-    const updated = cutShapeOptions.filter(s => s !== optToDelete);
-    setCutShapeOptions(updated);
-    localStorage.setItem('aureum_cut_shapes', JSON.stringify(updated));
-  };
-
-  // Option Handlers: Color Grades (Cor / Graduação)
-  const handleAddColorGrade = (newOpt: string) => {
-    const updated = [...colorGradeOptions, newOpt];
-    setColorGradeOptions(updated);
-    localStorage.setItem('aureum_color_grades', JSON.stringify(updated));
-  };
-  const handleEditColorGrade = (oldOpt: string, newOpt: string) => {
-    const updated = colorGradeOptions.map(s => s === oldOpt ? newOpt : s);
-    setColorGradeOptions(updated);
-    localStorage.setItem('aureum_color_grades', JSON.stringify(updated));
-  };
-  const handleDeleteColorGrade = (optToDelete: string) => {
-    const updated = colorGradeOptions.filter(s => s !== optToDelete);
-    setColorGradeOptions(updated);
-    localStorage.setItem('aureum_color_grades', JSON.stringify(updated));
-  };
-
-  // Option Handlers: Clarity Grades (Pureza / Clarity)
-  const handleAddClarityGrade = (newOpt: string) => {
-    const updated = [...clarityGradeOptions, newOpt];
-    setClarityGradeOptions(updated);
-    localStorage.setItem('aureum_clarity_grades', JSON.stringify(updated));
-  };
-  const handleEditClarityGrade = (oldOpt: string, newOpt: string) => {
-    const updated = clarityGradeOptions.map(s => s === oldOpt ? newOpt : s);
-    setClarityGradeOptions(updated);
-    localStorage.setItem('aureum_clarity_grades', JSON.stringify(updated));
-  };
-  const handleDeleteClarityGrade = (optToDelete: string) => {
-    const updated = clarityGradeOptions.filter(s => s !== optToDelete);
-    setClarityGradeOptions(updated);
-    localStorage.setItem('aureum_clarity_grades', JSON.stringify(updated));
-  };
 
   // Add Stone row
   const handleAddStone = () => {
@@ -761,7 +375,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
       warrantyMonths,
       warrantyTerms,
       warrantyStatus: 'Ativa',
-      authenticityHash: initialCert?.authenticityHash || '0x' + Array.from({ length: 20 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
+      authenticityHash: initialCert?.authenticityHash || '', // Gerado apenas ao vincular cliente
       estimatedValueBRL,
       careGuide: initialCert?.careGuide || [
         {
@@ -869,16 +483,19 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
                 </div>
               </div>
 
-              {/* Coleção (OptionManagerSelect) */}
-              <OptionManagerSelect
-                label="Coleção"
-                value={collection}
-                onChange={setCollection}
-                options={collectionOptions}
-                onAddOption={handleAddCollection}
-                onEditOption={handleEditCollection}
-                onDeleteOption={handleDeleteCollection}
-              />
+              {/* Coleção */}
+              <div className="flex flex-col justify-between h-full space-y-1">
+                <label className="block text-zinc-400 text-xs font-medium mb-0.5">Coleção</label>
+                <select
+                  value={collection}
+                  onChange={(e) => setCollection(e.target.value)}
+                  className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500 mt-auto"
+                >
+                  {collectionOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
 
               {/* Modelo / Referência */}
               <div className="flex flex-col justify-between h-full space-y-1">
@@ -898,15 +515,18 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
               </div>
 
               {/* Fabricante / Marca */}
-              <OptionManagerSelect
-                label="Fabricante / Marca"
-                value={manufacturer}
-                onChange={setManufacturer}
-                options={manufacturerOptions}
-                onAddOption={handleAddManufacturer}
-                onEditOption={handleEditManufacturer}
-                onDeleteOption={handleDeleteManufacturer}
-              />
+              <div className="flex flex-col justify-between h-full space-y-1">
+                <label className="block text-zinc-400 text-xs font-medium mb-0.5">Fabricante / Marca</label>
+                <select
+                  value={manufacturer}
+                  onChange={(e) => setManufacturer(e.target.value)}
+                  className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500 mt-auto"
+                >
+                  {manufacturerOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
 
               {/* Logotipo da Marca */}
               <div className="flex flex-col justify-between h-full space-y-1">
@@ -952,26 +572,32 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-stretch">
               {/* a) Teor do Metal */}
-              <OptionManagerSelect
-                label="Teor do Metal (Purity)"
-                value={metalPurity}
-                onChange={setMetalPurity}
-                options={purityOptions}
-                onAddOption={handleAddPurity}
-                onEditOption={handleEditPurity}
-                onDeleteOption={handleDeletePurity}
-              />
+              <div className="flex flex-col justify-between h-full space-y-1">
+                <label className="block text-zinc-400 text-xs font-medium mb-0.5">Teor do Metal</label>
+                <select
+                  value={metalPurity}
+                  onChange={(e) => setMetalPurity(e.target.value)}
+                  className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500 mt-auto"
+                >
+                  {purityOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
 
               {/* b) Cor do Metal */}
-              <OptionManagerSelect
-                label="Cor do Metal"
-                value={metalColor}
-                onChange={setMetalColor}
-                options={colorOptions}
-                onAddOption={handleAddColor}
-                onEditOption={handleEditColor}
-                onDeleteOption={handleDeleteColor}
-              />
+              <div className="flex flex-col justify-between h-full space-y-1">
+                <label className="block text-zinc-400 text-xs font-medium mb-0.5">Cor do Metal</label>
+                <select
+                  value={metalColor}
+                  onChange={(e) => setMetalColor(e.target.value)}
+                  className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500 mt-auto"
+                >
+                  {colorOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
 
               {/* c) Peso Bruto */}
               <div className="flex flex-col justify-between h-full space-y-1">
@@ -1010,15 +636,18 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
               </div>
 
               {/* e) Acabamento */}
-              <OptionManagerSelect
-                label="Acabamento"
-                value={finish}
-                onChange={setFinish}
-                options={finishOptions}
-                onAddOption={handleAddFinish}
-                onEditOption={handleEditFinish}
-                onDeleteOption={handleDeleteFinish}
-              />
+              <div className="flex flex-col justify-between h-full space-y-1">
+                <label className="block text-zinc-400 text-xs font-medium mb-0.5">Acabamento</label>
+                <select
+                  value={finish}
+                  onChange={(e) => setFinish(e.target.value)}
+                  className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500 mt-auto"
+                >
+                  {finishOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -1059,20 +688,23 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
-                      {/* Tipo da Gema com Cadastrar/Alterar/Excluir */}
-                      <OptionManagerSelect
-                        label="Tipo da Gema"
-                        value={st.type}
-                        onChange={(newVal) => {
-                          const updated = [...stones];
-                          updated[index].type = newVal;
-                          setStones(updated);
-                        }}
-                        options={stoneTypeOptions}
-                        onAddOption={handleAddStoneType}
-                        onEditOption={handleEditStoneType}
-                        onDeleteOption={handleDeleteStoneType}
-                      />
+                      {/* Tipo da Gema */}
+                      <div className="flex flex-col justify-between h-full space-y-1">
+                        <label className="block text-zinc-400 text-xs font-medium mb-0.5">Tipo da Gema</label>
+                        <select
+                          value={st.type}
+                          onChange={(e) => {
+                            const updated = [...stones];
+                            updated[index].type = e.target.value;
+                            setStones(updated);
+                          }}
+                          className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500 mt-auto"
+                        >
+                          {stoneTypeOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
 
                       {/* Quantidade */}
                       <div className="flex flex-col justify-between h-full space-y-1">
@@ -1121,50 +753,59 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
 
                     {/* Linha 2: Tipo de Cravação, Lapidação/Formato, Cor e Pureza */}
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-stretch pt-2 border-t border-zinc-800/60">
-                      {/* Tipo de Cravação com Cadastrar/Alterar/Excluir */}
-                      <OptionManagerSelect
-                        label="Tipo de Cravação"
-                        value={st.settingType || settingTypeOptions[0] || 'Garra (Prong)'}
-                        onChange={(newVal) => {
-                          const updated = [...stones];
-                          updated[index].settingType = newVal;
-                          setStones(updated);
-                        }}
-                        options={settingTypeOptions}
-                        onAddOption={handleAddSettingType}
-                        onEditOption={handleEditSettingType}
-                        onDeleteOption={handleDeleteSettingType}
-                      />
+                      {/* Tipo de Cravação */}
+                      <div className="flex flex-col justify-between h-full space-y-1">
+                        <label className="block text-zinc-400 text-xs font-medium mb-0.5">Tipo de Cravação</label>
+                        <select
+                          value={st.settingType || settingTypeOptions[0] || 'Garra (Prong)'}
+                          onChange={(e) => {
+                            const updated = [...stones];
+                            updated[index].settingType = e.target.value;
+                            setStones(updated);
+                          }}
+                          className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500 mt-auto"
+                        >
+                          {settingTypeOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
 
-                      {/* Lapidação / Formato com Cadastrar/Alterar/Excluir */}
-                      <OptionManagerSelect
-                        label="Lapidação / Formato"
-                        value={st.cutShape || cutShapeOptions[0] || 'Brilhante Redondo'}
-                        onChange={(newVal) => {
-                          const updated = [...stones];
-                          updated[index].cutShape = newVal;
-                          setStones(updated);
-                        }}
-                        options={cutShapeOptions}
-                        onAddOption={handleAddCutShape}
-                        onEditOption={handleEditCutShape}
-                        onDeleteOption={handleDeleteCutShape}
-                      />
+                      {/* Lapidação / Formato */}
+                      <div className="flex flex-col justify-between h-full space-y-1">
+                        <label className="block text-zinc-400 text-xs font-medium mb-0.5">Lapidação / Formato</label>
+                        <select
+                          value={st.cutShape || cutShapeOptions[0] || 'Brilhante Redondo'}
+                          onChange={(e) => {
+                            const updated = [...stones];
+                            updated[index].cutShape = e.target.value;
+                            setStones(updated);
+                          }}
+                          className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500 mt-auto"
+                        >
+                          {cutShapeOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
 
-                      {/* Cor / Graduação com Cadastrar/Alterar/Excluir */}
-                      <OptionManagerSelect
-                        label="Cor / Graduação"
-                        value={st.colorGrade || colorGradeOptions[0] || 'D - Incolor (Excepcional)'}
-                        onChange={(newVal) => {
-                          const updated = [...stones];
-                          updated[index].colorGrade = newVal;
-                          setStones(updated);
-                        }}
-                        options={colorGradeOptions}
-                        onAddOption={handleAddColorGrade}
-                        onEditOption={handleEditColorGrade}
-                        onDeleteOption={handleDeleteColorGrade}
-                      />
+                      {/* Cor / Graduação */}
+                      <div className="flex flex-col justify-between h-full space-y-1">
+                        <label className="block text-zinc-400 text-xs font-medium mb-0.5">Cor / Graduação</label>
+                        <select
+                          value={st.colorGrade || colorGradeOptions[0] || 'D - Incolor (Excepcional)'}
+                          onChange={(e) => {
+                            const updated = [...stones];
+                            updated[index].colorGrade = e.target.value;
+                            setStones(updated);
+                          }}
+                          className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500 mt-auto"
+                        >
+                          {colorGradeOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
                 ))}

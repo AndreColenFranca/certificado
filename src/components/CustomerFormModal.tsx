@@ -52,7 +52,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
     setSelectedOrgId('550e8400-e29b-41d4-a716-446655440000');
     setShowPassword(false);
     setErrors({});
-  }, [initialCustomer, isOpen, currentUser?.org_id]);
+  }, [initialCustomer, isOpen]);
 
   if (!isOpen) return null;
 

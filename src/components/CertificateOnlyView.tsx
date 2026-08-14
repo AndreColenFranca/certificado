@@ -292,7 +292,7 @@ export const CertificateOnlyView: React.FC<CertificateOnlyViewProps> = ({
               <div className="grid grid-cols-2 gap-3 text-xs">
                 
                 <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200 space-y-0.5">
-                  <span className="text-zinc-500 text-[10px] block font-bold uppercase tracking-wider">Metal Nobre</span>
+                  <span className="text-zinc-500 text-[10px] block font-bold uppercase tracking-wider">Teor do Metal</span>
                   <span className="font-bold text-zinc-950 text-sm">{cert.metalPurity}</span>
                   <span className="text-[11px] text-zinc-600 block">Cor: {cert.metalColor}</span>
                 </div>

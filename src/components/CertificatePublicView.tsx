@@ -372,7 +372,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="bg-zinc-950 p-2.5 rounded-lg border border-zinc-800">
-                  <span className="text-zinc-500 text-[10px] block">Metal Nobre</span>
+                  <span className="text-zinc-500 text-[10px] block">Teor do Metal</span>
                   <span className="font-semibold text-amber-300">{cert.metalPurity}</span>
                 </div>
 
@@ -436,7 +436,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
               return (
                 <div className={`grid ${hasWidth ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'} gap-4 pt-2`}>
                   <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-1">
-                    <span className="text-xs text-zinc-500">Metal e Liga</span>
+                    <span className="text-xs text-zinc-500">Teor do Metal</span>
                     <p className="text-base font-bold text-amber-300">{cert.metalPurity}</p>
                     <p className="text-[11px] text-zinc-400">{getGoldPurityPercentage(cert.metalPurity)}</p>
                   </div>

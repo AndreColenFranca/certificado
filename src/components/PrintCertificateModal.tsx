@@ -223,12 +223,12 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
               return (
                 <div className={`grid ${hasWidth ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'} gap-2 text-xs`}>
                   <div className="p-2 bg-zinc-50 rounded-lg border border-zinc-200">
-                    <span className="text-[9px] text-zinc-500 font-bold block uppercase tracking-wider">Metal Nobre:</span>
+                    <span className="text-[9px] text-zinc-500 font-bold block uppercase tracking-wider">Teor do Metal:</span>
                     <strong className="text-zinc-950 font-bold text-xs block mt-0.5">{cert.metalPurity}</strong>
                   </div>
 
                   <div className="p-2 bg-zinc-50 rounded-lg border border-zinc-200">
-                    <span className="text-[9px] text-zinc-500 font-bold block uppercase tracking-wider">Coloração da Liga:</span>
+                    <span className="text-[9px] text-zinc-500 font-bold block uppercase tracking-wider">Cor do Metal:</span>
                     <strong className="text-zinc-950 font-bold text-xs block mt-0.5">{cert.metalColor}</strong>
                   </div>
 

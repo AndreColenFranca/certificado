@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { JewelryCertificate, Customer, ViewMode, MaintenanceRecord, AppUser } from './types';
-import { INITIAL_CERTIFICATES } from './data/sampleCertificates';
-import { INITIAL_CUSTOMERS } from './data/sampleCustomers';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { CertificatePublicView } from './components/CertificatePublicView';
@@ -23,6 +21,8 @@ import { JewelryCustomerQueryModal } from './components/JewelryCustomerQueryModa
 import { LoginView } from './components/LoginView';
 import { UserManagementModal } from './components/UserManagementModal';
 import { CustomerPortalView } from './components/CustomerPortalView';
+import { OrganizationsView } from './components/OrganizationsView';
+import { AttributesView } from './components/AttributesView';
 import { extractCertIdFromInput, findCertificateByQuery } from './utils/certUtils';
 import { isRootCert, getChildCertificatesForParent } from './utils/certHierarchy';
 import { ShieldAlert, Search, QrCode, LogIn } from 'lucide-react';
@@ -42,37 +42,11 @@ export default function App() {
     return null;
   });
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
+  const [isOrganizationsViewOpen, setIsOrganizationsViewOpen] = useState(false);
 
-  const getInitialCertificates = (): JewelryCertificate[] => {
-    const stored = localStorage.getItem('aureum_certificates');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Merge initial sample certificates with stored ones (avoid duplicates by ID)
-          const storedIds = new Set(parsed.map(c => c.id));
-          const missingSamples = INITIAL_CERTIFICATES.filter(c => !storedIds.has(c.id));
-          return [...parsed, ...missingSamples];
-        }
-      } catch (e) {}
-    }
-    return INITIAL_CERTIFICATES;
-  };
+  const getInitialCertificates = (): JewelryCertificate[] => [];
 
-  const getInitialCustomers = (): Customer[] => {
-    const stored = localStorage.getItem('aureum_customers');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const storedIds = new Set(parsed.map(c => c.id));
-          const missingSamples = INITIAL_CUSTOMERS.filter(c => !storedIds.has(c.id));
-          return [...parsed, ...missingSamples];
-        }
-      } catch (e) {}
-    }
-    return INITIAL_CUSTOMERS;
-  };
+  const getInitialCustomers = (): Customer[] => [];
 
   const [certificates, setCertificates] = useState<JewelryCertificate[]>(getInitialCertificates);
   const [customers, setCustomers] = useState<Customer[]>(getInitialCustomers);
@@ -103,6 +77,11 @@ export default function App() {
       }
       return 'public-passport';
     }
+    // Tenta recuperar o viewMode salvo
+    const storedViewMode = localStorage.getItem('aureum_view_mode');
+    if (storedViewMode && ['jeweler-dashboard', 'customers', 'customer-portal', 'attributes', 'public-passport', 'public-certificate', 'scanner', 'create-new'].includes(storedViewMode)) {
+      return storedViewMode as ViewMode;
+    }
     const storedUser = localStorage.getItem('aureum_logged_user');
     if (storedUser) {
       try {
@@ -114,17 +93,14 @@ export default function App() {
     return 'jeweler-dashboard';
   });
 
-  const [publicViewTab, setPublicViewTab] = useState<'photo-inspector' | 'specs' | 'certificate' | 'history' | 'care'>(() => {
-    if (typeof window !== 'undefined' && (window.location.search.includes('type=certificate') || window.location.search.includes('doc=certificate'))) {
-      return 'certificate';
-    }
+  const [publicViewTab, setPublicViewTab] = useState<'photo-inspector' | 'specs' | 'history' | 'care'>(() => {
     return 'photo-inspector';
   });
 
   const [forceLoginView, setForceLoginView] = useState<boolean>(false);
   const [viewHistory, setViewHistory] = useState<ViewMode[]>([]);
 
-  const handleSelectCert = (cert: JewelryCertificate, tab: 'photo-inspector' | 'specs' | 'certificate' | 'history' | 'care' = 'photo-inspector') => {
+  const handleSelectCert = (cert: JewelryCertificate, tab: 'photo-inspector' | 'specs' | 'history' | 'care' = 'photo-inspector') => {
     setSelectedCert(cert);
     setPublicViewTab(tab);
     setForceLoginView(false);
@@ -203,12 +179,8 @@ export default function App() {
   };
 
   // Company Brand State
-  const [companyName, setCompanyName] = useState<string>(() => {
-    return localStorage.getItem('aureum_company_name') || 'Maison Lumière Joias';
-  });
-  const [companyLogoUrl, setCompanyLogoUrl] = useState<string>(() => {
-    return localStorage.getItem('aureum_company_logo_url') || 'https://drive.google.com/file/d/1EzDvqFIdNjWtIU4KIxYQtZ3RYQI6BnrR/view?usp=sharing';
-  });
+  const [companyName, setCompanyName] = useState<string>('Maison Lumière Joias');
+  const [companyLogoUrl, setCompanyLogoUrl] = useState<string>('https://drive.google.com/file/d/1EzDvqFIdNjWtIU4KIxYQtZ3RYQI6BnrR/view?usp=sharing');
 
   // Certificate Modals state
   const [isCompanyLogoOpen, setIsCompanyLogoOpen] = useState(false);
@@ -270,25 +242,11 @@ export default function App() {
     fetchCustomers();
   }, []);
 
+  // Salvar viewMode no localStorage
   useEffect(() => {
-    if (certificates.length > 0) {
-      try {
-        localStorage.setItem('aureum_certificates', JSON.stringify(certificates));
-      } catch (e) {
-        console.warn('Could not save certificates to localStorage', e);
-      }
-    }
-  }, [certificates]);
+    localStorage.setItem('aureum_view_mode', viewMode);
+  }, [viewMode]);
 
-  useEffect(() => {
-    if (customers.length > 0) {
-      try {
-        localStorage.setItem('aureum_customers', JSON.stringify(customers));
-      } catch (e) {
-        console.warn('Could not save customers to localStorage', e);
-      }
-    }
-  }, [customers]);
 
   // Sync selected certificate and tab when URL changes via popstate
   useEffect(() => {
@@ -296,7 +254,7 @@ export default function App() {
       const urlCertId = getCertIdFromUrl();
       const isCertType = typeof window !== 'undefined' && (window.location.search.includes('type=certificate') || window.location.search.includes('doc=certificate') || window.location.pathname.startsWith('/certificate/'));
       if (isCertType) {
-        setPublicViewTab('certificate');
+        setPublicViewTab('photo-inspector');
       }
       if (urlCertId && certificates.length > 0) {
         const found = certificates.find(
@@ -306,11 +264,14 @@ export default function App() {
         );
         if (found) {
           setSelectedCert(found);
+          setNotFoundQuery(null);
           if (isCertType) {
             setViewMode('public-certificate');
           } else if (viewMode === 'public-passport' || viewMode === 'public-certificate') {
             setViewMode('public-passport');
           }
+        } else {
+          setNotFoundQuery(urlCertId);
         }
       }
     };
@@ -322,7 +283,7 @@ export default function App() {
   // Keep URL path synchronized when viewing public passport or public certificate
   useEffect(() => {
     if ((viewMode === 'public-passport' || viewMode === 'public-certificate') && selectedCert) {
-      const isCertType = viewMode === 'public-certificate' || publicViewTab === 'certificate' || window.location.search.includes('type=certificate');
+      const isCertType = viewMode === 'public-certificate' || window.location.search.includes('type=certificate');
       const targetPath = `/cert/${encodeURIComponent(selectedCert.id)}${isCertType ? '?type=certificate' : ''}`;
       if (window.location.pathname + window.location.search !== targetPath) {
         window.history.replaceState(null, '', targetPath);
@@ -337,7 +298,6 @@ export default function App() {
   // Ensure public certificate view is active when requested via URL parameter
   useEffect(() => {
     if (selectedCert && (window.location.search.includes('type=certificate') || window.location.search.includes('doc=certificate'))) {
-      setPublicViewTab('certificate');
       if (viewMode !== 'public-certificate') {
         setViewMode('public-certificate');
       }
@@ -346,151 +306,29 @@ export default function App() {
 
   const fetchCertificates = async () => {
     try {
-      let localCerts: JewelryCertificate[] = [];
-      try {
-        const stored = localStorage.getItem('aureum_certificates');
-        if (stored) {
-          localCerts = JSON.parse(stored);
-        }
-      } catch (e) {}
-
-      let data: any = null;
-      try {
-        const syncRes = await fetch('/api/certificates/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ localCertificates: localCerts })
-        });
-        if (syncRes.ok) {
-          data = await syncRes.json();
-        }
-      } catch (err) {}
-
-      if (!data || !data.success) {
-        const res = await fetch('/api/certificates');
-        if (res.ok) data = await res.json();
-      }
-
-      if (data && data.success && Array.isArray(data.data) && data.data.length > 0) {
-        setCertificates(data.data);
-        localStorage.setItem('aureum_certificates', JSON.stringify(data.data));
-        const urlCertId = getCertIdFromUrl();
-        if (urlCertId) {
-          const matchFromUrl = findCertificateByQuery(data.data, urlCertId);
-          if (matchFromUrl) {
-            setSelectedCert(matchFromUrl);
-            setNotFoundQuery(null);
-            return;
-          } else {
-            try {
-              const singleRes = await fetch(`/api/certificates/${encodeURIComponent(urlCertId)}`);
-              if (singleRes.ok) {
-                const singleData = await singleRes.json();
-                if (singleData.success && singleData.data) {
-                  setCertificates(prev => {
-                    const newList = [singleData.data, ...prev.filter(c => c.id !== singleData.data.id)];
-                    localStorage.setItem('aureum_certificates', JSON.stringify(newList));
-                    return newList;
-                  });
-                  setSelectedCert(singleData.data);
-                  setNotFoundQuery(null);
-                  return;
-                }
-              }
-            } catch (err) {}
-
-            setNotFoundQuery(urlCertId);
-            return;
-          }
-        }
-        if (!selectedCert || !data.data.find((c: any) => c.id === selectedCert.id)) {
-          setSelectedCert(data.data[0]);
+      const res = await fetch('/api/certificates');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.data)) {
+          setCertificates(data.data);
         }
       }
     } catch (e) {
-      console.warn('Backend API offline or loading fallback sample data for certificates:', e);
-      // Fallback check against local certificates for URL cert ID
-      const urlCertId = getCertIdFromUrl();
-      if (urlCertId) {
-        const match = findCertificateByQuery(certificates, urlCertId);
-        if (match) {
-          setSelectedCert(match);
-          setNotFoundQuery(null);
-        } else {
-          setNotFoundQuery(urlCertId);
-        }
-      }
+      console.warn('Error fetching certificates:', e);
     }
   };
 
   const fetchCustomers = async () => {
-    let apiCusts: Customer[] = [];
     try {
       const res = await fetch('/api/customers');
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.data)) {
-          apiCusts = data.data;
+          setCustomers(data.data);
         }
       }
     } catch (e) {
-      console.warn('Backend API offline or loading fallback sample data for customers:', e);
-    }
-
-    // Merge with localStorage customers
-    let localCusts: Customer[] = [];
-    try {
-      const stored = localStorage.getItem('aureum_customers');
-      if (stored) {
-        localCusts = JSON.parse(stored);
-      }
-    } catch (e) {}
-
-    // Merge with localStorage customer users
-    let userCusts: Customer[] = [];
-    try {
-      const storedUsersRaw = localStorage.getItem('aureum_users_db');
-      if (storedUsersRaw) {
-        const storedUsers: any[] = JSON.parse(storedUsersRaw);
-        storedUsers.forEach(u => {
-          if (u.role === 'customer' && u.email) {
-            userCusts.push({
-              id: u.customerId || u.id || `CLI-${Math.floor(1000 + Math.random() * 9000)}`,
-              name: u.name || 'Cliente',
-              cpf: u.cpf || '',
-              email: u.email.trim().toLowerCase(),
-              phone: u.phone || '',
-              notes: 'Cliente Cadastrado no Sistema',
-              createdAt: u.createdAt || new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            });
-          }
-        });
-      }
-    } catch (e) {}
-
-    // Combine all lists uniquely by email or ID
-    const combined: Customer[] = [];
-    const seenEmails = new Set<string>();
-
-    const addUnique = (c: Customer) => {
-      const cleanEmail = (c.email || '').trim().toLowerCase();
-      if (cleanEmail) {
-        if (seenEmails.has(cleanEmail)) return;
-        seenEmails.add(cleanEmail);
-      }
-      combined.push(c);
-    };
-
-    apiCusts.forEach(addUnique);
-    localCusts.forEach(addUnique);
-    userCusts.forEach(addUnique);
-
-    if (combined.length > 0) {
-      setCustomers(combined);
-      try {
-        localStorage.setItem('aureum_customers', JSON.stringify(combined));
-      } catch (e) {}
+      console.warn('Error fetching customers:', e);
     }
   };
 
@@ -517,53 +355,6 @@ export default function App() {
       }
 
       setCustomers(updatedList);
-      try {
-        localStorage.setItem('aureum_customers', JSON.stringify(updatedList));
-      } catch (e) {}
-
-      // Sync customer user credentials into aureum_users_db for client-side login support
-      try {
-        const storedUsersRaw = localStorage.getItem('aureum_users_db');
-        let storedUsers: any[] = storedUsersRaw ? JSON.parse(storedUsersRaw) : [];
-        const cleanEmail = custToSave.email.trim().toLowerCase();
-        const userIdx = storedUsers.findIndex(u => u.email && u.email.toLowerCase() === cleanEmail);
-        const userObj = {
-          id: `user-customer-${custToSave.id}`,
-          name: custToSave.name,
-          email: cleanEmail,
-          password: custToSave.password || '123456',
-          role: 'customer',
-          customerId: custToSave.id,
-          cpf: custToSave.cpf,
-          createdAt: custToSave.createdAt || new Date().toISOString(),
-          isRoot: false
-        };
-        if (userIdx >= 0) {
-          storedUsers[userIdx] = { ...storedUsers[userIdx], ...userObj };
-        } else {
-          storedUsers.push(userObj);
-        }
-        localStorage.setItem('aureum_users_db', JSON.stringify(storedUsers));
-      } catch (err) {}
-
-      // If currentUser matches the saved customer, update currentUser in state and localStorage immediately
-      if (currentUser) {
-        const currentEmail = (currentUser.email || '').trim().toLowerCase();
-        const savedEmail = (custToSave.email || '').trim().toLowerCase();
-        if (currentEmail === savedEmail || currentUser.customerId === custToSave.id) {
-          const updatedUserObj = {
-            ...currentUser,
-            name: custToSave.name, // Updated Nome Completo (Alfanumérico)
-            email: custToSave.email,
-            cpf: custToSave.cpf,
-            customerId: custToSave.id
-          };
-          setCurrentUser(updatedUserObj);
-          try {
-            localStorage.setItem('aureum_current_user', JSON.stringify(updatedUserObj));
-          } catch (e) {}
-        }
-      }
 
       setIsCustomerFormOpen(false);
       setEditingCustomer(null);
@@ -573,6 +364,7 @@ export default function App() {
   };
 
   const handleConfirmDeleteCustomer = async (id: string) => {
+    console.log('Deletando cliente:', id);
     const targetCust = customers.find(c => c.id === id);
     const custCpf = targetCust?.cpf?.trim();
     const custName = targetCust?.name?.trim();
@@ -580,28 +372,43 @@ export default function App() {
     // Identify linked certificates
     const linkedCertIds = new Set(
       certificates
-        .filter(c => 
+        .filter(c =>
           (c.ownerId && c.ownerId === id) ||
           (custCpf && c.ownerCpf && c.ownerCpf.trim() === custCpf) ||
           (custName && c.currentOwnerName && c.currentOwnerName.trim() === custName)
         )
         .map(c => c.id.toUpperCase())
     );
+    console.log('Cliente:', id, 'tem', linkedCertIds.size, 'certificados vinculados');
 
     try {
-      await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      console.log('Resposta da API DELETE:', res.ok, res.status, data);
+      if (!res.ok) {
+        alert('Erro ao deletar no servidor: ' + (data.error || 'Desconhecido'));
+        return;
+      }
     } catch (e) {
       console.error('Error deleting customer from API:', e);
+      alert('Erro ao deletar: ' + e);
+      return;
     }
 
+    console.log('Atualizando lista de clientes - antes:', customers.map(c => c.id));
     const updatedCustomers = customers.filter(c => c.id !== id);
+    console.log('Atualizando lista de clientes - depois:', updatedCustomers.map(c => c.id));
     setCustomers(updatedCustomers);
-    localStorage.setItem('aureum_customers', JSON.stringify(updatedCustomers));
+
+    // Limpar cliente selecionado se for o deletado
+    if (selectedCustomerIdInManagement === id) {
+      console.log('Limpando selectedCustomerIdInManagement');
+      setSelectedCustomerIdInManagement('');
+    }
 
     if (linkedCertIds.size > 0) {
       const updatedCerts = certificates.filter(c => !linkedCertIds.has(c.id.toUpperCase()));
       setCertificates(updatedCerts);
-      localStorage.setItem('aureum_certificates', JSON.stringify(updatedCerts));
 
       if (selectedCert && linkedCertIds.has(selectedCert.id.toUpperCase())) {
         if (updatedCerts.length > 0) {
@@ -609,6 +416,11 @@ export default function App() {
         }
       }
     }
+
+    // Manter na tela de clientes após deletar
+    console.log('handleConfirmDeleteCustomer: viewMode=', viewMode);
+    setViewMode('customers');
+    console.log('handleConfirmDeleteCustomer: setViewMode para customers');
   };
 
   // Handle Mode Change
@@ -619,6 +431,11 @@ export default function App() {
       setIsFormModalOpen(true);
     } else if (mode === 'scanner') {
       setIsScannerModalOpen(true);
+    } else if (mode === 'public-passport') {
+      // Mostrar tela de busca ao clicar em Passaporte Público
+      setSelectedCert(null as any);
+      setNotFoundQuery(null);
+      navigateToView(mode);
     } else {
       navigateToView(mode);
     }
@@ -653,35 +470,55 @@ export default function App() {
 
   // Save Certificate (Create or Update)
   const handleSaveCertificate = async (certToSave: JewelryCertificate) => {
+    console.log('1. handleSaveCertificate iniciado para:', certToSave.id);
     try {
       const existing = certificates.find(c => c.id === certToSave.id);
-      let updatedList: JewelryCertificate[];
+      console.log('2. Certificado existe?', !!existing);
+      let apiResponse: any;
 
       if (existing) {
         // Update API
-        await fetch(`/api/certificates/${certToSave.id}`, {
+        const res = await fetch(`/api/certificates/${certToSave.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(certToSave)
         });
-        updatedList = certificates.map(c => c.id === certToSave.id ? certToSave : c);
+        apiResponse = await res.json();
+        if (!res.ok) {
+          console.error('API error updating certificate:', apiResponse);
+          alert('Erro ao atualizar certificado: ' + (apiResponse.error || 'Desconhecido'));
+          return;
+        }
       } else {
         // Create API
-        await fetch('/api/certificates', {
+        console.log('3. Criando novo certificado...');
+        const res = await fetch('/api/certificates', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(certToSave)
         });
-        updatedList = [certToSave, ...certificates];
+        apiResponse = await res.json();
+        console.log('4. Resposta da API:', res.status, apiResponse);
+        if (!res.ok) {
+          console.error('API error creating certificate:', apiResponse);
+          alert('Erro ao criar certificado: ' + (apiResponse.error || 'Desconhecido'));
+          return;
+        }
       }
 
-      setCertificates(updatedList);
-      setSelectedCert(certToSave);
+      // Recarregar certificados do servidor para garantir sincronização
+      console.log('5. Recarregando certificados do servidor...');
+      await fetchCertificates();
+
+      console.log('6. Atualizando estado...');
+      setNotFoundQuery(null);
       setIsFormModalOpen(false);
       setSelectedCustomerForNewCert(null);
-      setViewMode('public-passport');
+      console.log('7. Redirecionando para jeweler-dashboard');
+      setViewMode('jeweler-dashboard');
     } catch (e) {
       console.error('Error saving cert:', e);
+      alert('Erro ao salvar certificado: ' + e);
     }
   };
 
@@ -692,6 +529,10 @@ export default function App() {
   };
 
   const handleConfirmDelete = async (id: string) => {
+    console.log('handleConfirmDelete called for:', id);
+    console.log('Current viewMode:', viewMode);
+    console.log('Current selectedCert:', selectedCert?.id);
+
     const target = certificates.find(c => c.id.toUpperCase() === id.toUpperCase());
     if (target) {
       const ownerName = target.currentOwnerName?.trim();
@@ -723,13 +564,19 @@ export default function App() {
       console.error('Error deleting cert from API:', e);
     }
     const updated = certificates.filter(c => c.id.toUpperCase() !== id.toUpperCase());
+    console.log('Updated certificates count:', updated.length);
     setCertificates(updated);
+
     if (selectedCert?.id.toUpperCase() === id.toUpperCase()) {
+      console.log('Certificate was selected, clearing and redirecting');
       setSelectedCert(null as any);
-    }
-    // Do not redirect user to another page after deletion
-    if (viewMode === 'public-passport') {
-      setViewMode('jeweler-dashboard');
+      setNotFoundQuery(null);
+      // Redirect to dashboard if viewing deleted certificate
+      if (viewMode === 'public-passport' || viewMode === 'public-certificate') {
+        console.log('Redirecting from', viewMode, 'to jeweler-dashboard');
+        window.history.replaceState({}, '', '/');
+        setViewMode('jeweler-dashboard');
+      }
     }
   };
 
@@ -968,13 +815,6 @@ export default function App() {
     setCompanyName(newName);
     setCompanyLogoUrl(newLogoUrl);
 
-    try {
-      localStorage.setItem('aureum_company_name', newName);
-      localStorage.setItem('aureum_company_logo_url', newLogoUrl);
-    } catch (err) {
-      console.warn('Não foi possível salvar no localStorage:', err);
-    }
-
     // Update existing certificates with the new brand name & logo
     const updatedCertificates = certificates.map(cert => ({
       ...cert,
@@ -1070,9 +910,18 @@ export default function App() {
           onToggleTheme={handleToggleTheme}
           currentUser={currentUser}
           onOpenUsersModal={() => setIsUsersModalOpen(true)}
+          onOpenOrganizationsView={() => setIsOrganizationsViewOpen(true)}
           onLogout={handleLogout}
         />
 
+        {isOrganizationsViewOpen && currentUser?.isRoot ? (
+          <OrganizationsView
+            onClose={() => setIsOrganizationsViewOpen(false)}
+            companyName={companyName}
+            companyLogoUrl={companyLogoUrl}
+          />
+        ) : (
+        <>
         {/* Main View Content Area */}
         <main className="flex-1 min-w-0 pb-16 px-3 sm:px-6 lg:px-8 pt-6 max-w-7xl mx-auto w-full">
         {viewMode === 'public-passport' && notFoundQuery && (
@@ -1163,6 +1012,79 @@ export default function App() {
               navigateToView('public-passport');
             }}
           />
+        )}
+
+        {viewMode === 'public-passport' && !selectedCert && !notFoundQuery && (
+          <div className={`min-h-screen flex items-center justify-center p-6 transition-colors ${theme === 'classic-light' ? 'bg-white text-stone-900' : 'bg-gradient-to-b from-zinc-900 to-zinc-950 text-amber-50'}`}>
+            <div className="text-center max-w-md w-full">
+              <div className="mb-8">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent mb-2">
+                  Passaporte Digital
+                </h1>
+                <p className="text-zinc-400">Consulte o passaporte único de sua joia</p>
+              </div>
+
+              <div className="bg-zinc-900/80 border border-amber-900/50 rounded-2xl p-8 space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-amber-200 mb-3">
+                    Digite o ID, Número de Série ou Cole o Link:
+                  </label>
+                  <input
+                    type="text"
+                    id="passport-search"
+                    placeholder="ex: cert-2026-001 ou https://domain.com/cert/..."
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-1 ${theme === 'classic-light' ? 'bg-stone-100 border-amber-200 text-stone-900 placeholder-stone-400 focus:border-amber-500 focus:ring-amber-500' : 'bg-zinc-800 border-amber-900/40 text-amber-50 placeholder-zinc-500 focus:border-amber-500 focus:ring-amber-500'}`}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        const value = (e.target as HTMLInputElement).value.trim();
+                        if (value) {
+                          const found = findCertificateByQuery(certificates, value);
+                          if (found) {
+                            setSelectedCert(found);
+                            setNotFoundQuery(null);
+                            window.history.pushState(null, '', `/cert/${encodeURIComponent(found.id)}`);
+                          } else {
+                            setNotFoundQuery(value);
+                            window.history.pushState(null, '', `/cert/${encodeURIComponent(value)}`);
+                          }
+                        }
+                      }
+                    }}
+                  />
+                </div>
+
+                <button
+                  onClick={() => {
+                    const input = document.getElementById('passport-search') as HTMLInputElement;
+                    const value = input?.value.trim();
+                    if (value) {
+                      const found = findCertificateByQuery(certificates, value);
+                      if (found) {
+                        setSelectedCert(found);
+                        setNotFoundQuery(null);
+                        window.history.pushState(null, '', `/cert/${encodeURIComponent(found.id)}`);
+                      } else {
+                        setNotFoundQuery(value);
+                        window.history.pushState(null, '', `/cert/${encodeURIComponent(value)}`);
+                      }
+                    }
+                  }}
+                  className={`w-full px-6 py-3 font-semibold rounded-lg transition-all shadow-lg ${theme === 'classic-light' ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-900' : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950'} shadow-amber-950/40`}
+                >
+                  Buscar Passaporte
+                </button>
+              </div>
+
+              {currentUser?.role !== 'customer' && (
+                <button
+                  onClick={() => setViewMode('jeweler-dashboard')}
+                  className="mt-6 px-6 py-2 text-amber-400 hover:text-amber-300 text-sm font-semibold transition"
+                >
+                  ← Voltar ao Dashboard
+                </button>
+              )}
+            </div>
+          </div>
         )}
 
         {viewMode === 'public-passport' && !notFoundQuery && selectedCert && (
@@ -1298,7 +1220,13 @@ export default function App() {
             }}
           />
         )}
+
+        {viewMode === 'attributes' && currentUser?.role !== 'customer' && (
+          <AttributesView />
+        )}
       </main>
+        </>
+        )}
       </div>
 
       {/* Modals */}

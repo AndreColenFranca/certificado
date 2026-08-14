@@ -45,7 +45,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Default Organization UUID for local testing
-const DEFAULT_ORG_ID = 'default'; // Matches organizations.id in Supabase
+const DEFAULT_ORG_ID = '550e8400-e29b-41d4-a716-446655440000'; // UUID correspondente a 'default'
 
 // Middleware to extract org_id from JWT
 app.use((req: any, res, next) => {

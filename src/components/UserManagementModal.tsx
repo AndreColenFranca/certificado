@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Users, Crown, ShieldAlert, Trash2, CheckCircle2, Mail, Lock, User, ShieldCheck } from 'lucide-react';
 import { AppUser } from '../types';
+import { OrgSelector } from './OrgSelector';
 
 interface UserManagementModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState<'admin' | 'operator' | 'customer'>('customer');
+  const [selectedOrgId, setSelectedOrgId] = useState('550e8400-e29b-41d4-a716-446655440000');
 
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -129,7 +131,8 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
           name: newName.trim(),
           email: cleanEmail,
           password: newPassword,
-          role: newRole
+          role: newRole,
+          orgId: selectedOrgId
         })
       });
 
@@ -259,6 +262,15 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                   <h3 className="text-sm font-bold text-amber-200 uppercase tracking-wider">
                     Cadastrar Novo Usuário
                   </h3>
+                </div>
+
+                <div className="bg-zinc-900/50 p-3 rounded-lg border border-amber-900/30">
+                  <OrgSelector
+                    selectedOrgId={selectedOrgId}
+                    onOrgChange={setSelectedOrgId}
+                    currentUser={currentUser}
+                    label="Organização do Usuário"
+                  />
                 </div>
 
                 {feedback && (

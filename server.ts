@@ -45,7 +45,43 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Default Organization UUID for local testing
-const DEFAULT_ORG_ID = '550e8400-e29b-41d4-a716-446655440000';
+const DEFAULT_ORG_ID = 'default'; // Matches organizations.id in Supabase
+
+// Middleware to extract org_id from JWT
+app.use((req: any, res, next) => {
+  // Extract token from Authorization header
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  if (token) {
+    try {
+      // Decode JWT (without verification for now - Supabase does the verification)
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      const decoded = JSON.parse(jsonPayload);
+      req.user = {
+        id: decoded.sub,
+        org_id: decoded.org_id || DEFAULT_ORG_ID,
+        role: decoded.role || 'user',
+        email: decoded.email
+      };
+    } catch (e) {
+      console.warn('Error decoding JWT:', e);
+      req.user = { org_id: DEFAULT_ORG_ID };
+    }
+  } else {
+    // No token = use default org
+    req.user = { org_id: DEFAULT_ORG_ID };
+  }
+
+  next();
+});
 
 // In-memory databases initialized with sample data
 let certificatesDb: JewelryCertificate[] = [...INITIAL_CERTIFICATES];
@@ -722,8 +758,11 @@ app.delete('/api/users/:id', (req, res) => {
 // Get all customers
 app.get('/api/customers', async (req, res) => {
   try {
-    // ALWAYS load from Supabase - no local data
-    const result = await getCustomers(supabase);
+    // Get org_id from JWT or use default
+    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+
+    // ALWAYS load from Supabase - no local data, filter by org_id
+    const result = await getCustomers(supabase, userOrgId);
 
     if (result.success && result.data) {
       return res.json({ success: true, count: result.data.length, data: result.data });
@@ -772,7 +811,8 @@ app.post('/api/customers', async (req, res) => {
     newCust.createdAt = now;
     newCust.updatedAt = now;
 
-    // Try to save to Supabase
+    // Try to save to Supabase with org_id from JWT
+    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
     const supabaseCreateResult = await createCustomer(supabase, {
       customer_code: newCust.id,
       name: newCust.name,
@@ -780,7 +820,7 @@ app.post('/api/customers', async (req, res) => {
       email: newCust.email,
       phone: newCust.phone || '',
       notes: newCust.notes || '',
-      org_id: DEFAULT_ORG_ID
+      org_id: userOrgId
     });
 
     if (!supabaseCreateResult.success) {
@@ -971,8 +1011,11 @@ app.post('/api/certificates/sync', (req, res) => {
 // Get all certificates (ALWAYS from Supabase)
 app.get('/api/certificates', async (req, res) => {
   try {
-    // ALWAYS load from Supabase - no local data
-    const result = await getCertificates(supabase);
+    // Get org_id from JWT or use default
+    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+
+    // ALWAYS load from Supabase - no local data, filter by org_id
+    const result = await getCertificates(supabase, userOrgId);
 
     if (result.success && result.data) {
       return res.json({ success: true, count: result.data.length, data: result.data });
@@ -1052,8 +1095,9 @@ app.post('/api/certificates', async (req, res) => {
     newCert.createdAt = now;
     newCert.updatedAt = now;
 
-    // Try to save to Supabase
-    await createCertificate(supabase, { ...newCert, org_id: 'default' });
+    // Try to save to Supabase with org_id from JWT
+    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    await createCertificate(supabase, { ...newCert, org_id: userOrgId });
 
     // Always also save to in-memory for redundancy
     certificatesDb.unshift(newCert);

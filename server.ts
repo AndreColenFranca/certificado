@@ -44,9 +44,23 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+// Default Organization UUID for local testing
+const DEFAULT_ORG_ID = '550e8400-e29b-41d4-a716-446655440000';
+
 // In-memory databases initialized with sample data
 let certificatesDb: JewelryCertificate[] = [...INITIAL_CERTIFICATES];
 let customersDb: Customer[] = [...INITIAL_CUSTOMERS];
+
+// Organizations Database
+let organizationsDb: any[] = [
+  {
+    id: DEFAULT_ORG_ID,
+    name: 'Maison Lumière Joias',
+    description: 'Organização padrão',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
 
 // Only Admin User - All customer users come from Supabase
 let usersDb: any[] = [
@@ -78,6 +92,9 @@ const loadDataStore = () => {
       if (Array.isArray(data.usersDb)) {
         usersDb = data.usersDb;
       }
+      if (Array.isArray(data.organizationsDb)) {
+        organizationsDb = data.organizationsDb;
+      }
     }
   } catch (e) {
     console.warn('Could not load data_store.json:', e);
@@ -86,7 +103,7 @@ const loadDataStore = () => {
 
 const saveDataStore = () => {
   try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify({ certificatesDb, customersDb, usersDb }, null, 2));
+    fs.writeFileSync(DATA_FILE, JSON.stringify({ certificatesDb, customersDb, usersDb, organizationsDb }, null, 2));
   } catch (e) {
     console.warn('Could not save data_store.json:', e);
   }
@@ -763,7 +780,7 @@ app.post('/api/customers', async (req, res) => {
       email: newCust.email,
       phone: newCust.phone || '',
       notes: newCust.notes || '',
-      org_id: 'default'
+      org_id: DEFAULT_ORG_ID
     });
 
     if (!supabaseCreateResult.success) {

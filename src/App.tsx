@@ -304,31 +304,83 @@ export default function App() {
     }
   }, [selectedCert]);
 
-  const fetchCertificates = async () => {
+  const fetchCertificates = async (forceRefresh = false) => {
     try {
+      if (!forceRefresh) {
+        const cached = localStorage.getItem('aureum_certificates');
+        if (cached) {
+          try {
+            const cachedData = JSON.parse(cached);
+            if (Array.isArray(cachedData)) {
+              setCertificates(cachedData);
+            }
+          } catch (e) {
+            console.warn('Invalid cache:', e);
+          }
+        }
+      }
+
       const res = await fetch('/api/certificates');
       if (res.ok) {
         const data = await res.json();
         if (data && data.success && Array.isArray(data.data)) {
           setCertificates(data.data);
+          localStorage.setItem('aureum_certificates', JSON.stringify(data.data));
         }
       }
     } catch (e) {
       console.warn('Error fetching certificates:', e);
+      const cached = localStorage.getItem('aureum_certificates');
+      if (cached) {
+        try {
+          const cachedData = JSON.parse(cached);
+          if (Array.isArray(cachedData) && cachedData.length > 0) {
+            setCertificates(cachedData);
+          }
+        } catch (e) {
+          console.warn('Failed to load cache fallback:', e);
+        }
+      }
     }
   };
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = async (forceRefresh = false) => {
     try {
+      if (!forceRefresh) {
+        const cached = localStorage.getItem('aureum_customers');
+        if (cached) {
+          try {
+            const cachedData = JSON.parse(cached);
+            if (Array.isArray(cachedData)) {
+              setCustomers(cachedData);
+            }
+          } catch (e) {
+            console.warn('Invalid cache:', e);
+          }
+        }
+      }
+
       const res = await fetch('/api/customers');
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.data)) {
           setCustomers(data.data);
+          localStorage.setItem('aureum_customers', JSON.stringify(data.data));
         }
       }
     } catch (e) {
       console.warn('Error fetching customers:', e);
+      const cached = localStorage.getItem('aureum_customers');
+      if (cached) {
+        try {
+          const cachedData = JSON.parse(cached);
+          if (Array.isArray(cachedData) && cachedData.length > 0) {
+            setCustomers(cachedData);
+          }
+        } catch (e) {
+          console.warn('Failed to load cache fallback:', e);
+        }
+      }
     }
   };
 
@@ -358,6 +410,9 @@ export default function App() {
 
       setIsCustomerFormOpen(false);
       setEditingCustomer(null);
+
+      // Invalidate cache and refetch
+      setTimeout(() => fetchCustomers(true), 500);
     } catch (e) {
       console.error('Error saving customer:', e);
     }
@@ -421,6 +476,9 @@ export default function App() {
     console.log('handleConfirmDeleteCustomer: viewMode=', viewMode);
     setViewMode('customers');
     console.log('handleConfirmDeleteCustomer: setViewMode para customers');
+
+    // Invalidate cache and refetch
+    setTimeout(() => fetchCustomers(true), 500);
   };
 
   // Handle Mode Change
@@ -508,7 +566,7 @@ export default function App() {
 
       // Recarregar certificados do servidor para garantir sincronização
       console.log('5. Recarregando certificados do servidor...');
-      await fetchCertificates();
+      await fetchCertificates(true);
 
       console.log('6. Atualizando estado...');
       setNotFoundQuery(null);
@@ -578,6 +636,9 @@ export default function App() {
         setViewMode('jeweler-dashboard');
       }
     }
+
+    // Invalidate cache and refetch
+    setTimeout(() => fetchCertificates(true), 500);
   };
 
   // Add Maintenance Record
@@ -601,6 +662,8 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedCert)
       });
+      // Invalidate cache and refetch
+      setTimeout(() => fetchCertificates(true), 500);
     } catch (e) {
       console.error('Error adding maintenance:', e);
     }
@@ -649,6 +712,8 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedCert)
       });
+      // Invalidate cache and refetch
+      setTimeout(() => fetchCertificates(true), 500);
     } catch (e) {
       console.error('Error transferring owner:', e);
     }
@@ -696,6 +761,8 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedCert)
       });
+      // Invalidate cache and refetch
+      setTimeout(() => fetchCertificates(true), 500);
     } catch (e) {
       console.error('Error unlinking certificate:', e);
     }
@@ -765,6 +832,8 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(childCert)
         });
+        // Invalidate cache and refetch
+        setTimeout(() => fetchCertificates(true), 500);
       } catch (e) {
         console.error('Error creating child certificate for customer:', e);
       }
@@ -804,6 +873,8 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedCert)
         });
+        // Invalidate cache and refetch
+        setTimeout(() => fetchCertificates(true), 500);
       } catch (e) {
         console.error('Error linking customer to cert:', e);
       }

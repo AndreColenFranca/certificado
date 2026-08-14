@@ -1249,6 +1249,26 @@ app.post('/api/organizations', async (req, res) => {
       });
     }
 
+    // Validate unique email if provided
+    if (email) {
+      const { data: existingOrg, error: checkError } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (existingOrg) {
+        return res.status(400).json({
+          success: false,
+          error: 'Email já está registrado em outra organização'
+        });
+      }
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking email uniqueness:', checkError);
+      }
+    }
+
     // Generate ID automatically (slug from name)
     const generatedId = `org-${name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`;
 
@@ -1287,6 +1307,34 @@ app.put('/api/organizations/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, website, country, internalNotes, responsibleName, phone, email } = req.body;
+
+    // Validate unique email if provided and changed
+    if (email) {
+      const { data: currentOrg } = await supabase
+        .from('organizations')
+        .select('email')
+        .eq('id', id)
+        .single();
+
+      if (currentOrg && currentOrg.email !== email) {
+        const { data: existingOrg, error: checkError } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('email', email)
+          .single();
+
+        if (existingOrg) {
+          return res.status(400).json({
+            success: false,
+            error: 'Email já está registrado em outra organização'
+          });
+        }
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error('Error checking email uniqueness:', checkError);
+        }
+      }
+    }
 
     const updateData: any = { updated_at: new Date().toISOString() };
     if (name) updateData.name = name;

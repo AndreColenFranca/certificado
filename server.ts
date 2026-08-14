@@ -1507,6 +1507,68 @@ createAttributeEndpoints('setting_types', 'setting-types');
 createAttributeEndpoints('cut_shapes', 'cut-shapes');
 createAttributeEndpoints('color_grades', 'color-grades');
 
+// --- Audit Logs API ---
+app.get('/api/audit-logs', async (req, res) => {
+  try {
+    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const limit = parseInt(req.query.limit as string) || 100;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    const { data, error, count } = await supabase
+      .from('audit_logs')
+      .select('*', { count: 'exact' })
+      .eq('org_id', userOrgId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+
+    res.json({
+      success: true,
+      count: count || 0,
+      limit,
+      offset,
+      data: data || []
+    });
+  } catch (err: any) {
+    console.error('Error fetching audit logs:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET audit log de uma tabela específica
+app.get('/api/audit-logs/:table', async (req, res) => {
+  try {
+    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const tableName = req.params.table;
+    const limit = parseInt(req.query.limit as string) || 50;
+
+    const { data, error } = await supabase
+      .from('audit_logs')
+      .select('*')
+      .eq('org_id', userOrgId)
+      .eq('table_name', tableName)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+
+    res.json({
+      success: true,
+      table: tableName,
+      count: data?.length || 0,
+      data: data || []
+    });
+  } catch (err: any) {
+    console.error('Error fetching audit logs for table:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 if (!process.env.VERCEL) {
   startServer().then(() => {
     app.listen(3000, () => {

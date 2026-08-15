@@ -1009,7 +1009,8 @@ app.get('/api/certificates/:id', async (req, res) => {
     // Try Supabase first - search by ID
     const result = await getCertificateById(supabase, query);
     if (result.success && result.data) {
-      return res.json({ success: true, data: result.data });
+      const transformedData = transformCertificateFromDb(result.data);
+      return res.json({ success: true, data: transformedData });
     }
 
     // Fallback to in-memory search with multiple fields
@@ -1098,9 +1099,10 @@ app.post('/api/certificates', async (req, res) => {
 
     // Return the certificate with the correct UUID from Supabase
     const savedCert = result.data || certToSave;
+    const transformedData = transformCertificateFromDb(savedCert);
     const responseData = {
       ...newCert,
-      id: savedCert.id // Use the UUID from Supabase, not the cert_code
+      id: transformedData.id // Use the UUID from Supabase, not the cert_code
     };
 
     res.status(201).json({ success: true, data: responseData, message: 'Certificado emitido com sucesso' });
@@ -1134,7 +1136,8 @@ app.put('/api/certificates/:id', async (req, res) => {
       return res.status(400).json({ success: false, message: updateResult.error });
     }
 
-    res.json({ success: true, data: updatedCert, message: 'Certificado atualizado com sucesso' });
+    const transformedData = transformCertificateFromDb(updateResult.data || updatedCert);
+    res.json({ success: true, data: transformedData, message: 'Certificado atualizado com sucesso' });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message || 'Erro ao atualizar certificado' });
   }

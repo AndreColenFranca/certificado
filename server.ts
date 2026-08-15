@@ -43,6 +43,16 @@ app.get('/api/health', (req, res) => {
   res.json({ message: 'API Certificado de Joias', status: 'online', version: '1.0' });
 });
 
+// Debug endpoint to check environment variables
+app.get('/api/debug/env', (req, res) => {
+  res.json({
+    supabaseUrl: !!process.env.SUPABASE_URL,
+    supabaseServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    nodeEnv: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Initialize Supabase Client
 const supabaseUrl = process.env.SUPABASE_URL || 'https://btnxzffcuvwhuxdeshpk.supabase.co';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';

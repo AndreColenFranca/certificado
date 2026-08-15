@@ -13,6 +13,7 @@ import { JewelryCertificate, Customer } from './src/types';
 import {
   getCertificates,
   getCertificateById,
+  getCertificateByQuery,
   createCertificate,
   updateCertificate,
   deleteCertificate,
@@ -1001,13 +1002,13 @@ app.get('/api/certificates', async (req, res) => {
   }
 });
 
-// Get certificate by ID, Serial Number or Authenticity Hash
+// Get certificate by ID, Serial Number, Cert Code or Authenticity Hash
 app.get('/api/certificates/:id', async (req, res) => {
   try {
     const query = req.params.id.trim().toUpperCase();
 
-    // Try Supabase first - search by ID
-    const result = await getCertificateById(supabase, query);
+    // Try Supabase first - search by cert_code, serial_number, or id
+    const result = await getCertificateByQuery(supabase, query);
     if (result.success && result.data) {
       const transformedData = transformCertificateFromDb(result.data);
       return res.json({ success: true, data: transformedData });
@@ -1083,7 +1084,7 @@ app.post('/api/certificates', async (req, res) => {
       warranty_months: newCert.warrantyMonths,
       warranty_terms: newCert.warrantyTerms,
       warranty_status: newCert.warrantyStatus,
-      estimated_value_brl: newCert.estimatedValueBRL,
+      estimated_value_brl: newCert.estimatedValueBRL || 0,
       current_owner_name: newCert.currentOwnerName,
       owner_cpf: newCert.ownerCpf,
       owner_email: newCert.ownerEmail,

@@ -10,6 +10,7 @@ export function transformCertificateFromDb(dbCert: any): JewelryCertificate {
   const cert: any = {
     // Try camelCase first (if frontend saved it), then snake_case (from Supabase)
     id: dbCert.id,
+    certCode: dbCert.certCode ?? dbCert.cert_code,
     isRoot: dbCert.isRoot ?? dbCert.is_root ?? false,
     parentCertId: dbCert.parentCertId ?? dbCert.parent_cert_id,
     serialNumber: dbCert.serialNumber ?? dbCert.serial_number,
@@ -92,6 +93,72 @@ export async function getCertificateById(
   }
 }
 
+export async function getCertificateByQuery(
+  supabase: SupabaseClient,
+  query: string
+) {
+  try {
+    const normalizedQuery = query.trim().toUpperCase();
+    console.log(`[CERT SEARCH] Searching for: "${normalizedQuery}"`);
+
+    // Debug: Get all cert_codes to see what's in DB
+    const { data: allCerts } = await supabase
+      .from('jewelry_certificates')
+      .select('id, cert_code')
+      .limit(5);
+    console.log(`[CERT SEARCH] Sample cert_codes in DB:`, allCerts?.map(c => ({ id: c.id, cert_code: c.cert_code })));
+
+    // Try to find by cert_code first (human-readable) - case-insensitive
+    let { data, error } = await supabase
+      .from('jewelry_certificates')
+      .select('id, cert_code, serial_number')
+      .ilike('cert_code', `%${normalizedQuery}%`);
+
+    console.log(`[CERT SEARCH] cert_code query result:`, { error: error?.message, dataLength: data?.length, data });
+
+    if (!error && data && data.length > 0) {
+      console.log(`[CERT SEARCH] Found by cert_code:`, data[0].id, data[0].cert_code);
+      // Get full record
+      const { data: fullData } = await supabase
+        .from('jewelry_certificates')
+        .select('*')
+        .eq('id', data[0].id)
+        .single();
+      return { success: true, data: fullData };
+    }
+
+    console.log(`[CERT SEARCH] cert_code exact match failed, trying partial...`);
+
+    // Try by serial_number - exact match
+    const { data: data2, error: error2 } = await supabase
+      .from('jewelry_certificates')
+      .select('*')
+      .ilike('serial_number', `%${normalizedQuery}%`);
+
+    if (!error2 && data2 && data2.length > 0) {
+      console.log(`[CERT SEARCH] Found by serial_number:`, data2[0].id, data2[0].serial_number);
+      return { success: true, data: data2[0] };
+    }
+
+    // Try by UUID id
+    const { data: data3, error: error3 } = await supabase
+      .from('jewelry_certificates')
+      .select('*')
+      .eq('id', normalizedQuery);
+
+    if (!error3 && data3 && data3.length > 0) {
+      console.log(`[CERT SEARCH] Found by id:`, data3[0].id);
+      return { success: true, data: data3[0] };
+    }
+
+    console.log(`[CERT SEARCH] Not found: "${normalizedQuery}"`);
+    return { success: false, error: 'Certificado não encontrado', data: null };
+  } catch (err: any) {
+    console.log(`[CERT SEARCH] Exception:`, err.message);
+    return { success: false, error: err.message, data: null };
+  }
+}
+
 export async function createCertificate(
   supabase: SupabaseClient,
   certificate: Partial<JewelryCertificate> & { org_id: string }
@@ -157,9 +224,16 @@ export async function updateCertificate(
       if (snakeCaseUpdates[key] === undefined) {
         delete snakeCaseUpdates[key];
       } else if (snakeCaseUpdates[key] === '') {
-        snakeCaseUpdates[key] = null;
+        // For numeric fields, use 0 instead of null
+        if (['gross_weight_grams', 'width_cm', 'estimated_value_brl', 'warranty_months'].includes(key)) {
+          snakeCaseUpdates[key] = 0;
+        } else {
+          snakeCaseUpdates[key] = null;
+        }
       }
     });
+
+    console.log(`[UNLINK DEBUG] Updating cert ${id} with:`, snakeCaseUpdates);
 
     const { data, error } = await supabase
       .from('jewelry_certificates')
@@ -168,11 +242,14 @@ export async function updateCertificate(
       .select();
 
     if (error) {
+      console.log(`[UNLINK ERROR] Update failed for ${id}:`, error.message);
       return { success: false, error: error.message, data: null };
     }
 
+    console.log(`[UNLINK SUCCESS] Updated cert ${id}, returned:`, data?.[0]);
     return { success: true, data: data?.[0] || null };
   } catch (err: any) {
+    console.log(`[UNLINK EXCEPTION] Error updating ${id}:`, err.message);
     return { success: false, error: err.message, data: null };
   }
 }

@@ -62,7 +62,8 @@ export interface Customer {
 }
 
 export interface JewelryCertificate {
-  id: string; // e.g. "CERT-2026-A8F9"
+  id: string; // UUID
+  certCode?: string; // e.g. "CERT-2026-A8F9" (unique human-readable code)
   isRoot?: boolean; // true = Joia Pai/Raiz/Base (Catalog Model, unlinked to any customer)
   parentCertId?: string; // ID of Parent Root Joia if this is a Joia Filha (Child certificate assigned to customer)
   serialNumber: string; // e.g. "SN-18K-99042"

@@ -1407,6 +1407,7 @@ export default function App() {
         }}
         onSelectCustomer={(cust) => {
           setIsQueryModalOpen(false);
+          setSelectedCustomerIdInManagement(cust.id);
           setViewMode('customers');
         }}
         onSelectCertForView={(cert, tab) => {

@@ -178,8 +178,13 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
             </div>
 
             <div className="text-left font-mono">
-              <span className="text-[9px] text-amber-900 uppercase tracking-wider block font-bold">N° do Certificado</span>
-              <strong className="text-amber-900 font-bold text-xs sm:text-sm">{cert.id}</strong>
+              <span className="text-[9px] text-amber-900 uppercase tracking-wider block font-bold">Código do Certificado</span>
+              <strong className="text-amber-900 font-bold text-sm sm:text-base break-all">{cert.certCode || cert.id}</strong>
+            </div>
+
+            <div className="text-left font-mono">
+              <span className="text-[9px] text-amber-900 uppercase tracking-wider block font-bold">N° Passaporte Digital</span>
+              <strong className="text-amber-900 font-bold text-xs text-zinc-600 break-all">{cert.id}</strong>
             </div>
 
             <div className="text-left font-mono">

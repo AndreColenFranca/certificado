@@ -39,17 +39,21 @@ app.use(express.json({ limit: '10mb' }));
 
 // Initialize Supabase Client
 let supabase: any = null;
-const supabaseUrl = process.env.SUPABASE_URL || 'https://btnxzffcuvwhuxdeshpk.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-console.log('[DEBUG] Supabase URL:', supabaseUrl);
+console.log('[DEBUG] Supabase URL:', !!supabaseUrl);
 console.log('[DEBUG] Service Key configured:', !!supabaseServiceKey);
 
-try {
-  supabase = createClient(supabaseUrl, supabaseServiceKey);
-  console.log('[DEBUG] Supabase client initialized successfully');
-} catch (err: any) {
-  console.error('[ERROR] Failed to initialize Supabase:', err.message);
+if (supabaseUrl && supabaseServiceKey) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
+    console.log('[DEBUG] Supabase client initialized successfully');
+  } catch (err: any) {
+    console.error('[ERROR] Failed to initialize Supabase:', err.message);
+  }
+} else {
+  console.warn('[WARN] Supabase credentials not configured');
 }
 
 // Root route

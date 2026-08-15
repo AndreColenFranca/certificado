@@ -47,6 +47,9 @@ app.get('/api/health', (req, res) => {
 const supabaseUrl = process.env.SUPABASE_URL || 'https://btnxzffcuvwhuxdeshpk.supabase.co';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
+console.log('[DEBUG] Supabase URL:', supabaseUrl);
+console.log('[DEBUG] Service Key configured:', !!supabaseServiceKey);
+
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Default Organization UUID for local testing

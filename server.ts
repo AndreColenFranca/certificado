@@ -1084,6 +1084,9 @@ app.post('/api/certificates', async (req, res) => {
       warranty_terms: newCert.warrantyTerms,
       warranty_status: newCert.warrantyStatus,
       estimated_value_brl: newCert.estimatedValueBRL,
+      current_owner_name: newCert.currentOwnerName,
+      owner_cpf: newCert.ownerCpf,
+      owner_email: newCert.ownerEmail,
       owner_id: newCert.ownerId,
       authenticity_hash: authHash,
       org_id: (req as any).user?.org_id || DEFAULT_ORG_ID

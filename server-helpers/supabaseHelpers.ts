@@ -145,6 +145,9 @@ export async function updateCertificate(
       warranty_terms: updates.warrantyTerms,
       warranty_status: updates.warrantyStatus,
       estimated_value_brl: updates.estimatedValueBRL,
+      current_owner_name: updates.currentOwnerName,
+      owner_cpf: updates.ownerCpf,
+      owner_email: updates.ownerEmail,
       owner_id: updates.ownerId,
       updated_at: new Date().toISOString()
     };

@@ -1,6 +1,12 @@
 {
   "version": 2,
-  "buildCommand": "vite build && npm run build",
+  "buildCommand": "vite build",
   "outputDirectory": "dist",
-  "devCommand": "npm run dev"
+  "devCommand": "npm run dev",
+  "functions": {
+    "api/**/*.ts": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  }
 }

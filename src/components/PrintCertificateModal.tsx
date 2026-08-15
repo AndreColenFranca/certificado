@@ -196,17 +196,17 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
                 Comprador / Titular Registrado
               </span>
               <strong className="text-xs sm:text-sm font-bold text-zinc-950 block mt-0.5 font-serif">
-                {cert.current_owner_name || 'Ateliê Central (Em Estoque)'}
+                {cert.currentOwnerName || 'Ateliê Central (Em Estoque)'}
               </strong>
             </div>
 
-            {cert.owner_cpf && (
+            {cert.ownerCpf && (
               <div className="font-mono">
                 <span className="text-[9px] text-amber-900 uppercase tracking-wider block font-bold">
                   CPF do Titular
                 </span>
                 <strong className="text-amber-950 font-bold text-xs">
-                  {cert.owner_cpf}
+                  {cert.ownerCpf}
                 </strong>
               </div>
             )}
@@ -219,30 +219,30 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
             </h3>
 
             {(() => {
-              const hasWidth = Boolean(cert.width_cm && Number(cert.width_cm) > 0);
+              const hasWidth = Boolean(cert.widthCm && Number(cert.widthCm) > 0);
               return (
                 <div className={`grid ${hasWidth ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'} gap-2 text-xs`}>
                   <div className="p-2 bg-zinc-50 rounded-lg border border-zinc-200">
                     <span className="text-[9px] text-zinc-500 font-bold block uppercase tracking-wider">Teor do Metal:</span>
-                    <strong className="text-zinc-950 font-bold text-xs block mt-0.5">{cert.metal_purity}</strong>
+                    <strong className="text-zinc-950 font-bold text-xs block mt-0.5">{cert.metalPurity}</strong>
                   </div>
 
                   <div className="p-2 bg-zinc-50 rounded-lg border border-zinc-200">
                     <span className="text-[9px] text-zinc-500 font-bold block uppercase tracking-wider">Cor do Metal:</span>
-                    <strong className="text-zinc-950 font-bold text-xs block mt-0.5">{cert.metal_color}</strong>
+                    <strong className="text-zinc-950 font-bold text-xs block mt-0.5">{cert.metalColor}</strong>
                   </div>
 
-                  {cert.gross_weight_grams && (
+                  {cert.grossWeightGrams && (
                     <div className="p-2 bg-zinc-50 rounded-lg border border-zinc-200">
                       <span className="text-[9px] text-zinc-500 font-bold block uppercase tracking-wider">Peso Bruto:</span>
-                      <strong className="text-zinc-950 font-bold text-xs block mt-0.5">{cert.gross_weight_grams} gramas</strong>
+                      <strong className="text-zinc-950 font-bold text-xs block mt-0.5">{cert.grossWeightGrams} gramas</strong>
                     </div>
                   )}
 
                   {hasWidth && (
                     <div className="p-2 bg-zinc-50 rounded-lg border border-zinc-200">
                       <span className="text-[9px] text-zinc-500 font-bold block uppercase tracking-wider">Largura da Peça:</span>
-                      <strong className="text-zinc-950 font-bold text-xs block mt-0.5">{cert.width_cm} cm</strong>
+                      <strong className="text-zinc-950 font-bold text-xs block mt-0.5">{cert.widthCm} cm</strong>
                     </div>
                   )}
 
@@ -255,7 +255,7 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
             })()}
 
             {/* Gemstones Details */}
-            {cert.has_stones && cert.stones.length > 0 && (
+            {cert.hasStones && cert.stones.length > 0 && (
               <div className="pt-1">
                 <span className="text-[11px] font-bold text-zinc-950 block mb-1">Análise Gemológica:</span>
                 <table className="w-full text-left text-xs border border-zinc-200 bg-white rounded-lg overflow-hidden shadow-xs">

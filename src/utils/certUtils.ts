@@ -63,19 +63,21 @@ export const findCertificateByQuery = (
 
   const targetUpper = cleanTarget.toUpperCase();
 
-  // 1. Exact match on ID, serialNumber, or authenticityHash
+  // 1. Exact match on ID, serialNumber, certCode, or authenticityHash
   const exactMatch = certificates.find(
     c => (c.id && c.id.toUpperCase() === targetUpper) ||
          (c.serialNumber && c.serialNumber.toUpperCase() === targetUpper) ||
+         (c.certCode && c.certCode.toUpperCase() === targetUpper) ||
          (c.authenticityHash && c.authenticityHash.toUpperCase() === targetUpper)
   );
 
   if (exactMatch) return exactMatch;
 
-  // 2. Partial match on ID, serialNumber, title, or ownerName
+  // 2. Partial match on ID, serialNumber, certCode, title, or ownerName
   const partialMatch = certificates.find(
     c => (c.id && c.id.toUpperCase().includes(targetUpper)) ||
          (c.serialNumber && c.serialNumber.toUpperCase().includes(targetUpper)) ||
+         (c.certCode && c.certCode.toUpperCase().includes(targetUpper)) ||
          (c.title && c.title.toUpperCase().includes(targetUpper)) ||
          (c.currentOwnerName && c.currentOwnerName.toUpperCase().includes(targetUpper))
   );

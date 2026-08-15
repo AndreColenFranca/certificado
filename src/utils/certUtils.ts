@@ -51,36 +51,70 @@ export const extractCertIdFromInput = (input: string | null | undefined): string
 };
 
 /**
+ * Searches a list of certificates and returns ALL matching results
+ */
+export const findCertificatesByQuery = (
+  certificates: JewelryCertificate[],
+  query: string | null | undefined
+): JewelryCertificate[] => {
+  if (!query) return [];
+  const cleanTarget = extractCertIdFromInput(query);
+  if (!cleanTarget) return [];
+
+  const targetUpper = cleanTarget.toUpperCase();
+  const results: JewelryCertificate[] = [];
+  const seen = new Set<string>();
+
+  // 1. Exact match on ID, serialNumber, certCode, or authenticityHash (highest priority)
+  certificates.forEach(c => {
+    if (!seen.has(c.id) && (
+      (c.id && c.id.toUpperCase() === targetUpper) ||
+      (c.serialNumber && c.serialNumber.toUpperCase() === targetUpper) ||
+      (c.certCode && c.certCode.toUpperCase() === targetUpper) ||
+      (c.authenticityHash && c.authenticityHash.toUpperCase() === targetUpper)
+    )) {
+      results.push(c);
+      seen.add(c.id);
+    }
+  });
+
+  if (results.length > 0) return results;
+
+  // 2. Partial match on ID, serialNumber, certCode (medium priority)
+  certificates.forEach(c => {
+    if (!seen.has(c.id) && (
+      (c.id && c.id.toUpperCase().includes(targetUpper)) ||
+      (c.serialNumber && c.serialNumber.toUpperCase().includes(targetUpper)) ||
+      (c.certCode && c.certCode.toUpperCase().includes(targetUpper))
+    )) {
+      results.push(c);
+      seen.add(c.id);
+    }
+  });
+
+  if (results.length > 0) return results;
+
+  // 3. Partial match on title or ownerName (lowest priority)
+  certificates.forEach(c => {
+    if (!seen.has(c.id) && (
+      (c.title && c.title.toUpperCase().includes(targetUpper)) ||
+      (c.currentOwnerName && c.currentOwnerName.toUpperCase().includes(targetUpper))
+    )) {
+      results.push(c);
+      seen.add(c.id);
+    }
+  });
+
+  return results;
+};
+
+/**
  * Searches a list of certificates for a given query (ID, serial number, hash, or title).
  */
 export const findCertificateByQuery = (
   certificates: JewelryCertificate[],
   query: string | null | undefined
 ): JewelryCertificate | null => {
-  if (!query) return null;
-  const cleanTarget = extractCertIdFromInput(query);
-  if (!cleanTarget) return null;
-
-  const targetUpper = cleanTarget.toUpperCase();
-
-  // 1. Exact match on ID, serialNumber, certCode, or authenticityHash
-  const exactMatch = certificates.find(
-    c => (c.id && c.id.toUpperCase() === targetUpper) ||
-         (c.serialNumber && c.serialNumber.toUpperCase() === targetUpper) ||
-         (c.certCode && c.certCode.toUpperCase() === targetUpper) ||
-         (c.authenticityHash && c.authenticityHash.toUpperCase() === targetUpper)
-  );
-
-  if (exactMatch) return exactMatch;
-
-  // 2. Partial match on ID, serialNumber, certCode, title, or ownerName
-  const partialMatch = certificates.find(
-    c => (c.id && c.id.toUpperCase().includes(targetUpper)) ||
-         (c.serialNumber && c.serialNumber.toUpperCase().includes(targetUpper)) ||
-         (c.certCode && c.certCode.toUpperCase().includes(targetUpper)) ||
-         (c.title && c.title.toUpperCase().includes(targetUpper)) ||
-         (c.currentOwnerName && c.currentOwnerName.toUpperCase().includes(targetUpper))
-  );
-
-  return partialMatch || null;
+  const results = findCertificatesByQuery(certificates, query);
+  return results.length > 0 ? results[0] : null;
 };

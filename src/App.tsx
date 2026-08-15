@@ -18,12 +18,13 @@ import { CompanyLogoModal } from './components/CompanyLogoModal';
 import { DeleteConfirmModal } from './components/DeleteConfirmModal';
 import { JewelryCustomerLinkModal } from './components/JewelryCustomerLinkModal';
 import { JewelryCustomerQueryModal } from './components/JewelryCustomerQueryModal';
+import { CertificateSearchResultsModal } from './components/CertificateSearchResultsModal';
 import { LoginView } from './components/LoginView';
 import { UserManagementModal } from './components/UserManagementModal';
 import { CustomerPortalView } from './components/CustomerPortalView';
 import { OrganizationsView } from './components/OrganizationsView';
 import { AttributesView } from './components/AttributesView';
-import { extractCertIdFromInput, findCertificateByQuery } from './utils/certUtils';
+import { extractCertIdFromInput, findCertificateByQuery, findCertificatesByQuery } from './utils/certUtils';
 import { isRootCert, getChildCertificatesForParent } from './utils/certHierarchy';
 import { ShieldAlert, Search, QrCode, LogIn } from 'lucide-react';
 
@@ -101,20 +102,48 @@ export default function App() {
 
   const [forceLoginView, setForceLoginView] = useState<boolean>(false);
   const [viewHistory, setViewHistory] = useState<ViewMode[]>([]);
+  const [searchResults, setSearchResults] = useState<JewelryCertificate[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSearchResultsModalOpen, setIsSearchResultsModalOpen] = useState(false);
 
   const handleSelectCert = (cert: JewelryCertificate, tab: 'photo-inspector' | 'specs' | 'history' | 'care' = 'photo-inspector') => {
     setSelectedCert(cert);
     setPublicViewTab(tab);
-    setForceLoginView(false);
-    const isCertTab = tab === 'certificate';
     if (typeof window !== 'undefined') {
-      const targetUrl = `/cert/${encodeURIComponent(cert.id)}${isCertTab ? '?type=certificate' : ''}`;
-      window.history.pushState(null, '', targetUrl);
+      window.history.pushState(null, '', `/cert/${encodeURIComponent(cert.id)}`);
     }
-    if (isCertTab) {
-      navigateToView('public-certificate');
+    navigateToView('public-passport');
+  };
+
+  const handlePassportSearch = (query: string) => {
+    if (!query.trim()) return;
+
+    const results = findCertificatesByQuery(certificates, query);
+
+    if (results.length === 0) {
+      setNotFoundQuery(query);
+      setSearchResults([]);
+      setIsSearchResultsModalOpen(false);
+      if (typeof window !== 'undefined') {
+        window.history.pushState(null, '', `/cert/${encodeURIComponent(query)}`);
+      }
+    } else if (results.length === 1) {
+      const cert = results[0];
+      setSelectedCert(cert);
+      setNotFoundQuery(null);
+      setSearchResults([]);
+      setIsSearchResultsModalOpen(false);
+      if (typeof window !== 'undefined') {
+        window.history.pushState(null, '', `/cert/${encodeURIComponent(cert.id)}`);
+      }
     } else {
-      navigateToView('public-passport');
+      setSearchResults(results);
+      setSearchQuery(query);
+      setIsSearchResultsModalOpen(true);
+      setNotFoundQuery(null);
+      if (typeof window !== 'undefined') {
+        window.history.pushState(null, '', `/cert/${encodeURIComponent(query)}`);
+      }
     }
   };
 
@@ -1091,19 +1120,11 @@ export default function App() {
                     id="passport-search"
                     placeholder="ex: cert-2026-001 ou https://domain.com/cert/..."
                     className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-1 ${theme === 'classic-light' ? 'bg-stone-100 border-amber-200 text-stone-900 placeholder-stone-400 focus:border-amber-500 focus:ring-amber-500' : 'bg-zinc-800 border-amber-900/40 text-amber-50 placeholder-zinc-500 focus:border-amber-500 focus:ring-amber-500'}`}
-                    onKeyPress={(e) => {
+                    onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         const value = (e.target as HTMLInputElement).value.trim();
                         if (value) {
-                          const found = findCertificateByQuery(certificates, value);
-                          if (found) {
-                            setSelectedCert(found);
-                            setNotFoundQuery(null);
-                            window.history.pushState(null, '', `/cert/${encodeURIComponent(found.id)}`);
-                          } else {
-                            setNotFoundQuery(value);
-                            window.history.pushState(null, '', `/cert/${encodeURIComponent(value)}`);
-                          }
+                          handlePassportSearch(value);
                         }
                       }
                     }}
@@ -1115,15 +1136,7 @@ export default function App() {
                     const input = document.getElementById('passport-search') as HTMLInputElement;
                     const value = input?.value.trim();
                     if (value) {
-                      const found = findCertificateByQuery(certificates, value);
-                      if (found) {
-                        setSelectedCert(found);
-                        setNotFoundQuery(null);
-                        window.history.pushState(null, '', `/cert/${encodeURIComponent(found.id)}`);
-                      } else {
-                        setNotFoundQuery(value);
-                        window.history.pushState(null, '', `/cert/${encodeURIComponent(value)}`);
-                      }
+                      handlePassportSearch(value);
                     }
                   }}
                   className={`w-full px-6 py-3 font-semibold rounded-lg transition-all shadow-lg ${theme === 'classic-light' ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-900' : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950'} shadow-amber-950/40`}
@@ -1333,6 +1346,20 @@ export default function App() {
         onDelete={onRequestDeleteCertificate}
         customers={customers}
         selectedCustomerForNewCert={selectedCustomerForNewCert}
+      />
+
+      <CertificateSearchResultsModal
+        isOpen={isSearchResultsModalOpen}
+        results={searchResults}
+        query={searchQuery}
+        onClose={() => {
+          setIsSearchResultsModalOpen(false);
+          setSearchResults([]);
+          setSearchQuery('');
+        }}
+        onSelectCertificate={(cert) => {
+          handleSelectCert(cert);
+        }}
       />
 
       <DeleteConfirmModal

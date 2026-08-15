@@ -863,7 +863,7 @@ app.post('/api/customers', async (req, res) => {
     const supabaseCreateResult = await createCustomer(supabase, {
       customer_code: newCust.id,
       name: newCust.name,
-      cpf: newCust.cpf,
+      cpf: String(newCust.cpf),
       email: newCust.email,
       phone: newCust.phone || '',
       notes: newCust.notes || '',

@@ -58,7 +58,6 @@ export const ResetPasswordView = ({
         localStorage.removeItem('aureum_customers');
         localStorage.removeItem('aureum_theme');
       } catch (e) {
-        console.warn('Could not clear localStorage');
       }
       setTimeout(() => {
         // Redirect to login with logout flag

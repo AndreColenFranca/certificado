@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Lock, Mail, Eye, EyeOff, ShieldCheck, Crown, Sparkles, KeyRound, User } from 'lucide-react';
 import { AppUser, Customer } from '../types';
 import { INITIAL_CUSTOMERS } from '../data/sampleCustomers';
+import { ROOT_USER_EMAIL } from '../config/constants';
 
 interface LoginViewProps {
   onLoginSuccess: (user: AppUser) => void;
@@ -34,7 +35,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
     // 1. Check Root Admin Aliases
     const rootKeywords = [
-      'andreluiz.colen@gmail.com',
+      ROOT_USER_EMAIL,
+      ROOT_USER_EMAIL.split('@')[0],
       'andreluiz.colen',
       'andreluiz',
       'colen',
@@ -60,7 +62,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
       return {
         id: 'user-root-001',
         name: 'André Luiz Colen (Administrador Raiz)',
-        email: 'andreluiz.colen@gmail.com',
+        email: ROOT_USER_EMAIL,
         role: 'root',
         createdAt: new Date().toISOString(),
         isRoot: true
@@ -369,7 +371,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   onLoginSuccess({
                     id: 'user-root-001',
                     name: 'André Luiz Colen (Administrador Raiz)',
-                    email: 'andreluiz.colen@gmail.com',
+                    email: ROOT_USER_EMAIL,
                     role: 'root',
                     createdAt: new Date().toISOString(),
                     isRoot: true

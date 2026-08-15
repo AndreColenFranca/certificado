@@ -7,6 +7,7 @@ export interface AppUser {
   isRoot?: boolean;
   customerId?: string;
   cpf?: string;
+  orgId?: string;
 }
 
 export type MetalPurity = string;
@@ -51,7 +52,7 @@ export interface CareGuideItem {
 export interface Customer {
   id: string; // e.g., "CLI-1001"
   name: string; // Alphanumeric
-  cpf: string; // Formatted "999.999.999-99"
+  cpf: string | number; // 11 dígitos (BIGINT no banco, mas flexível aqui)
   email: string; // Email
   phone?: string;
   notes?: string;
@@ -90,8 +91,6 @@ export interface JewelryCertificate {
 
   // Media
   images: string[]; // High-res images
-  frames360: string[]; // Images or angles for 360 viewer
-  video360Url?: string;
 
   // Warranty & Auth
   warrantyMonths: number; // e.g. 60 or 0 for lifetime (-1)

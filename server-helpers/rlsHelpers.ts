@@ -14,10 +14,8 @@ export async function setUserOrgId(
     // Nota: isso requer uma função Edge Function ou API customizada
     // Por enquanto, vamos usar um padrão alternativo
 
-    console.log(`Setting org_id='${orgId}' for user ${userId}`);
     return { success: true };
   } catch (err: any) {
-    console.error('Error setting user org_id:', err);
     return { success: false, error: err.message };
   }
 }
@@ -40,7 +38,6 @@ export function getOrgIdFromJwt(jwtToken?: string): string {
 
     return payload.org_id || 'default';
   } catch (err) {
-    console.warn('Error decoding JWT:', err);
     return 'default';
   }
 }
@@ -108,7 +105,6 @@ export async function getUserOrgId(
 
     return data.org_id;
   } catch (err) {
-    console.warn('Error fetching user org:', err);
     return 'default';
   }
 }

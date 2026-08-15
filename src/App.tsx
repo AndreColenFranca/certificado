@@ -43,6 +43,8 @@ export default function App() {
   });
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
   const [isOrganizationsViewOpen, setIsOrganizationsViewOpen] = useState(false);
+  const [orgDisplayName, setOrgDisplayName] = useState<string>('');
+  const [customerFormError, setCustomerFormError] = useState<string>('');
 
   const getInitialCertificates = (): JewelryCertificate[] => [];
 
@@ -147,7 +149,7 @@ export default function App() {
     setCurrentUser(user);
     setForceLoginView(false);
     try {
-      localStorage.setItem('aureum_logged_user', JSON.stringify(user));
+      // localStorage.setItem('aureum_logged_user', JSON.stringify(user)); // Supabase only
     } catch (e) {
       console.warn('Could not save logged user to localStorage:', e);
     }
@@ -233,7 +235,7 @@ export default function App() {
   const handleToggleTheme = () => {
     const nextTheme = theme === 'luxury-dark' ? 'classic-light' : 'luxury-dark';
     setTheme(nextTheme);
-    localStorage.setItem('aureum_theme', nextTheme);
+    // localStorage.setItem('aureum_theme', nextTheme); // Supabase only
   };
 
   // Load certificates and customers from backend API on mount
@@ -304,6 +306,21 @@ export default function App() {
     }
   }, [selectedCert]);
 
+  // Fetch organization display name
+  useEffect(() => {
+    if (currentUser) {
+      const orgId = currentUser.orgId || '550e8400-e29b-41d4-a716-446655440000';
+      fetch(`/api/organizations/${orgId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data) {
+            setOrgDisplayName(data.data.display_name || data.data.name);
+          }
+        })
+        .catch(err => {});
+    }
+  }, [currentUser]);
+
   const fetchCertificates = async (forceRefresh = false) => {
     try {
       if (!forceRefresh) {
@@ -315,7 +332,6 @@ export default function App() {
               setCertificates(cachedData);
             }
           } catch (e) {
-            console.warn('Invalid cache:', e);
           }
         }
       }
@@ -325,11 +341,10 @@ export default function App() {
         const data = await res.json();
         if (data && data.success && Array.isArray(data.data)) {
           setCertificates(data.data);
-          localStorage.setItem('aureum_certificates', JSON.stringify(data.data));
+          // localStorage.setItem('aureum_certificates', JSON.stringify(data.data)); // Supabase only
         }
       }
     } catch (e) {
-      console.warn('Error fetching certificates:', e);
       const cached = localStorage.getItem('aureum_certificates');
       if (cached) {
         try {
@@ -338,7 +353,6 @@ export default function App() {
             setCertificates(cachedData);
           }
         } catch (e) {
-          console.warn('Failed to load cache fallback:', e);
         }
       }
     }
@@ -355,7 +369,6 @@ export default function App() {
               setCustomers(cachedData);
             }
           } catch (e) {
-            console.warn('Invalid cache:', e);
           }
         }
       }
@@ -365,11 +378,10 @@ export default function App() {
         const data = await res.json();
         if (data.success && Array.isArray(data.data)) {
           setCustomers(data.data);
-          localStorage.setItem('aureum_customers', JSON.stringify(data.data));
+          // localStorage.setItem('aureum_customers', JSON.stringify(data.data)); // Supabase only
         }
       }
     } catch (e) {
-      console.warn('Error fetching customers:', e);
       const cached = localStorage.getItem('aureum_customers');
       if (cached) {
         try {
@@ -378,7 +390,6 @@ export default function App() {
             setCustomers(cachedData);
           }
         } catch (e) {
-          console.warn('Failed to load cache fallback:', e);
         }
       }
     }
@@ -398,11 +409,15 @@ export default function App() {
         });
         updatedList = customers.map(c => c.id === custToSave.id ? custToSave : c);
       } else {
-        await fetch('/api/customers', {
+        const response = await fetch('/api/customers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(custToSave)
         });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || data.message || response.statusText);
+        }
         updatedList = [custToSave, ...customers];
       }
 
@@ -414,14 +429,14 @@ export default function App() {
       // Invalidate cache and refetch
       setTimeout(() => fetchCustomers(true), 500);
     } catch (e) {
-      console.error('Error saving customer:', e);
+      const errorMsg = e instanceof Error ? e.message : 'Erro ao salvar cliente';
+      setCustomerFormError(errorMsg);
     }
   };
 
   const handleConfirmDeleteCustomer = async (id: string) => {
-    console.log('Deletando cliente:', id);
     const targetCust = customers.find(c => c.id === id);
-    const custCpf = targetCust?.cpf?.trim();
+    const custCpf = String(targetCust?.cpf || '').trim();
     const custName = targetCust?.name?.trim();
 
     // Identify linked certificates
@@ -434,14 +449,12 @@ export default function App() {
         )
         .map(c => c.id.toUpperCase())
     );
-    console.log('Cliente:', id, 'tem', linkedCertIds.size, 'certificados vinculados');
 
     try {
       const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
       const data = await res.json();
-      console.log('Resposta da API DELETE:', res.ok, res.status, data);
       if (!res.ok) {
-        alert('Erro ao deletar no servidor: ' + (data.error || 'Desconhecido'));
+        alert('Erro ao deletar no servidor: ' + (data.message || data.error || 'Desconhecido'));
         return;
       }
     } catch (e) {
@@ -450,14 +463,11 @@ export default function App() {
       return;
     }
 
-    console.log('Atualizando lista de clientes - antes:', customers.map(c => c.id));
     const updatedCustomers = customers.filter(c => c.id !== id);
-    console.log('Atualizando lista de clientes - depois:', updatedCustomers.map(c => c.id));
     setCustomers(updatedCustomers);
 
     // Limpar cliente selecionado se for o deletado
     if (selectedCustomerIdInManagement === id) {
-      console.log('Limpando selectedCustomerIdInManagement');
       setSelectedCustomerIdInManagement('');
     }
 
@@ -473,9 +483,7 @@ export default function App() {
     }
 
     // Manter na tela de clientes após deletar
-    console.log('handleConfirmDeleteCustomer: viewMode=', viewMode);
     setViewMode('customers');
-    console.log('handleConfirmDeleteCustomer: setViewMode para customers');
 
     // Invalidate cache and refetch
     setTimeout(() => fetchCustomers(true), 500);
@@ -510,9 +518,9 @@ export default function App() {
     } else {
       // Check if it matches a customer name/CPF/email
       const q = query.trim().toUpperCase();
-      const matchingCust = customers.find(c => 
-        c.name.toUpperCase().includes(q) || 
-        c.cpf.includes(query) || 
+      const matchingCust = customers.find(c =>
+        c.name.toUpperCase().includes(q) ||
+        String(c.cpf || '').includes(query) ||
         c.email.toUpperCase().includes(q)
       );
       if (matchingCust) {
@@ -528,10 +536,8 @@ export default function App() {
 
   // Save Certificate (Create or Update)
   const handleSaveCertificate = async (certToSave: JewelryCertificate) => {
-    console.log('1. handleSaveCertificate iniciado para:', certToSave.id);
     try {
       const existing = certificates.find(c => c.id === certToSave.id);
-      console.log('2. Certificado existe?', !!existing);
       let apiResponse: any;
 
       if (existing) {
@@ -543,39 +549,31 @@ export default function App() {
         });
         apiResponse = await res.json();
         if (!res.ok) {
-          console.error('API error updating certificate:', apiResponse);
           alert('Erro ao atualizar certificado: ' + (apiResponse.error || 'Desconhecido'));
           return;
         }
       } else {
         // Create API
-        console.log('3. Criando novo certificado...');
         const res = await fetch('/api/certificates', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(certToSave)
         });
         apiResponse = await res.json();
-        console.log('4. Resposta da API:', res.status, apiResponse);
         if (!res.ok) {
-          console.error('API error creating certificate:', apiResponse);
           alert('Erro ao criar certificado: ' + (apiResponse.error || 'Desconhecido'));
           return;
         }
       }
 
       // Recarregar certificados do servidor para garantir sincronização
-      console.log('5. Recarregando certificados do servidor...');
       await fetchCertificates(true);
 
-      console.log('6. Atualizando estado...');
       setNotFoundQuery(null);
       setIsFormModalOpen(false);
       setSelectedCustomerForNewCert(null);
-      console.log('7. Redirecionando para jeweler-dashboard');
       setViewMode('jeweler-dashboard');
     } catch (e) {
-      console.error('Error saving cert:', e);
       alert('Erro ao salvar certificado: ' + e);
     }
   };
@@ -587,10 +585,6 @@ export default function App() {
   };
 
   const handleConfirmDelete = async (id: string) => {
-    console.log('handleConfirmDelete called for:', id);
-    console.log('Current viewMode:', viewMode);
-    console.log('Current selectedCert:', selectedCert?.id);
-
     const target = certificates.find(c => c.id.toUpperCase() === id.toUpperCase());
     if (target) {
       const ownerName = target.currentOwnerName?.trim();
@@ -622,16 +616,13 @@ export default function App() {
       console.error('Error deleting cert from API:', e);
     }
     const updated = certificates.filter(c => c.id.toUpperCase() !== id.toUpperCase());
-    console.log('Updated certificates count:', updated.length);
     setCertificates(updated);
 
     if (selectedCert?.id.toUpperCase() === id.toUpperCase()) {
-      console.log('Certificate was selected, clearing and redirecting');
       setSelectedCert(null as any);
       setNotFoundQuery(null);
       // Redirect to dashboard if viewing deleted certificate
       if (viewMode === 'public-passport' || viewMode === 'public-certificate') {
-        console.log('Redirecting from', viewMode, 'to jeweler-dashboard');
         window.history.replaceState({}, '', '/');
         setViewMode('jeweler-dashboard');
       }
@@ -665,7 +656,6 @@ export default function App() {
       // Invalidate cache and refetch
       setTimeout(() => fetchCertificates(true), 500);
     } catch (e) {
-      console.error('Error adding maintenance:', e);
     }
   };
 
@@ -715,7 +705,6 @@ export default function App() {
       // Invalidate cache and refetch
       setTimeout(() => fetchCertificates(true), 500);
     } catch (e) {
-      console.error('Error transferring owner:', e);
     }
   };
 
@@ -764,7 +753,6 @@ export default function App() {
       // Invalidate cache and refetch
       setTimeout(() => fetchCertificates(true), 500);
     } catch (e) {
-      console.error('Error unlinking certificate:', e);
     }
   };
 
@@ -835,7 +823,6 @@ export default function App() {
         // Invalidate cache and refetch
         setTimeout(() => fetchCertificates(true), 500);
       } catch (e) {
-        console.error('Error creating child certificate for customer:', e);
       }
     } else {
       // It's already a child certificate in stock or owned by same customer - update directly
@@ -876,7 +863,6 @@ export default function App() {
         // Invalidate cache and refetch
         setTimeout(() => fetchCertificates(true), 500);
       } catch (e) {
-        console.error('Error linking customer to cert:', e);
       }
     }
   };
@@ -1243,6 +1229,7 @@ export default function App() {
             customers={customers}
             certificates={certificates}
             initialCustomerId={selectedCustomerIdInManagement}
+            orgDisplayName={orgDisplayName}
             onOpenCreateCustomer={() => {
               setEditingCustomer(null);
               setIsCustomerFormOpen(true);
@@ -1311,10 +1298,16 @@ export default function App() {
 
       <CustomerFormModal
         isOpen={isCustomerFormOpen}
-        onClose={() => setIsCustomerFormOpen(false)}
+        onClose={() => {
+          setIsCustomerFormOpen(false);
+          setCustomerFormError('');
+        }}
         onSave={handleSaveCustomer}
+        serverErrorMessage={customerFormError}
+        onClearError={() => setCustomerFormError('')}
         initialCustomer={editingCustomer}
         existingCustomers={customers}
+        currentUser={currentUser}
       />
 
       <CustomerDeleteModal

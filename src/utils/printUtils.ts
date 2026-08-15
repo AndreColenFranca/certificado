@@ -68,7 +68,6 @@ export async function generateCertificatePdf(
 ): Promise<boolean> {
   const element = document.getElementById(elementId);
   if (!element) {
-    console.error(`Element #${elementId} not found`);
     return false;
   }
 
@@ -235,11 +234,9 @@ export async function generateCertificatePdf(
     pdf.save(filename);
     return true;
   } catch (err) {
-    console.error('Error in generateCertificatePdf:', err);
     try {
       window.print();
     } catch (e) {
-      console.error('Fallback print failed:', e);
     }
     return false;
   } finally {
@@ -268,7 +265,6 @@ export async function printElement(
       }, 1000);
       return;
     } catch (err) {
-      console.warn('Native window.print failed, falling back to PDF generation:', err);
     }
   }
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Customer } from '../types';
 import { AppUser } from '../types';
-import { formatCPF, isValidCPF } from '../utils/cpfUtils';
+import { isValidCPF, formatCPF } from '../utils/cpfUtils';
 import { X, UserPlus, UserCheck, ShieldCheck, Mail, CreditCard, Phone, FileText, Lock, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { OrgSelector } from './OrgSelector';
 
@@ -9,6 +9,9 @@ interface CustomerFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (customer: Customer) => void;
+  onError?: (error: string) => void;
+  serverErrorMessage?: string;
+  onClearError?: () => void;
   initialCustomer?: Customer | null;
   existingCustomers?: Customer[];
   currentUser?: AppUser | null;
@@ -18,6 +21,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  onError,
+  serverErrorMessage,
+  onClearError,
   initialCustomer,
   existingCustomers = [],
   currentUser = null
@@ -31,36 +37,65 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const [selectedOrgId, setSelectedOrgId] = useState('550e8400-e29b-41d4-a716-446655440000');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; cpf?: string; email?: string; password?: string }>({});
+  const [serverError, setServerError] = useState<string>('');
 
   useEffect(() => {
-    if (initialCustomer) {
-      setName(initialCustomer.name || '');
-      setCpf(formatCPF(initialCustomer.cpf || ''));
-      setEmail(initialCustomer.email || '');
-      setPhone(initialCustomer.phone || '');
-      setNotes(initialCustomer.notes || '');
-      setPassword(initialCustomer.password || '');
+    if (isOpen) {
+      if (initialCustomer) {
+        setName(initialCustomer.name || '');
+        setCpf(String(initialCustomer.cpf || ''));
+        setEmail(initialCustomer.email || '');
+        setPhone(initialCustomer.phone || '');
+        setNotes(initialCustomer.notes || '');
+        setPassword(initialCustomer.password || '');
+      } else {
+        setName('');
+        setCpf('');
+        setEmail('');
+        setPhone('');
+        setNotes('');
+        setPassword('');
+      }
+      setSelectedOrgId('550e8400-e29b-41d4-a716-446655440000');
+      setShowPassword(false);
     } else {
-      setName('');
-      setCpf('');
-      setEmail('');
-      setPhone('');
-      setNotes('');
-      setPassword('');
+      setErrors({});
+      setServerError('');
     }
-    // Usar org padrão
-    setSelectedOrgId('550e8400-e29b-41d4-a716-446655440000');
-    setShowPassword(false);
-    setErrors({});
   }, [initialCustomer, isOpen]);
+
+  useEffect(() => {
+    if (serverErrorMessage) {
+      if (serverErrorMessage.toLowerCase().includes('e-mail') || serverErrorMessage.toLowerCase().includes('email')) {
+        setErrors(prev => ({
+          ...prev,
+          email: serverErrorMessage
+        }));
+      } else {
+        setErrors(prev => ({
+          ...prev,
+          cpf: serverErrorMessage
+        }));
+      }
+    }
+  }, [serverErrorMessage]);
 
   if (!isOpen) return null;
 
+
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatCPF(e.target.value);
-    setCpf(formatted);
+    const numericOnly = e.target.value.replace(/\D/g, '').slice(0, 11);
+    setCpf(numericOnly);
     if (errors.cpf) {
       setErrors(prev => ({ ...prev, cpf: undefined }));
+    }
+    // Limpar erro do servidor quando usuário muda o CPF
+    if (serverErrorMessage && onClearError) {
+      onClearError();
+    }
+    // Garante que não ultrapasse 11 dígitos
+    if (numericOnly.length > 11) {
+      e.target.value = numericOnly.slice(0, 11);
     }
   };
 
@@ -72,18 +107,18 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       newErrors.name = 'Nome é obrigatório (campo alfanumérico).';
     }
 
-    const cleanCpfDigits = cpf.replace(/\D/g, '');
     if (!cpf.trim()) {
       newErrors.cpf = 'CPF é obrigatório.';
+    } else if (cpf.length !== 11) {
+      newErrors.cpf = 'CPF deve conter 11 dígitos.';
     } else if (!isValidCPF(cpf)) {
-      newErrors.cpf = 'CPF inválido. Deve conter 11 dígitos no formato 999.999.999-99.';
+      newErrors.cpf = 'CPF inválido.';
     } else {
-      // Check duplicate CPF in existing customers
       const duplicateCpf = existingCustomers.find(
-        c => c.id !== initialCustomer?.id && c.cpf.replace(/\D/g, '') === cleanCpfDigits
+        c => c.id !== initialCustomer?.id && String(c.cpf) === String(cpf)
       );
       if (duplicateCpf) {
-        newErrors.cpf = `CPF já cadastrado para o cliente "${duplicateCpf.name}". Não são permitidos CPFs duplicados.`;
+        newErrors.cpf = `CPF já cadastrado!`;
       }
     }
 
@@ -98,7 +133,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         c => c.id !== initialCustomer?.id && c.email.trim().toLowerCase() === cleanEmail
       );
       if (duplicateEmail) {
-        newErrors.email = `E-mail já cadastrado para o cliente "${duplicateEmail.name}". Não são permitidos e-mails duplicados.`;
+        newErrors.email = `E-mail já Cadastrado!`;
       }
     }
 
@@ -113,10 +148,13 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       return;
     }
 
+    const cpfNumero = Number(cpf.replace(/\D/g, ''));
+    console.log('📤 Enviando CPF:', cpfNumero, 'tipo:', typeof cpfNumero);
+
     const customerToSave: any = {
       id: initialCustomer?.id || `CLI-${Math.floor(1000 + Math.random() * 9000)}`,
       name: name.trim(),
-      cpf: formatCPF(cpf),
+      cpf: cpfNumero,
       email: email.trim().toLowerCase(),
       phone: phone.trim() || undefined,
       notes: notes.trim() || undefined,
@@ -126,6 +164,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       updatedAt: new Date().toISOString()
     };
 
+    console.log('📤 Customer to save:', customerToSave);
     onSave(customerToSave);
   };
 
@@ -196,24 +235,25 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
           <div>
             <label className="block text-xs font-semibold text-amber-200 mb-1 flex items-center gap-1.5">
               <CreditCard className="w-3.5 h-3.5 text-amber-400" />
-              <span>CPF (Formato 999.999.999-99) *</span>
+              <span>CPF (11 dígitos) *</span>
             </label>
             <input
               type="text"
+              inputMode="numeric"
               maxLength={14}
-              value={cpf}
+              value={formatCPF(cpf)}
               onChange={handleCpfChange}
-              placeholder="999.999.999-99"
+              placeholder="123.456.789-01"
               className={`w-full px-3.5 py-2.5 bg-zinc-950 border rounded-xl text-sm font-mono text-amber-100 placeholder-zinc-600 focus:outline-none focus:ring-1 transition-all ${
-                errors.cpf 
-                  ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/50' 
+                errors.cpf
+                  ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/50'
                   : 'border-zinc-800 focus:border-amber-500/80 focus:ring-amber-500/50'
               }`}
             />
             {errors.cpf ? (
               <p className="text-xs text-rose-400 mt-1">{errors.cpf}</p>
             ) : (
-              <p className="text-[11px] text-zinc-500 mt-1">Formatação automática de CPF conforme você digita.</p>
+              <p className="text-[11px] text-zinc-500 mt-1">Digite 11 dígitos (apenas números).</p>
             )}
           </div>
 

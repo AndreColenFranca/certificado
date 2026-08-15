@@ -30,7 +30,6 @@ export const extractCertIdFromInput = (input: string | null | undefined): string
       if (urlCert) return urlCert;
     }
   } catch (e) {
-    console.error('Error parsing cert input:', e);
   }
 
   // Don't return URLs, paths, or invalid patterns

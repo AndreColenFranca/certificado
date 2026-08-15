@@ -19,7 +19,6 @@ export async function getAttributes(supabase: SupabaseClient, tableName: string)
     if (error) throw error;
     return data || [];
   } catch (err: any) {
-    console.error(`Error fetching from ${tableName}:`, err);
     throw err;
   }
 }
@@ -35,7 +34,6 @@ export async function getAttribute(supabase: SupabaseClient, tableName: string, 
     if (error) throw error;
     return data;
   } catch (err: any) {
-    console.error(`Error fetching from ${tableName}:`, err);
     throw err;
   }
 }
@@ -61,22 +59,18 @@ export async function createAttribute(supabase: SupabaseClient, tableName: strin
     if (error) throw error;
     return data;
   } catch (err: any) {
-    console.error(`Error creating in ${tableName}:`, err);
     throw err;
   }
 }
 
 export async function updateAttribute(supabase: SupabaseClient, tableName: string, id: string, attr: Partial<AttributeRecord>): Promise<AttributeRecord> {
   try {
-    console.log(`[updateAttribute] Recebido:`, { id, attr });
     const updateData: any = {
       updated_at: new Date().toISOString()
     };
     if (attr.name) updateData.name = attr.name;
     if (attr.description !== undefined) updateData.description = attr.description;
     if (attr.order !== undefined) updateData.order = attr.order;
-
-    console.log(`[updateAttribute] Enviando para Supabase:`, { tableName, id, updateData });
 
     const { data, error } = await supabase
       .from(tableName)
@@ -85,12 +79,9 @@ export async function updateAttribute(supabase: SupabaseClient, tableName: strin
       .select()
       .single();
 
-    console.log(`[updateAttribute] Resposta do Supabase:`, { data, error });
-
     if (error) throw error;
     return data;
   } catch (err: any) {
-    console.error(`Error updating in ${tableName}:`, err);
     throw err;
   }
 }
@@ -104,7 +95,6 @@ export async function deleteAttribute(supabase: SupabaseClient, tableName: strin
 
     if (error) throw error;
   } catch (err: any) {
-    console.error(`Error deleting from ${tableName}:`, err);
     throw err;
   }
 }

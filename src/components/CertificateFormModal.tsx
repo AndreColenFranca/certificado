@@ -116,24 +116,17 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
         for (const endpoint of endpoints) {
           try {
             const url = `/api/${endpoint.key.replace(/_/g, '-')}`;
-            console.log(`Loading ${endpoint.key} from ${url}`);
             const res = await fetch(url);
             const data = await res.json();
-            console.log(`Response for ${endpoint.key}:`, data);
             if (data.success && Array.isArray(data.data)) {
               const sorted = [...data.data].sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
               const names = sorted.map((item: any) => item.name);
-              console.log(`Loaded ${endpoint.key}:`, names);
               endpoint.setState(names);
-            } else {
-              console.warn(`Invalid response for ${endpoint.key}, keeping defaults`);
             }
           } catch (err: any) {
-            console.warn(`Failed to load ${endpoint.key}: ${err.message}`);
           }
         }
       } catch (err) {
-        console.warn('Failed to load attributes from Supabase');
       }
     };
 
@@ -143,15 +136,15 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   // Certificate Fields
   const [title, setTitle] = useState(initialCert?.title || '');
   const [collection, setCollection] = useState(initialCert?.collection || 'Haute Joaillerie 2026');
-  const [model, setModel] = useState(initialCert?.model || 'Modelo V1');
+  const [model, setModel] = useState(initialCert?.model || '');
   const [manufacturer, setManufacturer] = useState(initialCert?.manufacturer || defaultCompanyName);
   const [manufacturerLogoUrl, setManufacturerLogoUrl] = useState(
     initialCert?.manufacturerLogoUrl || defaultCompanyLogo || DEFAULT_BRAND_LOGO_DRIVE_URL
   );
-  const [currentOwnerName, setCurrentOwnerName] = useState(initialCert?.currentOwnerName || selectedCustomerForNewCert?.name || '');
-  const [ownerCpf, setOwnerCpf] = useState(initialCert?.ownerCpf || selectedCustomerForNewCert?.cpf || '');
-  const [ownerEmail, setOwnerEmail] = useState(initialCert?.ownerEmail || selectedCustomerForNewCert?.email || '');
-  const [ownerId, setOwnerId] = useState(initialCert?.ownerId || selectedCustomerForNewCert?.id || '');
+  const [currentOwnerName, setCurrentOwnerName] = useState(initialCert?.current_owner_name || initialCert?.currentOwnerName || selectedCustomerForNewCert?.name || '');
+  const [ownerCpf, setOwnerCpf] = useState(initialCert?.owner_cpf || initialCert?.ownerCpf || selectedCustomerForNewCert?.cpf || '');
+  const [ownerEmail, setOwnerEmail] = useState(initialCert?.owner_email || initialCert?.ownerEmail || selectedCustomerForNewCert?.email || '');
+  const [ownerId, setOwnerId] = useState(initialCert?.owner_id || initialCert?.ownerId || selectedCustomerForNewCert?.id || '');
 
   useEffect(() => {
     if (selectedCustomerForNewCert) {
@@ -161,14 +154,44 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
       setOwnerId(selectedCustomerForNewCert.id);
     }
   }, [selectedCustomerForNewCert]);
+
+  // Sync certificate fields when initialCert changes
+  useEffect(() => {
+    if (initialCert) {
+      setTitle(initialCert.title || '');
+      setCollection(initialCert.collection || 'Haute Joaillerie 2026');
+      setModel(initialCert.model || '');
+      setManufacturer(initialCert.manufacturer || defaultCompanyName);
+      setManufacturerLogoUrl(initialCert.manufacturerLogoUrl || defaultCompanyLogo || DEFAULT_BRAND_LOGO_DRIVE_URL);
+      setCurrentOwnerName(initialCert.current_owner_name || initialCert.currentOwnerName || '');
+      setOwnerCpf(initialCert.owner_cpf || initialCert.ownerCpf || '');
+      setOwnerEmail(initialCert.owner_email || initialCert.ownerEmail || '');
+      setOwnerId(initialCert.owner_id || initialCert.ownerId || '');
+      setMetalPurity(initialCert.metal_purity || initialCert.metalPurity || purityOptions[0] || '18K (750)');
+      setMetalColor(initialCert.metal_color || initialCert.metalColor || colorOptions[0] || 'Ouro Amarelo');
+      setGrossWeightGrams(initialCert.gross_weight_grams ?? initialCert.grossWeightGrams ?? '');
+      setWidthCm(initialCert.width_cm ?? initialCert.widthCm ?? '');
+      setFinish(initialCert.finish || finishOptions[0] || 'Polido Espelhado');
+      setHasStones(initialCert.has_stones ?? initialCert.hasStones ?? true);
+      if (initialCert.stones && initialCert.stones.length > 0) {
+        setStones(initialCert.stones);
+      }
+      if (initialCert.images && initialCert.images.length > 0) {
+        setImages(initialCert.images.map(formatImageUrl));
+      }
+      setWarrantyMonths(initialCert.warranty_months ?? initialCert.warrantyMonths ?? -1);
+      setWarrantyTerms(initialCert.warranty_terms || initialCert.warrantyTerms || 'Garantia Vitalícia cobrindo autenticidade do ouro e gemas naturais.');
+      setEstimatedValueBRL(initialCert.estimated_value_brl ?? initialCert.estimatedValueBRL ?? '');
+    }
+  }, [initialCert]);
   
-  const [metalPurity, setMetalPurity] = useState<string>(initialCert?.metalPurity || purityOptions[0] || '18K (750)');
-  const [metalColor, setMetalColor] = useState<string>(initialCert?.metalColor || colorOptions[0] || 'Ouro Amarelo');
-  const [grossWeightGrams, setGrossWeightGrams] = useState<number>(initialCert?.grossWeightGrams || 5.2);
-  const [widthCm, setWidthCm] = useState<number>(initialCert?.widthCm ?? 0);
+  const [metalPurity, setMetalPurity] = useState<string>(initialCert?.metal_purity || initialCert?.metalPurity || purityOptions[0] || '18K (750)');
+  const [metalColor, setMetalColor] = useState<string>(initialCert?.metal_color || initialCert?.metalColor || colorOptions[0] || 'Ouro Amarelo');
+  const [grossWeightGrams, setGrossWeightGrams] = useState<number>(initialCert?.gross_weight_grams ?? initialCert?.grossWeightGrams ?? '');
+  const [widthCm, setWidthCm] = useState<number>(initialCert?.width_cm ?? initialCert?.widthCm ?? '');
   const [finish, setFinish] = useState<string>(initialCert?.finish || finishOptions[0] || 'Polido Espelhado');
 
-  const [hasStones, setHasStones] = useState<boolean>(initialCert?.hasStones ?? true);
+  const [hasStones, setHasStones] = useState<boolean>(initialCert?.has_stones ?? initialCert?.hasStones ?? true);
   const [stones, setStones] = useState<StoneDetail[]>(initialCert?.stones || [
     {
       id: 'st-new-1',
@@ -189,25 +212,35 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
 
-  const [warrantyMonths, setWarrantyMonths] = useState<number>(initialCert?.warrantyMonths ?? -1);
-  const [warrantyTerms, setWarrantyTerms] = useState(initialCert?.warrantyTerms || 'Garantia Vitalícia cobrindo autenticidade do ouro e gemas naturais.');
-  const [estimatedValueBRL, setEstimatedValueBRL] = useState<number>(initialCert?.estimatedValueBRL || 25000);
+  const [warrantyMonths, setWarrantyMonths] = useState<number>(initialCert?.warranty_months ?? initialCert?.warrantyMonths ?? -1);
+  const [warrantyTerms, setWarrantyTerms] = useState(initialCert?.warranty_terms || initialCert?.warrantyTerms || 'Garantia Vitalícia cobrindo autenticidade do ouro e gemas naturais.');
+  const [estimatedValueBRL, setEstimatedValueBRL] = useState<number>(initialCert?.estimated_value_brl ?? initialCert?.estimatedValueBRL ?? '');
 
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
   // Sync state if options change or initialCert changes
   useEffect(() => {
-    if (initialCert?.metalPurity && !purityOptions.includes(initialCert.metalPurity)) {
-      setPurityOptions(prev => [...prev, initialCert.metalPurity]);
+    const purityValue = initialCert?.metal_purity || initialCert?.metalPurity;
+    if (purityValue && !purityOptions.includes(purityValue)) {
+      setPurityOptions(prev => [...prev, purityValue]);
     }
-    if (initialCert?.metalColor && !colorOptions.includes(initialCert.metalColor)) {
-      setColorOptions(prev => [...prev, initialCert.metalColor]);
+    const colorValue = initialCert?.metal_color || initialCert?.metalColor;
+    if (colorValue && !colorOptions.includes(colorValue)) {
+      setColorOptions(prev => [...prev, colorValue]);
     }
     if (initialCert?.collection && !collectionOptions.includes(initialCert.collection)) {
       setCollectionOptions(prev => [...prev, initialCert.collection]);
     }
     if (initialCert?.finish && !finishOptions.includes(initialCert.finish)) {
       setFinishOptions(prev => [...prev, initialCert.finish]);
+    }
+    // Sync stone types from loaded certificate
+    if (initialCert?.stones && Array.isArray(initialCert.stones)) {
+      initialCert.stones.forEach(stone => {
+        if (stone.type && !stoneTypeOptions.includes(stone.type)) {
+          setStoneTypeOptions(prev => [...prev, stone.type]);
+        }
+      });
     }
   }, [initialCert]);
 
@@ -371,7 +404,6 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
       hasStones,
       stones: hasStones ? stones : [],
       images: images.map(formatImageUrl),
-      frames360: images.map(formatImageUrl),
       warrantyMonths,
       warrantyTerms,
       warrantyStatus: 'Ativa',

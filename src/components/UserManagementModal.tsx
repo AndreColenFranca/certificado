@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Users, Crown, ShieldAlert, Trash2, CheckCircle2, Mail, Lock, User, ShieldCheck } from 'lucide-react';
 import { AppUser } from '../types';
 import { OrgSelector } from './OrgSelector';
+import { ROOT_USER_EMAIL } from '../config/constants';
 
 interface UserManagementModalProps {
   isOpen: boolean;
@@ -29,7 +30,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isRootUser = currentUser?.isRoot || currentUser?.email.toLowerCase() === 'andreluiz.colen@gmail.com';
+  const isRootUser = currentUser?.isRoot || currentUser?.email.toLowerCase() === ROOT_USER_EMAIL.toLowerCase();
 
   useEffect(() => {
     if (isOpen) {
@@ -53,7 +54,6 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
         }
       }
     } catch (e) {
-      console.warn('Erro ao carregar usuários:', e);
       const localUsers = localStorage.getItem('aureum_users_db');
       if (localUsers) {
         try { setUsersList(JSON.parse(localUsers)); } catch (err) {}
@@ -250,7 +250,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
               <ShieldAlert className="w-10 h-10 text-amber-400 mx-auto" />
               <h3 className="font-bold text-sm">Acesso Restrito do Usuário Raiz</h3>
               <p className="text-xs text-zinc-300 max-w-md mx-auto leading-relaxed">
-                Apenas o usuário principal cadastrado (<strong>andreluiz.colen@gmail.com</strong>) possui autorização técnica para cadastrar ou gerenciar novos usuários no sistema.
+                Apenas o usuário principal cadastrado (<strong>{ROOT_USER_EMAIL}</strong>) possui autorização técnica para cadastrar ou gerenciar novos usuários no sistema.
               </p>
             </div>
           ) : (

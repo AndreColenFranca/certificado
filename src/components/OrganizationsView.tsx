@@ -4,6 +4,7 @@ import { Building2, Plus, Edit2, Trash2, X, Search, Mail, Globe } from 'lucide-r
 interface Organization {
   id: string;
   name: string;
+  display_name?: string;
   website?: string;
   country?: string;
   created_at?: string;
@@ -31,6 +32,7 @@ export const OrganizationsView = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     name: '',
+    displayName: '',
     website: '',
     country: 'BR',
     internalNotes: '',
@@ -94,7 +96,7 @@ export const OrganizationsView = ({
 
       if (data.success) {
         setSuccess(editingId ? 'Organização atualizada!' : 'Organização criada!');
-        setFormData({ name: '', website: '', country: 'BR', internalNotes: '', responsibleName: '', phone: '', email: '' });
+        setFormData({ name: '', displayName: '', website: '', country: 'BR', internalNotes: '', responsibleName: '', phone: '', email: '' });
         setEditingId(null);
         setShowForm(false);
         setSearchTerm('');
@@ -133,6 +135,7 @@ export const OrganizationsView = ({
   const handleEdit = (org: any) => {
     setFormData({
       name: org.name,
+      displayName: org.display_name || '',
       website: org.website || '',
       country: org.country || 'BR',
       internalNotes: org.internal_notes || '',
@@ -211,7 +214,7 @@ export const OrganizationsView = ({
               onClick={() => {
                 setShowForm(true);
                 setEditingId(null);
-                setFormData({ name: '', website: '', country: 'BR', internalNotes: '', responsibleName: '', phone: '', email: '' });
+                setFormData({ name: '', displayName: '', website: '', country: 'BR', internalNotes: '', responsibleName: '', phone: '', email: '' });
               }}
               className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-semibold rounded-lg transition flex items-center gap-2"
             >
@@ -238,6 +241,19 @@ export const OrganizationsView = ({
                   className="w-full px-3 py-2 bg-zinc-800 border border-amber-900/40 rounded text-amber-50"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">Nome Exibição (máx 18 caracteres)</label>
+                <input
+                  type="text"
+                  maxLength={18}
+                  value={formData.displayName}
+                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value.substring(0, 18) })}
+                  placeholder="Maison Lumière"
+                  className="w-full px-3 py-2 bg-zinc-800 border border-amber-900/40 rounded text-amber-50"
+                />
+                <p className="text-xs text-zinc-500 mt-1">{formData.displayName.length}/18 caracteres</p>
               </div>
 
               <div>
@@ -336,6 +352,9 @@ export const OrganizationsView = ({
                 {/* Header */}
                 <div>
                   <h3 className="text-lg font-bold text-amber-400">{org.name}</h3>
+                  {org.display_name && (
+                    <p className="text-xs text-amber-300 mt-1">📌 Exibição: <span className="font-semibold">{org.display_name}</span></p>
+                  )}
                   {org.responsible_name && (
                     <p className="text-sm text-zinc-300 mt-1">👤 {org.responsible_name}</p>
                   )}

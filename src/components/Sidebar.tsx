@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ViewMode, AppUser } from '../types';
+import { ROOT_USER_EMAIL } from '../config/constants';
 import {
   ShieldCheck,
   Users,
@@ -294,7 +295,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {currentUser && (
           <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-2">
             <div className="flex items-center gap-2">
-              {(currentUser.isRoot || currentUser.email.toLowerCase() === 'andreluiz.colen@gmail.com') ? (
+              {(currentUser.isRoot || currentUser.email.toLowerCase() === ROOT_USER_EMAIL.toLowerCase()) ? (
                 <Crown className="w-4 h-4 text-amber-400 shrink-0" />
               ) : (
                 <UserCheck className="w-4 h-4 text-amber-400 shrink-0" />

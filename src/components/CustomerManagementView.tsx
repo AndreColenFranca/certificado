@@ -12,6 +12,7 @@ interface CustomerManagementViewProps {
   customers: Customer[];
   certificates: JewelryCertificate[];
   initialCustomerId?: string;
+  orgDisplayName?: string;
   onOpenCreateCustomer: () => void;
   onEditCustomer: (customer: Customer) => void;
   onDeleteCustomer: (customer: Customer) => void;
@@ -28,6 +29,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
   customers,
   certificates,
   initialCustomerId,
+  orgDisplayName,
   onOpenCreateCustomer,
   onEditCustomer,
   onDeleteCustomer,
@@ -77,7 +79,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         };
         img.onerror = () => setQrDataUrl(rawDataUrl);
         img.src = rawDataUrl;
-      }).catch(err => console.error(err));
+      }).catch(err => {});
     } else {
       setQrDataUrl('');
       setCopiedLink(false);
@@ -94,18 +96,13 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
     }
   };
 
-  // Filter customers by name, CPF, or email
   const filteredCustomers = customers.filter(c => {
     if (!searchTerm.trim()) return true;
     const q = searchTerm.toLowerCase().trim();
-    const cleanQ = q.replace(/\D/g, ''); // for numeric CPF match
-    const cleanCpf = c.cpf.replace(/\D/g, '');
-
     return (
       c.name.toLowerCase().includes(q) ||
       c.email.toLowerCase().includes(q) ||
-      c.cpf.toLowerCase().includes(q) ||
-      (cleanQ.length > 2 && cleanCpf.includes(cleanQ))
+      String(c.cpf || '').includes(q)
     );
   });
 
@@ -134,17 +131,14 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
   // Helper to find all pieces belonging to a customer (where customer is current owner)
   const getCustomerPieces = (customer: Customer | null): JewelryCertificate[] => {
     if (!customer) return [];
-    const cleanCustCpf = customer.cpf ? customer.cpf.replace(/\D/g, '') : '';
     const custNameLower = customer.name.trim().toLowerCase();
     const custEmailLower = customer.email ? customer.email.trim().toLowerCase() : '';
 
     return certificates.filter(cert => {
-      // 1. Direct current owner match
       if (cert.ownerId && cert.ownerId === customer.id) return true;
-      if (cleanCustCpf && cert.ownerCpf && cert.ownerCpf.replace(/\D/g, '') === cleanCustCpf) return true;
+      if (customer.cpf && cert.ownerCpf && cert.ownerCpf === customer.cpf) return true;
       if (custEmailLower && cert.ownerEmail && cert.ownerEmail.trim().toLowerCase() === custEmailLower) return true;
       if (cert.currentOwnerName && cert.currentOwnerName.trim().toLowerCase() === custNameLower) return true;
-
       return false;
     });
   };
@@ -226,7 +220,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
             {filteredCustomers.length === 0 ? (
               <div className="p-6 text-center space-y-3">
                 <Users className="w-8 h-8 text-zinc-600 mx-auto" />
-                <p className="text-xs text-zinc-400">Nenhum cliente localizado para "{searchTerm}"</p>
+                <p className="text-xs text-zinc-400">Nenhum cliente localizado para "{searchTerm || orgDisplayName || 'organização'}"</p>
                 <button
                   onClick={onOpenCreateCustomer}
                   className="px-3 py-1.5 rounded-lg bg-amber-500 text-zinc-950 font-bold text-xs"

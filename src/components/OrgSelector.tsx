@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Building2 } from 'lucide-react';
 import { AppUser } from '../types';
+import { ROOT_USER_EMAIL } from '../config/constants';
 
 interface Organization {
   id: string;
@@ -38,14 +39,13 @@ export const OrgSelector: React.FC<OrgSelectorProps> = ({
         setOrganizations(data.data);
       }
     } catch (err) {
-      console.warn('Erro ao buscar organizações:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Admin consegue selecionar org, usuário comum vê apenas info
-  const isAdmin = currentUser?.isRoot || currentUser?.role === 'admin';
+  // Root, Raiz e Admin conseguem selecionar org
+  const isAdmin = currentUser?.isRoot || currentUser?.role === 'admin' || currentUser?.role === 'root' || currentUser?.email?.toLowerCase() === ROOT_USER_EMAIL.toLowerCase();
   const isDisabledForUser = disabled || !isAdmin;
 
   return (

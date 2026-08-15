@@ -48,7 +48,6 @@ export const CertificateOnlyView: React.FC<CertificateOnlyViewProps> = ({
         });
         setQrCodeUrl(qrData);
       } catch (err) {
-        console.error('Error generating passport QR in CertificateOnlyView:', err);
       }
     };
     generatePassportQr();

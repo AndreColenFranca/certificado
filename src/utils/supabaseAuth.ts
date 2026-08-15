@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { AppUser } from '../types';
+import { ROOT_USER_EMAIL } from '../config/constants';
 
 export interface AuthResponse {
   success: boolean;
@@ -45,10 +46,6 @@ export const supabaseAuth = {
           updated_at: new Date().toISOString()
         });
 
-      if (authUserError) {
-        console.warn('Erro ao criar entry em auth_users:', authUserError);
-      }
-
       return {
         success: true,
         user: {
@@ -82,7 +79,7 @@ export const supabaseAuth = {
       }
 
       // Special case for root user
-      const isRootEmail = email === 'andreluiz.colen@gmail.com';
+      const isRootEmail = email === ROOT_USER_EMAIL;
 
       // Get user profile from auth_users table
       const { data: userProfile, error: profileError } = await supabase
@@ -90,10 +87,6 @@ export const supabaseAuth = {
         .select('*')
         .eq('id', authData.user.id)
         .single();
-
-      if (profileError && profileError.code !== 'PGRST116') {
-        console.warn('Erro ao buscar perfil:', profileError);
-      }
 
       return {
         success: true,
@@ -104,6 +97,7 @@ export const supabaseAuth = {
           role: isRootEmail ? 'root' : (userProfile?.role || 'customer'),
           cpf: userProfile?.cpf,
           isRoot: isRootEmail || userProfile?.role === 'root' || false,
+          orgId: userProfile?.org_id || '550e8400-e29b-41d4-a716-446655440000',
           createdAt: authData.user.created_at || new Date().toISOString()
         }
       };
@@ -132,7 +126,6 @@ export const supabaseAuth = {
       if (error) throw error;
       return session;
     } catch (err) {
-      console.error('Erro ao obter sessão:', err);
       return null;
     }
   },

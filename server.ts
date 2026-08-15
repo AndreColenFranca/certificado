@@ -5,6 +5,8 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 import 'dotenv/config';
+import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 import { INITIAL_CERTIFICATES } from './src/data/sampleCertificates';
 import { INITIAL_CUSTOMERS } from './src/data/sampleCustomers';
 import { JewelryCertificate, Customer } from './src/types';
@@ -18,7 +20,8 @@ import {
   getCustomerById,
   createCustomer,
   updateCustomer,
-  deleteCustomer
+  deleteCustomer,
+  transformCertificateFromDb
 } from './server-helpers/supabaseHelpers';
 import {
   getAttributes,
@@ -34,7 +37,8 @@ const PORT = 3000;
 app.use(express.json({ limit: '10mb' }));
 
 // Root route
-app.get('/', (req, res) => {
+// Health check - only for API requests
+app.get('/api/health', (req, res) => {
   res.json({ message: 'API Certificado de Joias', status: 'online', version: '1.0' });
 });
 
@@ -72,7 +76,6 @@ app.use((req: any, res, next) => {
         email: decoded.email
       };
     } catch (e) {
-      console.warn('Error decoding JWT:', e);
       req.user = { org_id: DEFAULT_ORG_ID };
     }
   } else {
@@ -83,9 +86,10 @@ app.use((req: any, res, next) => {
   next();
 });
 
-// In-memory databases initialized with sample data
-let certificatesDb: JewelryCertificate[] = [...INITIAL_CERTIFICATES];
-let customersDb: Customer[] = [...INITIAL_CUSTOMERS];
+// All data now from Supabase only - no local caches
+let certificatesDb: JewelryCertificate[] = []; // Not used
+let customersDb: Customer[] = []; // Not used
+let usersDb: any[] = []; // Not used
 
 // Organizations Database
 let organizationsDb: any[] = [
@@ -99,17 +103,6 @@ let organizationsDb: any[] = [
 ];
 
 // Only Admin User - All customer users come from Supabase
-let usersDb: any[] = [
-  {
-    id: 'user-root-001',
-    name: 'André Luiz Colen (Administrador Raiz)',
-    email: 'andreluiz.colen@gmail.com',
-    password: 'fofa!@#',
-    role: 'root',
-    createdAt: new Date().toISOString(),
-    isRoot: true
-  }
-];
 
 const DATA_FILE = path.join(process.cwd(), 'data_store.json');
 
@@ -133,7 +126,6 @@ const loadDataStore = () => {
       }
     }
   } catch (e) {
-    console.warn('Could not load data_store.json:', e);
   }
 };
 
@@ -141,11 +133,10 @@ const saveDataStore = () => {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify({ certificatesDb, customersDb, usersDb, organizationsDb }, null, 2));
   } catch (e) {
-    console.warn('Could not save data_store.json:', e);
   }
 };
 
-loadDataStore();
+// loadDataStore(); // Removed - using Supabase only
 
 // Supabase Credentials Test Endpoint
 app.get('/api/supabase/credentials', async (req, res) => {
@@ -159,15 +150,12 @@ app.get('/api/supabase/credentials', async (req, res) => {
 // Supabase Connection Test Endpoint
 app.get('/api/supabase/test', async (req, res) => {
   try {
-    console.log('Testing Supabase connection...');
-
     // Test connection
     const { count, error } = await supabase
       .from('organizations')
       .select('*', { count: 'exact', head: true });
 
     if (error) {
-      console.error('Supabase error:', error);
       return res.status(500).json({
         success: false,
         error: error.message,
@@ -184,7 +172,6 @@ app.get('/api/supabase/test', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (err: any) {
-    console.error('Supabase test error:', err);
     return res.status(500).json({
       success: false,
       error: err.message || 'Unknown error',
@@ -193,6 +180,7 @@ app.get('/api/supabase/test', async (req, res) => {
     });
   }
 });
+
 
 // Supabase User Registration Endpoint (for creating users via Supabase)
 app.post('/api/auth/register', async (req, res) => {
@@ -241,10 +229,6 @@ app.post('/api/auth/register', async (req, res) => {
         name,
         role: 'customer'
       });
-
-    if (profileError) {
-      console.warn('Warning: User created but profile insert failed:', profileError);
-    }
 
     res.status(201).json({
       success: true,
@@ -377,7 +361,6 @@ app.post('/api/auth/update-password', async (req, res) => {
       data
     });
   } catch (err: any) {
-    console.error('Update password error:', err);
     res.status(500).json({
       success: false,
       error: err.message || 'Failed to update password'
@@ -391,8 +374,6 @@ app.post('/api/auth/create-root-user', async (req, res) => {
     const email = 'andreluiz.colen@gmail.com';
     const password = req.body.password || 'fofa!@#';
     const name = 'André Luiz Colen (Administrador Raiz)';
-
-    console.log(`Creating root user: ${email}`);
 
     // Create user via Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -438,10 +419,6 @@ app.post('/api/auth/create-root-user', async (req, res) => {
         role: 'root'
       })
       .select();
-
-    if (profileError) {
-      console.warn('Warning: Root user created but profile insert failed:', profileError);
-    }
 
     res.status(201).json({
       success: true,
@@ -793,7 +770,6 @@ app.get('/api/customers', async (req, res) => {
     // If Supabase fails, return empty (not local data)
     res.json({ success: true, count: 0, data: [] });
   } catch (err: any) {
-    console.error('Error fetching customers:', err);
     res.status(500).json({ success: false, error: err.message, data: [] });
   }
 });
@@ -806,28 +782,9 @@ app.post('/api/customers', async (req, res) => {
       newCust.id = `CLI-${Math.floor(1000 + Math.random() * 9000)}`;
     }
 
-    const cleanCpf = (newCust.cpf || '').replace(/\D/g, '');
     const cleanEmail = (newCust.email || '').trim().toLowerCase();
 
-    if (cleanCpf) {
-      const dupCpf = customersDb.find(c => c.cpf.replace(/\D/g, '') === cleanCpf);
-      if (dupCpf) {
-        return res.status(400).json({
-          success: false,
-          message: `O CPF ${newCust.cpf} já está cadastrado para o cliente "${dupCpf.name}".`
-        });
-      }
-    }
-
-    if (cleanEmail) {
-      const dupEmail = customersDb.find(c => c.email.trim().toLowerCase() === cleanEmail);
-      if (dupEmail) {
-        return res.status(400).json({
-          success: false,
-          message: `O E-mail ${newCust.email} já está cadastrado para o cliente "${dupEmail.name}".`
-        });
-      }
-    }
+    // Validations removed - Supabase handles duplicates via unique constraints
 
     const now = new Date().toISOString();
     newCust.createdAt = now;
@@ -846,11 +803,8 @@ app.post('/api/customers', async (req, res) => {
     });
 
     if (!supabaseCreateResult.success) {
-      console.error('Erro ao salvar cliente no Supabase:', supabaseCreateResult.error);
-      // Ainda assim continua, pois pode ser um erro de RLS
+      return res.status(400).json({ success: false, message: supabaseCreateResult.error });
     }
-
-    customersDb.unshift(newCust);
 
     // Sync to usersDb so auth and user management endpoints see the customer user
     if (cleanEmail) {
@@ -873,11 +827,10 @@ app.post('/api/customers', async (req, res) => {
       }
     }
 
-    saveDataStore();
+    // saveDataStore(); // Removed - using Supabase only
 
     res.status(201).json({ success: true, data: newCust, message: 'Cliente cadastrado com sucesso' });
   } catch (error: any) {
-    console.error('Error creating customer:', error);
     res.status(400).json({ success: false, message: error.message || 'Erro ao cadastrar cliente' });
   }
 });
@@ -893,15 +846,14 @@ app.put('/api/customers/:id', async (req, res) => {
     }
 
     const newCust: Customer = req.body;
-    const cleanCpf = (newCust.cpf || '').replace(/\D/g, '');
     const cleanEmail = (newCust.email || '').trim().toLowerCase();
 
-    if (cleanCpf) {
-      const dupCpf = customersDb.find(c => c.id !== id && c.cpf.replace(/\D/g, '') === cleanCpf);
+    if (newCust.cpf) {
+      const dupCpf = customersDb.find(c => c.id !== id && c.cpf === newCust.cpf);
       if (dupCpf) {
         return res.status(400).json({
           success: false,
-          message: `O CPF ${newCust.cpf} já está cadastrado para o cliente "${dupCpf.name}".`
+          message: `CPF já cadastrado!`
         });
       }
     }
@@ -911,7 +863,7 @@ app.put('/api/customers/:id', async (req, res) => {
       if (dupEmail) {
         return res.status(400).json({
           success: false,
-          message: `O E-mail ${newCust.email} já está cadastrado para o cliente "${dupEmail.name}".`
+          message: `E-mail já Cadastrado!`
         });
       }
     }
@@ -948,11 +900,10 @@ app.put('/api/customers/:id', async (req, res) => {
       }
     }
 
-    saveDataStore();
+    // saveDataStore(); // Removed - using Supabase only
 
     res.json({ success: true, data: updatedCust, message: 'Cliente atualizado com sucesso' });
   } catch (error: any) {
-    console.error('Error updating customer:', error);
     res.status(400).json({ success: false, message: error.message || 'Erro ao atualizar cliente' });
   }
 });
@@ -961,20 +912,22 @@ app.put('/api/customers/:id', async (req, res) => {
 app.delete('/api/customers/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    const targetCust = customersDb.find(c => c.id === id || c.cpf === id);
-    const initialLength = customersDb.length;
-    customersDb = customersDb.filter(c => c.id !== id && c.cpf !== id);
+    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
 
-    if (customersDb.length === initialLength) {
+    // Find customer from Supabase first (to get details for cleanup)
+    const getResult = await getCustomerById(supabase, id);
+    if (!getResult.success || !getResult.data) {
       return res.status(404).json({ success: false, message: 'Cliente não encontrado' });
     }
+    const targetCust = getResult.data;
 
-    // Try to delete from Supabase
-    const supabaseResult = await deleteCustomer(supabase, id);
-    if (!supabaseResult.success) {
-      console.error('Erro ao deletar do Supabase:', supabaseResult.error);
-      // Não retornar erro, pois já deletou da memória
+    // Delete from Supabase
+    const deleteResult = await deleteCustomer(supabase, id);
+    if (!deleteResult.success) {
+      // Continua mesmo se falhar no Supabase
     }
+
+    // Delete from local DB - customersDb not used anymore
 
     // Delete associated user if exists
     const userToDelete = usersDb.find(u => u.customerId === id || (u.email && u.email.toLowerCase() === targetCust?.email?.toLowerCase()));
@@ -983,24 +936,21 @@ app.delete('/api/customers/:id', async (req, res) => {
     }
 
     // Delete all certificates/passports associated with this customer
-    if (targetCust) {
-      const custId = targetCust.id;
-      const custCpf = targetCust.cpf?.trim();
-      const custName = targetCust.name?.trim();
+    const custId = targetCust.id;
+    const custCpf = String(targetCust.cpf || '').trim();
+    const custName = targetCust.name?.trim();
 
-      certificatesDb = certificatesDb.filter(c => {
-        if (c.ownerId && c.ownerId === custId) return false;
-        if (custCpf && c.ownerCpf && c.ownerCpf.trim() === custCpf) return false;
-        if (custName && c.currentOwnerName && c.currentOwnerName.trim() === custName) return false;
-        return true;
-      });
-    }
+    certificatesDb = certificatesDb.filter(c => {
+      if (c.ownerId && c.ownerId === custId) return false;
+      if (custCpf && c.ownerCpf && String(c.ownerCpf).trim() === custCpf) return false;
+      if (custName && c.currentOwnerName && c.currentOwnerName.trim() === custName) return false;
+      return true;
+    });
 
-    saveDataStore();
+    // saveDataStore(); // Removed - using Supabase only
 
     res.json({ success: true, message: 'Cliente e todos os seus passaportes removidos com sucesso' });
   } catch (error: any) {
-    console.error('Error deleting customer:', error);
     res.status(400).json({ success: false, message: error.message || 'Erro ao remover cliente' });
   }
 });
@@ -1022,7 +972,7 @@ app.post('/api/certificates/sync', (req, res) => {
           }
         }
       });
-      saveDataStore();
+      // saveDataStore(); // Removed - using Supabase only
     }
     res.json({ success: true, count: certificatesDb.length, data: certificatesDb });
   } catch (err: any) {
@@ -1040,14 +990,14 @@ app.get('/api/certificates', async (req, res) => {
     const result = await getCertificates(supabase, userOrgId);
 
     if (result.success && result.data) {
-      return res.json({ success: true, count: result.data.length, data: result.data });
+      const transformedData = result.data.map(transformCertificateFromDb);
+      return res.json({ success: true, count: transformedData.length, data: transformedData });
     }
 
     // If Supabase fails, return empty (not local data)
     res.json({ success: true, count: 0, data: [] });
   } catch (err: any) {
-    console.error('Error fetching certificates:', err);
-    res.json({ success: true, count: certificatesDb.length, data: certificatesDb });
+    res.json({ success: true, count: 0, data: [] });
   }
 });
 
@@ -1098,37 +1048,63 @@ app.post('/api/certificates', async (req, res) => {
     const newCert: JewelryCertificate = req.body;
 
     // Ensure unique ID and timestamps
-    if (!newCert.id) {
-      const randomHex = Math.random().toString(36).substring(2, 6).toUpperCase();
-      newCert.id = `CERT-${new Date().getFullYear()}-${randomHex}`;
-    }
+    const certCode = newCert.id || `CERT-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const uuidId = uuidv4(); // UUID válido para o Supabase
 
     if (!newCert.serialNumber) {
       newCert.serialNumber = `SN-${Math.floor(100000 + Math.random() * 900000)}`;
     }
 
-    if (!newCert.authenticityHash) {
-      newCert.authenticityHash = '0x' + Array.from({ length: 20 }, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      ).join('');
+    // Gerar hash de autenticidade
+    const authHash = crypto
+      .createHash('sha256')
+      .update(uuidId + certCode + Date.now())
+      .digest('hex');
+
+    // Manter apenas campos essenciais que existem na tabela Supabase (snake_case!)
+    const certToSave: any = {
+      id: uuidId,
+      cert_code: certCode,
+      serial_number: newCert.serialNumber,
+      title: newCert.title,
+      collection: newCert.collection,
+      model: newCert.model,
+      manufacturer: newCert.manufacturer,
+      manufacturer_logo_url: newCert.manufacturerLogoUrl,
+      metal_purity: newCert.metalPurity,
+      metal_color: newCert.metalColor,
+      gross_weight_grams: newCert.grossWeightGrams,
+      width_cm: newCert.widthCm,
+      finish: newCert.finish,
+      has_stones: newCert.hasStones,
+      stones: newCert.stones,
+      warranty_months: newCert.warrantyMonths,
+      warranty_terms: newCert.warrantyTerms,
+      warranty_status: newCert.warrantyStatus,
+      estimated_value_brl: newCert.estimatedValueBRL,
+      owner_id: newCert.ownerId,
+      authenticity_hash: authHash,
+      org_id: (req as any).user?.org_id || DEFAULT_ORG_ID
+    };
+
+    const result = await createCertificate(supabase, certToSave);
+
+    if (!result.success) {
+      const errMsg = result.error || 'Erro ao salvar certificado';
+      return res.status(400).json({ success: false, message: errMsg });
     }
 
-    const now = new Date().toISOString();
-    newCert.createdAt = now;
-    newCert.updatedAt = now;
+    // Return the certificate with the correct UUID from Supabase
+    const savedCert = result.data || certToSave;
+    const responseData = {
+      ...newCert,
+      id: savedCert.id // Use the UUID from Supabase, not the cert_code
+    };
 
-    // Try to save to Supabase with org_id from JWT
-    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
-    await createCertificate(supabase, { ...newCert, org_id: userOrgId });
-
-    // Always also save to in-memory for redundancy
-    certificatesDb.unshift(newCert);
-    saveDataStore();
-
-    res.status(201).json({ success: true, data: newCert, message: 'Certificado emitido com sucesso' });
+    res.status(201).json({ success: true, data: responseData, message: 'Certificado emitido com sucesso' });
   } catch (error: any) {
-    console.error('Error creating certificate:', error);
-    res.status(400).json({ success: false, message: error.message || 'Erro ao criar certificado' });
+    const errorMsg = error?.message || error?.error || JSON.stringify(error) || 'Erro desconhecido';
+    res.status(400).json({ success: false, message: errorMsg });
   }
 });
 
@@ -1136,28 +1112,28 @@ app.post('/api/certificates', async (req, res) => {
 app.put('/api/certificates/:id', async (req, res) => {
   try {
     const id = req.params.id.toUpperCase();
-    const index = certificatesDb.findIndex(c => c.id.toUpperCase() === id);
 
-    if (index === -1) {
+    // Get existing certificate from Supabase
+    const getCertResult = await getCertificateById(supabase, id);
+    if (!getCertResult.success || !getCertResult.data) {
       return res.status(404).json({ success: false, message: 'Certificado não encontrado' });
     }
 
     const updatedCert = {
-      ...certificatesDb[index],
+      ...getCertResult.data,
       ...req.body,
       updatedAt: new Date().toISOString()
     };
 
-    // Try to update in Supabase
-    await updateCertificate(supabase, id, updatedCert);
+    // Update in Supabase
+    const updateResult = await updateCertificate(supabase, id, updatedCert);
 
-    // Always update in-memory for consistency
-    certificatesDb[index] = updatedCert;
-    saveDataStore();
+    if (!updateResult.success) {
+      return res.status(400).json({ success: false, message: updateResult.error });
+    }
 
     res.json({ success: true, data: updatedCert, message: 'Certificado atualizado com sucesso' });
   } catch (error: any) {
-    console.error('Error updating certificate:', error);
     res.status(400).json({ success: false, message: error.message || 'Erro ao atualizar certificado' });
   }
 });
@@ -1165,17 +1141,19 @@ app.put('/api/certificates/:id', async (req, res) => {
 // Delete certificate
 app.delete('/api/certificates/:id', async (req, res) => {
   try {
-    const id = req.params.id.toUpperCase();
-    const cert = certificatesDb.find(c => c.id.toUpperCase() === id);
+    const id = req.params.id;
 
-    if (!cert) {
+    // Get certificate from Supabase
+    const getCertResult = await getCertificateById(supabase, id);
+    if (!getCertResult.success || !getCertResult.data) {
       return res.status(404).json({ success: false, message: 'Certificado não encontrado' });
     }
 
-    const ownerName = cert.currentOwnerName?.trim();
-    const ownerCpf = cert.ownerCpf?.trim();
-    const ownerId = cert.ownerId?.trim();
-    const ownerEmail = cert.ownerEmail?.trim();
+    const cert = getCertResult.data;
+    const ownerName = cert.current_owner_name?.trim();
+    const ownerCpf = String(cert.owner_cpf || '').trim();
+    const ownerId = cert.owner_id?.trim();
+    const ownerEmail = cert.owner_email?.trim();
 
     const isCustomerLinked = Boolean(
       (ownerName && ownerName.length > 0 && ownerName.toLowerCase() !== 'sem proprietário') ||
@@ -1191,16 +1169,14 @@ app.delete('/api/certificates/:id', async (req, res) => {
       });
     }
 
-    // Try to delete from Supabase
-    await deleteCertificate(supabase, id);
-
-    // Always delete from in-memory
-    certificatesDb = certificatesDb.filter(c => c.id.toUpperCase() !== id);
-    saveDataStore();
+    // Delete from Supabase
+    const deleteResult = await deleteCertificate(supabase, id);
+    if (!deleteResult.success) {
+      return res.status(400).json({ success: false, message: deleteResult.error });
+    }
 
     res.json({ success: true, message: 'Certificado removido com sucesso' });
   } catch (error: any) {
-    console.error('Error deleting certificate:', error);
     res.status(400).json({ success: false, message: error.message || 'Erro ao remover certificado' });
   }
 });
@@ -1254,7 +1230,6 @@ Responda APENAS um objeto JSON válido, sem marcadores de markdown adicionais se
     res.json({ success: true, data: parsedData });
 
   } catch (err: any) {
-    console.error('Erro na API Gemini:', err);
     res.status(500).json({ 
       success: false, 
       message: 'Não foi possível consultar a IA no momento.',
@@ -1263,7 +1238,15 @@ Responda APENAS um objeto JSON válido, sem marcadores de markdown adicionais se
   }
 });
 
+async function migrateDatabase() {
+  // Column creation is handled in Supabase dashboard
+  // This function is a placeholder for future migrations
+}
+
 async function startServer() {
+  // Run migrations
+  await migrateDatabase();
+
   // Production build (Vite dev server runs separately)
   const distPath = path.join(process.cwd(), 'dist');
   if (fs.existsSync(distPath)) {
@@ -1298,7 +1281,26 @@ app.get('/api/organizations', async (req, res) => {
 
     res.json({ success: true, count: data?.length || 0, data: data || [] });
   } catch (err: any) {
-    console.error('Error fetching organizations:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Get organization by ID
+app.get('/api/organizations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+
+    res.json({ success: true, data });
+  } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -1306,12 +1308,19 @@ app.get('/api/organizations', async (req, res) => {
 // Create organization
 app.post('/api/organizations', async (req, res) => {
   try {
-    const { name, website, country, internalNotes, responsibleName, phone, email } = req.body;
+    const { name, displayName, website, country, internalNotes, responsibleName, phone, email } = req.body;
 
     if (!name) {
       return res.status(400).json({
         success: false,
         error: 'Nome é obrigatório'
+      });
+    }
+
+    if (displayName && displayName.length > 18) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nome de Exibição não pode ter mais de 18 caracteres'
       });
     }
 
@@ -1331,7 +1340,6 @@ app.post('/api/organizations', async (req, res) => {
       }
 
       if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking email uniqueness:', checkError);
       }
     }
 
@@ -1340,7 +1348,8 @@ app.post('/api/organizations', async (req, res) => {
 
     const insertData: any = {
       id: generatedId,
-      name
+      name,
+      display_name: displayName || name.substring(0, 18)
     };
     if (website) insertData.website = website;
     if (responsibleName) insertData.responsible_name = responsibleName;
@@ -1363,7 +1372,6 @@ app.post('/api/organizations', async (req, res) => {
       message: 'Organização criada com sucesso'
     });
   } catch (err: any) {
-    console.error('Error creating organization:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -1372,7 +1380,14 @@ app.post('/api/organizations', async (req, res) => {
 app.put('/api/organizations/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, website, country, internalNotes, responsibleName, phone, email } = req.body;
+    const { name, displayName, website, country, internalNotes, responsibleName, phone, email } = req.body;
+
+    if (displayName && displayName.length > 18) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nome de Exibição não pode ter mais de 18 caracteres'
+      });
+    }
 
     // Validate unique email if provided and changed
     if (email) {
@@ -1397,13 +1412,13 @@ app.put('/api/organizations/:id', async (req, res) => {
         }
 
         if (checkError && checkError.code !== 'PGRST116') {
-          console.error('Error checking email uniqueness:', checkError);
         }
       }
     }
 
     const updateData: any = { updated_at: new Date().toISOString() };
     if (name) updateData.name = name;
+    if (displayName) updateData.display_name = displayName;
     if (website) updateData.website = website;
     if (responsibleName) updateData.responsible_name = responsibleName;
     if (phone) updateData.phone = phone;
@@ -1426,7 +1441,6 @@ app.put('/api/organizations/:id', async (req, res) => {
       message: 'Organização atualizada com sucesso'
     });
   } catch (err: any) {
-    console.error('Error updating organization:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -1454,7 +1468,6 @@ app.delete('/api/organizations/:id', async (req, res) => {
 
     res.json({ success: true, message: 'Organização deletada com sucesso' });
   } catch (err: any) {
-    console.error('Error deleting organization:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -1555,7 +1568,6 @@ app.get('/api/audit-logs', async (req, res) => {
       data: data || []
     });
   } catch (err: any) {
-    console.error('Error fetching audit logs:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -1586,7 +1598,39 @@ app.get('/api/audit-logs/:table', async (req, res) => {
       data: data || []
     });
   } catch (err: any) {
-    console.error('Error fetching audit logs for table:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Migration endpoint to convert CPF to numeric
+app.post('/api/migrate/cpf-numeric', async (req, res) => {
+  const authKey = req.headers['x-admin-key'];
+  if (authKey !== process.env.ADMIN_KEY && authKey !== 'admin-secret-key') {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+
+  try {
+    const sql = `
+      BEGIN;
+
+      ALTER TABLE customers DROP CONSTRAINT IF EXISTS customers_cpf_unique;
+      ALTER TABLE customers ADD COLUMN IF NOT EXISTS cpf_numeric BIGINT;
+      UPDATE customers SET cpf_numeric = CAST(REGEXP_REPLACE(cpf, '[^0-9]', '', 'g') AS BIGINT) WHERE cpf IS NOT NULL AND cpf != '';
+      ALTER TABLE customers DROP COLUMN cpf;
+      ALTER TABLE customers RENAME COLUMN cpf_numeric TO cpf;
+
+      COMMIT;
+    `;
+
+    // Use Supabase admin client
+    const { error } = await supabase.rpc('run_sql', { query: sql });
+
+    if (error) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+
+    res.json({ success: true, message: 'CPF migration completed successfully' });
+  } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -1594,7 +1638,6 @@ app.get('/api/audit-logs/:table', async (req, res) => {
 if (!process.env.VERCEL) {
   startServer().then(() => {
     app.listen(3000, () => {
-      console.log('✅ Server running on http://localhost:3000');
     });
   });
 }

@@ -69,7 +69,6 @@ export const AttributeManager: React.FC<AttributeManagerProps> = ({
       const url = editingId ? `${endpoint}/${editingId}` : endpoint;
       const method = editingId ? 'PUT' : 'POST';
 
-      console.log('Enviando:', { url, method, formData });
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -77,7 +76,6 @@ export const AttributeManager: React.FC<AttributeManagerProps> = ({
       });
 
       const data = await res.json();
-      console.log('Resposta do servidor:', data);
 
       if (data.success) {
         setSuccess(editingId ? 'Atributo atualizado!' : 'Atributo criado!');

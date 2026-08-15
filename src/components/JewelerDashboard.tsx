@@ -2,18 +2,17 @@ import React, { useState } from 'react';
 import { JewelryCertificate } from '../types';
 import { formatImageUrl } from '../utils/imageUtils';
 import { isRootCert, isChildCert, getChildCertificatesForParent } from '../utils/certHierarchy';
-import { 
-  PlusCircle, 
-  Search, 
-  Printer, 
-  Eye, 
-  Trash2, 
-  Edit3, 
-  ShieldCheck, 
-  Layers, 
-  DollarSign, 
-  Gem, 
-  Filter, 
+import {
+  PlusCircle,
+  Search,
+  Printer,
+  Trash2,
+  Edit3,
+  ShieldCheck,
+  Layers,
+  DollarSign,
+  Gem,
+  Filter,
   FileText,
   Award,
   Sparkles,
@@ -208,10 +207,9 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
               <tr className="border-b border-amber-900/40 text-amber-400 font-semibold uppercase tracking-wider bg-zinc-950/80">
                 <th className="p-4">Peça</th>
                 <th className="p-4">Certificado / SN</th>
-                <th className="p-4">Metal & Peso</th>
+                <th className="p-4">Teor do Metal</th>
                 <th className="p-4">Certificados Emitidos</th>
                 <th className="p-4">Coleção / Marca</th>
-                <th className="p-4">Garantia Base</th>
                 <th className="p-4 text-right">Ações</th>
               </tr>
             </thead>
@@ -255,12 +253,9 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
                       <span className="text-[10px] text-zinc-500">{cert.serialNumber}</span>
                     </td>
 
-                    {/* Metal & Weight */}
+                    {/* Metal */}
                     <td className="p-4">
-                      <span className="font-semibold text-zinc-300 block">{cert.metalPurity}</span>
-                      <span className="text-[10px] text-zinc-500">
-                        {cert.grossWeightGrams}g{cert.widthCm && cert.widthCm > 0 ? ` • ${cert.widthCm}cm` : ''} ({cert.finish})
-                      </span>
+                      <span className="font-semibold text-zinc-300">{cert.metalPurity}</span>
                     </td>
 
                     {/* Child Certificates issued count */}
@@ -283,17 +278,6 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
                     <td className="p-4">
                       <span className="text-zinc-300 block">{cert.collection}</span>
                       <span className="text-[10px] text-zinc-500">{cert.manufacturer}</span>
-                    </td>
-
-                    {/* Warranty Status */}
-                    <td className="p-4">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        cert.warrantyStatus === 'Ativa' || cert.warrantyStatus === 'Vitalícia'
-                          ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                          : 'bg-zinc-800 text-zinc-400 border-zinc-700'
-                      }`}>
-                        {cert.warrantyStatus}
-                      </span>
                     </td>
 
                     {/* Action buttons */}
@@ -320,15 +304,6 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
                             <UserPlus className="w-4 h-4" />
                           </button>
                         )}
-
-                        <button
-                          onClick={() => onSelectCertificate(cert)}
-                          className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-amber-300 transition-colors"
-                          title="Ver Passaporte Modelo Base"
-                          id={`btn-view-${cert.id}`}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
 
                         <button
                           onClick={() => onOpenPrintModal(cert)}

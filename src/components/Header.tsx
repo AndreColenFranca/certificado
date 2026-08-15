@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ViewMode, AppUser } from '../types';
-import { Search, Gem, PlusCircle, QrCode, Sun, Moon, LogOut, Users, Crown, Menu, ArrowLeft } from 'lucide-react';
+import { Search, Gem, PlusCircle, QrCode, Sun, Moon, LogOut, Menu, ArrowLeft, Building2 } from 'lucide-react';
 import { formatImageUrl } from '../utils/imageUtils';
-import { formatUserGreeting } from '../utils/customerUtils';
+import { ROOT_USER_EMAIL } from '../config/constants';
 
 interface HeaderProps {
   currentMode: ViewMode;
@@ -42,12 +42,29 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTheme,
   onToggleMobileMenu,
   currentUser,
-  onOpenUsersModal,
   onLogout,
   onGoBack,
   canGoBack = false
 }) => {
   const [searchInput, setSearchInput] = useState('');
+  const [orgName, setOrgName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const orgId = currentUser?.orgId || '550e8400-e29b-41d4-a716-446655440000';
+
+    if (currentUser) {
+      fetch(`/api/organizations/${orgId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data) {
+            // Usar display_name se disponível, senão usar nome completo
+            setOrgName(data.data.display_name || data.data.name);
+          }
+        })
+        .catch(err => {
+        });
+    }
+  }, [currentUser]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,37 +174,17 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Header Right Actions */}
           <div className="flex items-center gap-2">
             
-            {/* User Badge & Management (If Root user or logged in) */}
+            {/* Debug Badge - Organization & User Info */}
             {currentUser && (
-              <div className="flex items-center gap-2 pr-1.5 sm:pr-2 border-r border-amber-900/30">
-                {currentUser.role === 'customer' ? (
-                  <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs font-semibold">
-                    <Users className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <span className="max-w-[130px] sm:max-w-[220px] truncate" title={formatUserGreeting(currentUser)}>
-                      {formatUserGreeting(currentUser)}
-                    </span>
-                    <span className="hidden sm:inline px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 text-[9px] font-bold rounded uppercase">Cliente</span>
-                  </div>
-                ) : (
-                  <button
-                    onClick={onOpenUsersModal}
-                    title={currentUser.isRoot || currentUser.email.toLowerCase() === 'andreluiz.colen@gmail.com' ? "Gestão de Usuários (Acesso Raiz)" : "Usuário Autenticado"}
-                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-200 text-xs font-semibold transition-all cursor-pointer"
-                    id="header-btn-users"
-                  >
-                    {(currentUser.isRoot || currentUser.email.toLowerCase() === 'andreluiz.colen@gmail.com') ? (
-                      <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    ) : (
-                      <Users className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    )}
-                    <span className="max-w-[130px] sm:max-w-[220px] truncate" title={formatUserGreeting(currentUser)}>
-                      {formatUserGreeting(currentUser)}
-                    </span>
-                    {(currentUser.isRoot || currentUser.email.toLowerCase() === 'andreluiz.colen@gmail.com') && (
-                      <span className="hidden sm:inline px-1.5 py-0.2 bg-amber-500/30 text-amber-300 text-[9px] font-bold rounded uppercase">Raiz</span>
-                    )}
-                  </button>
-                )}
+              <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-zinc-800/80 border border-zinc-600/60 text-base text-zinc-200 whitespace-nowrap">
+                <Building2 className="w-5 h-5 text-zinc-400 shrink-0" />
+                <span className="font-medium" title={orgName || 'Org'}>
+                  {orgName || 'Org'}
+                </span>
+                <span className="text-zinc-500">•</span>
+                <span className="font-medium" title={currentUser.name}>
+                  {currentUser.name.split(' ')[0]}
+                </span>
               </div>
             )}
 

@@ -90,7 +90,6 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
         });
         setQrCodeDataUrl(qrData);
       } catch (err) {
-        console.error('Error generating QR:', err);
       }
     };
     generateQR();

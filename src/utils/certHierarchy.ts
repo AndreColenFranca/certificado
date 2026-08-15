@@ -5,8 +5,7 @@ import { JewelryCertificate } from '../types';
  * Root certificates represent master catalog models and are NEVER linked to customers.
  */
 export function isRootCert(cert: JewelryCertificate): boolean {
-  if (cert.isRoot === true) return true;
-  if (cert.isRoot === false) return false;
+  // Treat as root if it has no parent, owner, or current owner
   return !cert.parentCertId && !cert.ownerId && !cert.currentOwnerName;
 }
 

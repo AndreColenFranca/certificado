@@ -296,13 +296,15 @@ export const CertificateOnlyView: React.FC<CertificateOnlyViewProps> = ({
                   <span className="text-[11px] text-zinc-600 block">Cor: {cert.metalColor}</span>
                 </div>
 
-                <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200 space-y-0.5">
-                  <span className="text-zinc-500 text-[10px] block font-bold uppercase tracking-wider">Peso Bruto Estimado</span>
-                  <span className="font-bold text-zinc-950 text-sm">{cert.grossWeightGrams} g</span>
-                  {cert.widthCm && Number(cert.widthCm) > 0 && (
-                    <span className="text-[11px] text-zinc-600 block">Largura: {cert.widthCm} cm</span>
-                  )}
-                </div>
+                {cert.grossWeightGrams && Number(cert.grossWeightGrams) > 0 && (
+                  <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200 space-y-0.5">
+                    <span className="text-zinc-500 text-[10px] block font-bold uppercase tracking-wider">Peso Bruto Estimado</span>
+                    <span className="font-bold text-zinc-950 text-sm">{cert.grossWeightGrams} g</span>
+                    {cert.widthCm && Number(cert.widthCm) > 0 && (
+                      <span className="text-[11px] text-zinc-600 block">Largura: {cert.widthCm} cm</span>
+                    )}
+                  </div>
+                )}
 
                 <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200 space-y-0.5">
                   <span className="text-zinc-500 text-[10px] block font-bold uppercase tracking-wider">Acabamento</span>

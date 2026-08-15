@@ -165,6 +165,12 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
               <span className="px-2.5 py-1 rounded-full text-xs font-mono bg-zinc-800 text-amber-400 border border-amber-900/50">
                 Série: {cert.serialNumber}
               </span>
+
+              {cert.certCode && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-mono bg-emerald-950 text-emerald-300 border border-emerald-700/50">
+                  Passaporte: {cert.certCode}
+                </span>
+              )}
             </div>
 
             <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-amber-100">

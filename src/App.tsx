@@ -19,7 +19,7 @@ import { DeleteConfirmModal } from './components/DeleteConfirmModal';
 import { JewelryCustomerLinkModal } from './components/JewelryCustomerLinkModal';
 import { JewelryCustomerQueryModal } from './components/JewelryCustomerQueryModal';
 import { CertificateSearchResultsModal } from './components/CertificateSearchResultsModal';
-import { LoginView } from './components/LoginView';
+import { SupabaseLoginView } from './components/SupabaseLoginView';
 import { UserManagementModal } from './components/UserManagementModal';
 import { CustomerPortalView } from './components/CustomerPortalView';
 import { OrganizationsView } from './components/OrganizationsView';
@@ -934,7 +934,7 @@ export default function App() {
   // STRICT AUTHENTICATION GUARD: Zero system access without active login session
   if (!currentUser) {
     return (
-      <LoginView
+      <SupabaseLoginView
         onLoginSuccess={handleLoginSuccess}
         companyName={companyName}
         companyLogoUrl={companyLogoUrl}

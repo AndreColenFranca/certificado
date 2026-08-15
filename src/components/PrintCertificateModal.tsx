@@ -224,9 +224,10 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
             </h3>
 
             {(() => {
+              const hasWeight = Boolean(cert.grossWeightGrams && Number(cert.grossWeightGrams) > 0);
               const hasWidth = Boolean(cert.widthCm && Number(cert.widthCm) > 0);
               return (
-                <div className={`grid ${hasWidth ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'} gap-2 text-xs`}>
+                <div className={`grid ${hasWeight || hasWidth ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'} gap-2 text-xs`}>
                   <div className="p-2 bg-zinc-50 rounded-lg border border-zinc-200">
                     <span className="text-[9px] text-zinc-500 font-bold block uppercase tracking-wider">Teor do Metal:</span>
                     <strong className="text-zinc-950 font-bold text-xs block mt-0.5">{cert.metalPurity}</strong>
@@ -237,7 +238,7 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
                     <strong className="text-zinc-950 font-bold text-xs block mt-0.5">{cert.metalColor}</strong>
                   </div>
 
-                  {cert.grossWeightGrams && (
+                  {hasWeight && (
                     <div className="p-2 bg-zinc-50 rounded-lg border border-zinc-200">
                       <span className="text-[9px] text-zinc-500 font-bold block uppercase tracking-wider">Peso Bruto:</span>
                       <strong className="text-zinc-950 font-bold text-xs block mt-0.5">{cert.grossWeightGrams} gramas</strong>

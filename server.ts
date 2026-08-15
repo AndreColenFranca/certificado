@@ -37,6 +37,21 @@ const PORT = 3000;
 
 app.use(express.json({ limit: '10mb' }));
 
+// Initialize Supabase Client
+let supabase: any = null;
+const supabaseUrl = process.env.SUPABASE_URL || 'https://btnxzffcuvwhuxdeshpk.supabase.co';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+console.log('[DEBUG] Supabase URL:', supabaseUrl);
+console.log('[DEBUG] Service Key configured:', !!supabaseServiceKey);
+
+try {
+  supabase = createClient(supabaseUrl, supabaseServiceKey);
+  console.log('[DEBUG] Supabase client initialized successfully');
+} catch (err: any) {
+  console.error('[ERROR] Failed to initialize Supabase:', err.message);
+}
+
 // Root route
 // Health check - only for API requests
 app.get('/api/health', (req, res) => {
@@ -48,19 +63,11 @@ app.get('/api/debug/env', (req, res) => {
   res.json({
     supabaseUrl: !!process.env.SUPABASE_URL,
     supabaseServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    supabaseInitialized: !!supabase,
     nodeEnv: process.env.NODE_ENV,
     timestamp: new Date().toISOString()
   });
 });
-
-// Initialize Supabase Client
-const supabaseUrl = process.env.SUPABASE_URL || 'https://btnxzffcuvwhuxdeshpk.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-
-console.log('[DEBUG] Supabase URL:', supabaseUrl);
-console.log('[DEBUG] Service Key configured:', !!supabaseServiceKey);
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Default Organization UUID for local testing
 const DEFAULT_ORG_ID = '550e8400-e29b-41d4-a716-446655440000'; // UUID correspondente a 'default'

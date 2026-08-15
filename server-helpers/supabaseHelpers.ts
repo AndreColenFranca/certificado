@@ -152,10 +152,14 @@ export async function updateCertificate(
       updated_at: new Date().toISOString()
     };
 
-    // Remove undefined values
-    Object.keys(snakeCaseUpdates).forEach(key =>
-      snakeCaseUpdates[key] === undefined && delete snakeCaseUpdates[key]
-    );
+    // Convert empty strings to null and remove undefined values
+    Object.keys(snakeCaseUpdates).forEach(key => {
+      if (snakeCaseUpdates[key] === undefined) {
+        delete snakeCaseUpdates[key];
+      } else if (snakeCaseUpdates[key] === '') {
+        snakeCaseUpdates[key] = null;
+      }
+    });
 
     const { data, error } = await supabase
       .from('jewelry_certificates')

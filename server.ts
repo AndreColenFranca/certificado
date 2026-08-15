@@ -1073,11 +1073,12 @@ app.post('/api/certificates', async (req, res) => {
       manufacturer_logo_url: newCert.manufacturerLogoUrl,
       metal_purity: newCert.metalPurity,
       metal_color: newCert.metalColor,
-      gross_weight_grams: newCert.grossWeightGrams,
-      width_cm: newCert.widthCm,
+      gross_weight_grams: newCert.grossWeightGrams || 0,
+      width_cm: newCert.widthCm || 0,
       finish: newCert.finish,
       has_stones: newCert.hasStones,
       stones: newCert.stones,
+      images: newCert.images,
       warranty_months: newCert.warrantyMonths,
       warranty_terms: newCert.warrantyTerms,
       warranty_status: newCert.warrantyStatus,
@@ -1091,6 +1092,7 @@ app.post('/api/certificates', async (req, res) => {
 
     if (!result.success) {
       const errMsg = result.error || 'Erro ao salvar certificado';
+      console.error('POST Certificate Error:', errMsg);
       return res.status(400).json({ success: false, message: errMsg });
     }
 
@@ -1111,7 +1113,7 @@ app.post('/api/certificates', async (req, res) => {
 // Update existing certificate (e.g., maintenance record or owner transfer)
 app.put('/api/certificates/:id', async (req, res) => {
   try {
-    const id = req.params.id.toUpperCase();
+    const id = req.params.id;
 
     // Get existing certificate from Supabase
     const getCertResult = await getCertificateById(supabase, id);

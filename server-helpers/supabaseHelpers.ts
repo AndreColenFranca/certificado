@@ -140,6 +140,7 @@ export async function updateCertificate(
       finish: updates.finish,
       has_stones: updates.hasStones,
       stones: updates.stones,
+      images: updates.images,
       warranty_months: updates.warrantyMonths,
       warranty_terms: updates.warrantyTerms,
       warranty_status: updates.warrantyStatus,

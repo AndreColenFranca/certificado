@@ -279,7 +279,7 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
                         <td className="p-1.5 font-bold text-zinc-950">{s.type}</td>
                         <td className="p-1.5 font-mono text-zinc-800">{s.quantity}x</td>
                         <td className="p-1.5 font-bold font-mono text-zinc-950">{s.caratWeight > 0 ? `${s.caratWeight} ct` : '-'}</td>
-                        <td className="p-1.5 text-zinc-800">{s.cutShape}</td>
+                        <td className="p-1.5 text-zinc-800">{s.cutShape || '-'}</td>
                         <td className="p-1.5 text-zinc-800">{s.colorGrade || '-'}</td>
                       </tr>
                     ))}

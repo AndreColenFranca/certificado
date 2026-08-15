@@ -56,6 +56,8 @@ export async function getCertificates(
   try {
     let query = supabase.from('jewelry_certificates').select('*');
 
+    console.log(`[DEBUG] getCertificates - Filtering by orgId:`, orgId);
+
     if (orgId) {
       query = query.eq('org_id', orgId);
     }
@@ -63,11 +65,18 @@ export async function getCertificates(
     const { data, error } = await query;
 
     if (error) {
+      console.error(`[ERROR] getCertificates failed:`, error.message);
       return { success: false, error: error.message, data: null };
+    }
+
+    console.log(`[DEBUG] getCertificates - Returned ${data?.length || 0} records`);
+    if (data && data.length > 0) {
+      console.log(`[DEBUG] Sample cert org_ids:`, data.slice(0, 3).map(c => ({ id: c.id, org_id: c.org_id })));
     }
 
     return { success: true, data: data || [] };
   } catch (err: any) {
+    console.error(`[ERROR] getCertificates exception:`, err.message);
     return { success: false, error: err.message, data: null };
   }
 }
@@ -283,6 +292,8 @@ export async function getCustomers(
   try {
     let query = supabase.from('customers').select('*');
 
+    console.log(`[DEBUG] getCustomers - Filtering by orgId:`, orgId);
+
     if (orgId) {
       query = query.eq('org_id', orgId);
     }
@@ -290,11 +301,18 @@ export async function getCustomers(
     const { data, error } = await query;
 
     if (error) {
+      console.error(`[ERROR] getCustomers failed:`, error.message);
       return { success: false, error: error.message, data: null };
+    }
+
+    console.log(`[DEBUG] getCustomers - Returned ${data?.length || 0} records`);
+    if (data && data.length > 0) {
+      console.log(`[DEBUG] Sample customer org_ids:`, data.slice(0, 3).map(c => ({ id: c.id, org_id: c.org_id })));
     }
 
     return { success: true, data: data || [] };
   } catch (err: any) {
+    console.error(`[ERROR] getCustomers exception:`, err.message);
     return { success: false, error: err.message, data: null };
   }
 }

@@ -206,6 +206,49 @@ app.get('/api/supabase/test', async (req, res) => {
   }
 });
 
+// Diagnostic endpoint - Get ALL certificates and customers without org_id filter
+app.get('/api/supabase/diagnostic', async (req, res) => {
+  try {
+    const { data: allCerts, error: certsError } = await supabase
+      .from('jewelry_certificates')
+      .select('id, cert_code, org_id, title, current_owner_name, created_at');
+
+    const { data: allCustomers, error: custsError } = await supabase
+      .from('customers')
+      .select('id, customer_code, org_id, name, email, created_at');
+
+    const { data: allOrgs, error: orgsError } = await supabase
+      .from('organizations')
+      .select('id, name, display_name, created_at');
+
+    return res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      supabaseConnected: !certsError && !custsError && !orgsError,
+      totalCertificates: allCerts?.length || 0,
+      totalCustomers: allCustomers?.length || 0,
+      totalOrganizations: allOrgs?.length || 0,
+      certificateOrgIds: [...new Set(allCerts?.map(c => c.org_id) || [])],
+      customerOrgIds: [...new Set(allCustomers?.map(c => c.org_id) || [])],
+      currentRequestOrgId: (req as any).user?.org_id || DEFAULT_ORG_ID,
+      certificates: allCerts?.slice(0, 5),
+      customers: allCustomers?.slice(0, 5),
+      organizations: allOrgs?.slice(0, 5),
+      errors: {
+        certificates: certsError?.message,
+        customers: custsError?.message,
+        organizations: orgsError?.message
+      }
+    });
+  } catch (err: any) {
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 
 // Supabase User Registration Endpoint (for creating users via Supabase)
 app.post('/api/auth/register', async (req, res) => {

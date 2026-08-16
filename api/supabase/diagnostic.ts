@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    let supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
       return res.status(500).json({
@@ -13,6 +13,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         timestamp: new Date().toISOString()
       });
     }
+
+    // Remove quebras de linha e espaços em branco da chave
+    supabaseServiceKey = supabaseServiceKey.replace(/\s+/g, '');
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 

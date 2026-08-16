@@ -832,7 +832,7 @@ app.post('/api/users', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Este e-mail já está cadastrado no sistema.' });
     }
 
-    const newUserId = `user-${Date.now()}`;
+    const newUserId = uuidv4();
     const now = new Date().toISOString();
 
     // Salvar no Supabase

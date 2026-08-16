@@ -22,14 +22,14 @@ import {
   updateCustomer,
   deleteCustomer,
   transformCertificateFromDb
-} from '../server-helpers/supabaseHelpers';
+} from '@/server-helpers/supabaseHelpers';
 import {
   getAttributes,
   getAttribute,
   createAttribute,
   updateAttribute,
   deleteAttribute
-} from '../server-helpers/attributesHelpers';
+} from '@/server-helpers/attributesHelpers';
 
 const app = express();
 const PORT = 3000;

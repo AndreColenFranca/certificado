@@ -921,6 +921,67 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
+// Update user
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    if (!supabase) {
+      return res.status(500).json({ success: false, message: 'Supabase não disponível' });
+    }
+
+    const param = req.params.id;
+    const { name, role } = req.body;
+
+    if (!name || !role) {
+      return res.status(400).json({ success: false, message: 'Nome e role são obrigatórios' });
+    }
+
+    // Buscar usuário no Supabase
+    const { data: user, error: findError } = await supabase
+      .from('auth_users')
+      .select('id, email')
+      .or(`id.eq.${param},email.eq.${param}`)
+      .single();
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
+    }
+
+    if (user.email?.toLowerCase() === 'andreluiz.colen@gmail.com') {
+      return res.status(403).json({ success: false, message: 'O Usuário Raiz principal não pode ser alterado!' });
+    }
+
+    const now = new Date().toISOString();
+
+    // Atualizar no Supabase
+    const { data: updatedUser, error: updateError } = await supabase
+      .from('auth_users')
+      .update({
+        name: name.trim(),
+        role: role,
+        updated_at: now
+      })
+      .eq('id', user.id)
+      .select()
+      .single();
+
+    if (updateError || !updatedUser) {
+      return res.status(500).json({
+        success: false,
+        message: updateError?.message || 'Erro ao atualizar usuário'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: updatedUser,
+      message: 'Usuário atualizado com sucesso!'
+    });
+  } catch (error: any) {
+    console.error('Erro ao atualizar usuário:', error);
+    res.status(500).json({ success: false, message: error.message || 'Erro ao atualizar usuário' });
+  }
+});
+
 // Delete user
 app.delete('/api/users/:id', async (req, res) => {
   try {

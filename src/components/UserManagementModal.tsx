@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, UserPlus, Users, Crown, ShieldAlert, Trash2, CheckCircle2, Mail, Lock, User, ShieldCheck } from 'lucide-react';
+import { X, UserPlus, Users, Crown, ShieldAlert, Trash2, CheckCircle2, Mail, Lock, User, ShieldCheck, Edit2 } from 'lucide-react';
 import { AppUser } from '../types';
 import { OrgSelector } from './OrgSelector';
 import { ROOT_USER_EMAIL } from '../config/constants';
@@ -27,6 +27,11 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState<'admin' | 'operator' | 'customer'>('customer');
   const [selectedOrgId, setSelectedOrgId] = useState('550e8400-e29b-41d4-a716-446655440000');
+
+  // Edit user state
+  const [editingUser, setEditingUser] = useState<AppUser | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editRole, setEditRole] = useState<'admin' | 'operator' | 'customer'>('operator');
 
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -121,6 +126,55 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
       }
     } catch (err: any) {
       setFeedback({ type: 'error', message: 'Erro ao conectar com o servidor. Tente novamente.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditUser = (user: AppUser) => {
+    setEditingUser(user);
+    setEditName(user.name);
+    setEditRole(user.role as any);
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editingUser) return;
+    if (!editName.trim()) {
+      setFeedback({ type: 'error', message: 'Nome é obrigatório' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFeedback(null);
+
+    try {
+      const res = await fetchWithAuth(`/api/users/${editingUser.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          name: editName.trim(),
+          role: editRole
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setFeedback({ type: 'success', message: 'Usuário atualizado com sucesso!' });
+        const updatedUsers = usersList.map(u =>
+          u.id === editingUser.id
+            ? { ...u, name: editName.trim(), role: editRole }
+            : u
+        );
+        setUsersList(updatedUsers);
+        setEditingUser(null);
+        setEditName('');
+      } else {
+        setFeedback({ type: 'error', message: data.message || 'Erro ao atualizar usuário' });
+      }
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: 'Erro ao conectar com o servidor' });
     } finally {
       setIsSubmitting(false);
     }
@@ -395,14 +449,27 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                             </div>
                           </div>
 
-                          {!isUserRoot && isRootUser && (
-                            <button
-                              onClick={() => handleDeleteUser(usr)}
-                              title="Remover este usuário"
-                              className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 hover:text-red-200 transition-all cursor-pointer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                          {!isUserRoot && (
+                            <div className="flex items-center gap-2">
+                              {(currentUser?.role === 'admin' || isRootUser) && (
+                                <button
+                                  onClick={() => handleEditUser(usr)}
+                                  title="Editar este usuário"
+                                  className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-amber-200 transition-all cursor-pointer"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                              )}
+                              {isRootUser && (
+                                <button
+                                  onClick={() => handleDeleteUser(usr)}
+                                  title="Remover este usuário"
+                                  className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 hover:text-red-200 transition-all cursor-pointer"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       );
@@ -426,6 +493,82 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
         </div>
 
       </div>
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-amber-900/50 text-amber-50 rounded-3xl max-w-md w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-amber-900/40">
+              <h3 className="text-lg font-bold font-serif text-amber-100">Editar Usuário</h3>
+              <button
+                onClick={() => setEditingUser(null)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-amber-200 hover:bg-zinc-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateUser} className="mt-4 space-y-3">
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-amber-200 uppercase">Nome</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3 py-2 bg-zinc-900 border border-amber-900/50 rounded-xl text-xs text-amber-50 focus:outline-none focus:border-amber-500 font-medium"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-amber-200 uppercase">E-mail</label>
+                <input
+                  type="email"
+                  value={editingUser.email}
+                  disabled
+                  className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-xl text-xs text-zinc-400 font-medium cursor-not-allowed"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-amber-200 uppercase">Nível de Acesso</label>
+                <select
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-zinc-900 border border-amber-900/50 rounded-xl text-xs text-amber-50 focus:outline-none focus:border-amber-500 font-medium"
+                >
+                  {isRootUser ? (
+                    <>
+                      <option value="customer">Cliente</option>
+                      <option value="operator">Operador</option>
+                      <option value="admin">Administrador</option>
+                    </>
+                  ) : (
+                    <option value="operator">Operador</option>
+                  )}
+                </select>
+              </div>
+
+              <div className="pt-2 flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-amber-100 font-bold text-xs transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs transition-all disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Atualizando...' : 'Salvar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

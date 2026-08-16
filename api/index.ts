@@ -1093,15 +1093,20 @@ app.put('/api/users/:id', async (req, res) => {
     const now = new Date().toISOString();
     const cleanEmail = email ? email.trim().toLowerCase() : undefined;
 
+    console.log(`[UPDATE] Validando email: ${cleanEmail} (anterior: ${user.email})`);
+
     // Validar email duplicado (se foi alterado)
     if (cleanEmail && cleanEmail !== user.email?.toLowerCase()) {
+      console.log(`[UPDATE] Email foi alterado, verificando duplicatas...`);
       const { data: existingEmail, error: checkError } = await supabase
         .from('auth_users')
-        .select('id')
-        .eq('email', cleanEmail)
-        .single();
+        .select('id, email')
+        .eq('email', cleanEmail);
 
-      if (existingEmail) {
+      console.log(`[UPDATE] Resultado da busca: ${JSON.stringify({ existingEmail, checkError })}`);
+
+      if (existingEmail && existingEmail.length > 0) {
+        console.log(`[UPDATE] Email já existe! Retornando erro.`);
         return res.status(400).json({
           success: false,
           message: 'Este e-mail já está cadastrado para outro usuário.'

@@ -360,7 +360,7 @@ export default function App() {
   useEffect(() => {
     if (currentUser) {
       const orgId = currentUser.orgId || '550e8400-e29b-41d4-a716-446655440000';
-      fetch(`/api/organizations/${orgId}`)
+      fetchWithAuth(`/api/organizations/${orgId}`)
         .then(res => res.json())
         .then(data => {
           if (data.success && data.data) {

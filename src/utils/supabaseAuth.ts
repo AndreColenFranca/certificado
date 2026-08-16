@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { AppUser } from '../types';
 import { ROOT_USER_EMAIL } from '../config/constants';
+import { fetchWithAuth } from './fetchWithAuth';
 
 export interface AuthResponse {
   success: boolean;
@@ -83,9 +84,8 @@ export const supabaseAuth = {
       const isRootEmail = email === ROOT_USER_EMAIL;
 
       try {
-        const meRes = await fetch('/api/auth/me', {
+        const meRes = await fetchWithAuth('/api/auth/me', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email })
         });
 

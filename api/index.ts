@@ -813,7 +813,7 @@ app.post('/api/users', async (req, res) => {
     }
 
     const { requesterEmail, name, email, password, role, orgId } = req.body;
-    const userOrgId = (req as any).user?.org_id || orgId || DEFAULT_ORG_ID;
+    const userOrgId = orgId || (req as any).user?.org_id || DEFAULT_ORG_ID;
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Nome, e-mail e senha são obrigatórios' });

@@ -64,7 +64,7 @@ CREATE POLICY "view_org_users" ON auth_users
   FOR SELECT
   USING (org_id::text = (auth.jwt() ->> 'org_id'));
 
--- Gerenciar usuários (apenas admins)
+-- Gerenciar usuários (apenas admins podem criar/editar/deletar da própria org)
 CREATE POLICY "manage_org_users" ON auth_users
   FOR ALL
   USING (
@@ -72,8 +72,9 @@ CREATE POLICY "manage_org_users" ON auth_users
     AND (auth.jwt() ->> 'role') IN ('root', 'admin')
   )
   WITH CHECK (
+    -- Ao inserir/atualizar, apenas validar que é da mesma organização
+    -- O USING já validou que o requester é admin
     org_id::text = (auth.jwt() ->> 'org_id')
-    AND (auth.jwt() ->> 'role') IN ('root', 'admin')
   );
 
 

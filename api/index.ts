@@ -889,6 +889,9 @@ app.post('/api/users', async (req, res) => {
     const now = new Date().toISOString();
 
     // Salvar no Supabase
+    const roleToSave = role || 'operator';
+    console.log(`[DEBUG] Criando usuário: email=${cleanEmail}, role=${roleToSave}, requesterEmail=${requesterEmail}`);
+
     const { data: insertedUser, error: insertError } = await supabase
       .from('auth_users')
       .insert({
@@ -896,7 +899,7 @@ app.post('/api/users', async (req, res) => {
         email: cleanEmail,
         name: name.trim(),
         org_id: userOrgId,
-        role: role || 'operator',
+        role: roleToSave,
         created_at: now,
         updated_at: now
       })
@@ -909,6 +912,8 @@ app.post('/api/users', async (req, res) => {
         message: insertError?.message || 'Erro ao criar usuário no banco de dados'
       });
     }
+
+    console.log(`[DEBUG] Usuário criado: id=${insertedUser.id}, role=${insertedUser.role}`);
 
     res.status(201).json({
       success: true,

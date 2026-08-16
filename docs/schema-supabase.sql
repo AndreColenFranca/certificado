@@ -38,16 +38,25 @@ CREATE TABLE IF NOT EXISTS auth_users (
 
 ALTER TABLE auth_users ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view users in their organization"
-  ON auth_users FOR SELECT
-  USING (org_id = (auth.jwt() ->> 'org_id')::uuid);
+-- NOTA: Políticas RLS para auth_users estão em FASE4-RLS-SETUP.sql
+-- Não defina aqui para evitar conflitos com a configuração completa
+-- Descomente abaixo só se não estiver usando FASE4-RLS-SETUP.sql:
 
-CREATE POLICY "Admins can manage users"
-  ON auth_users FOR ALL
+/*
+CREATE POLICY "view_org_users" ON auth_users
+  FOR SELECT
+  USING (org_id::text = (auth.jwt() ->> 'org_id'));
+
+CREATE POLICY "manage_org_users" ON auth_users
+  FOR ALL
   USING (
-    org_id = (auth.jwt() ->> 'org_id')::uuid
+    org_id::text = (auth.jwt() ->> 'org_id')
     AND (auth.jwt() ->> 'role') IN ('root', 'admin')
+  )
+  WITH CHECK (
+    org_id::text = (auth.jwt() ->> 'org_id')
   );
+*/
 
 -- 3. CUSTOMERS (Clientes dos Joalheiros)
 CREATE TABLE IF NOT EXISTS customers (

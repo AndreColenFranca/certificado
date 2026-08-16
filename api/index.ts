@@ -1093,6 +1093,22 @@ app.put('/api/users/:id', async (req, res) => {
     const now = new Date().toISOString();
     const cleanEmail = email ? email.trim().toLowerCase() : undefined;
 
+    // Validar email duplicado (se foi alterado)
+    if (cleanEmail && cleanEmail !== user.email?.toLowerCase()) {
+      const { data: existingEmail, error: checkError } = await supabase
+        .from('auth_users')
+        .select('id')
+        .eq('email', cleanEmail)
+        .single();
+
+      if (existingEmail) {
+        return res.status(400).json({
+          success: false,
+          message: 'Este e-mail já está cadastrado para outro usuário.'
+        });
+      }
+    }
+
     // Se email foi alterado, atualizar também no Supabase Auth
     if (cleanEmail && cleanEmail !== user.email?.toLowerCase()) {
       try {
@@ -1102,7 +1118,10 @@ app.put('/api/users/:id', async (req, res) => {
         console.log(`[UPDATE] Email atualizado no Supabase Auth: ${user.email} → ${cleanEmail}`);
       } catch (authErr: any) {
         console.error(`[UPDATE] Erro ao atualizar email em Supabase Auth: ${authErr.message}`);
-        // Continua mesmo se falhar aqui
+        return res.status(400).json({
+          success: false,
+          message: `Erro ao atualizar email: ${authErr.message}`
+        });
       }
     }
 

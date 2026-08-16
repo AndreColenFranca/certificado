@@ -99,6 +99,8 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
       // ROOT pode selecionar org, outros usam sua própria org
       const orgId = isRootUser ? selectedOrgId : (currentUser?.orgId || selectedOrgId);
 
+      console.log('[UserManagement] Enviando role:', newRole, 'Usuário:', currentUser?.role);
+
       const res = await fetchWithAuth('/api/users', {
         method: 'POST',
         body: JSON.stringify({

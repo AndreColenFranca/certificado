@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { getCertificates } from '../server-helpers/supabaseHelpers';
+import { getCertificates } from './supabaseHelpers';
 
 const DEFAULT_ORG_ID = '550e8400-e29b-41d4-a716-446655440000';
 

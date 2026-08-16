@@ -84,12 +84,15 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
       return;
     }
 
+    // Use role correto baseado no usuário atual (não confie no state que pode estar desatualizado)
+    const roleToSend = currentUser?.role === 'root' ? 'customer' : 'operator';
+
     const newUserObj = {
       id: `user-${Date.now()}`,
       name: newName.trim(),
       email: cleanEmail,
       password: newPassword,
-      role: newRole,
+      role: roleToSend,
       createdAt: new Date().toISOString(),
       isRoot: false
     };
@@ -99,7 +102,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
       // ROOT pode selecionar org, outros usam sua própria org
       const orgId = isRootUser ? selectedOrgId : (currentUser?.orgId || selectedOrgId);
 
-      console.log('[UserManagement] Enviando role:', newRole, 'Usuário:', currentUser?.role);
+      console.log('[UserManagement] Enviando role:', roleToSend, 'Usuário role:', currentUser?.role);
 
       const res = await fetchWithAuth('/api/users', {
         method: 'POST',
@@ -108,7 +111,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
           name: newName.trim(),
           email: cleanEmail,
           password: newPassword,
-          role: newRole,
+          role: roleToSend,
           orgId: orgId
         })
       });

@@ -174,14 +174,30 @@ export default function App() {
   const defaultMainView = currentUser?.role === 'customer' ? 'customer-portal' : 'jeweler-dashboard';
   const canGoBack = viewHistory.length > 0 || viewMode !== defaultMainView;
 
-  const handleLoginSuccess = (user: AppUser) => {
-    setCurrentUser(user);
-    setForceLoginView(false);
+  const handleLoginSuccess = async (user: AppUser) => {
     try {
-      // localStorage.setItem('aureum_logged_user', JSON.stringify(user)); // Supabase only
+      // Buscar dados completos do usuário (incluindo org_id e orgName)
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.data) {
+          const completeUser: AppUser = {
+            ...user,
+            orgId: data.data.orgId,
+            orgName: data.data.orgName
+          };
+          setCurrentUser(completeUser);
+        } else {
+          setCurrentUser(user);
+        }
+      } else {
+        setCurrentUser(user);
+      }
     } catch (e) {
-      console.warn('Could not save logged user to localStorage:', e);
+      setCurrentUser(user);
     }
+
+    setForceLoginView(false);
     if (typeof window !== 'undefined') {
       try {
         window.history.replaceState(null, '', '/');

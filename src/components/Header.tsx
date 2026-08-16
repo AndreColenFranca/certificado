@@ -47,24 +47,9 @@ export const Header: React.FC<HeaderProps> = ({
   canGoBack = false
 }) => {
   const [searchInput, setSearchInput] = useState('');
-  const [orgName, setOrgName] = useState<string | null>(null);
 
-  useEffect(() => {
-    const orgId = currentUser?.orgId || '550e8400-e29b-41d4-a716-446655440000';
-
-    if (currentUser) {
-      fetch(`/api/organizations/${orgId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.data) {
-            // Usar display_name se disponível, senão usar nome completo
-            setOrgName(data.data.display_name || data.data.name);
-          }
-        })
-        .catch(err => {
-        });
-    }
-  }, [currentUser]);
+  // Obter nome da organização do usuário logado
+  const orgName = currentUser?.orgName || null;
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();

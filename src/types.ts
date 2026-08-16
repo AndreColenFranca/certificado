@@ -8,6 +8,7 @@ export interface AppUser {
   customerId?: string;
   cpf?: string;
   orgId?: string;
+  orgName?: string;
 }
 
 export type MetalPurity = string;

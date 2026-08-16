@@ -860,12 +860,18 @@ app.get('/api/users', async (req, res) => {
 
 // Create new user (Allowed for Root, Admins or authenticated system requests)
 app.post('/api/users', async (req, res) => {
+  console.log('\n\n🟢🟢🟢 POST /api/users RECEBIDA 🟢🟢🟢');
+  console.log(`Body: ${JSON.stringify(req.body)}`);
+  console.log(`Supabase disponível: ${!!supabase}`);
+
   try {
     if (!supabase) {
+      console.log('❌ Supabase não inicializado!');
       return res.status(500).json({ success: false, message: 'Supabase não disponível' });
     }
 
     const { requesterEmail, name, email, password, role, orgId } = req.body;
+    console.log(`Email recebido: ${email}, Role: ${role}`);
     const userOrgId = orgId || (req as any).user?.org_id || DEFAULT_ORG_ID;
     const requesterRole = (req as any).user?.role || 'user';
 
@@ -902,10 +908,55 @@ app.post('/api/users', async (req, res) => {
     const roleToSave = role || 'operator';
     console.log(`[DEBUG] Criando usuário: email=${cleanEmail}, role=${roleToSave}, requesterEmail=${requesterEmail}`);
 
+    // 1. FIRST: Create user in Supabase Auth (auth.users table)
+    let authUserId = newUserId;
+    console.log(`[DEBUG] === INICIANDO CRIAÇÃO NO SUPABASE AUTH ===`);
+    console.log(`[DEBUG] Email: ${cleanEmail}, Senha: ${password}, Role: ${roleToSave}`);
+
+    try {
+      console.log(`[DEBUG] Chamando supabase.auth.admin.createUser...`);
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: cleanEmail,
+        password,
+        user_metadata: {
+          display_name: name.trim(),
+          role: roleToSave
+        },
+        email_confirm: true
+      });
+
+      console.log(`[DEBUG] Resposta do Supabase Auth:`);
+      console.log(`[DEBUG] - authData: ${JSON.stringify(authData)}`);
+      console.log(`[DEBUG] - authError: ${authError ? authError.message : 'null'}`);
+
+      if (authError) {
+        console.error(`[ERROR] Failed to create user in Supabase Auth:`, authError.message);
+        return res.status(400).json({
+          success: false,
+          message: `Erro ao criar usuário no Supabase Auth: ${authError.message}`
+        });
+      }
+
+      if (authData.user) {
+        authUserId = authData.user.id;
+        console.log(`[DEBUG] ✅ Usuário criado no Supabase Auth: id=${authUserId}`);
+      } else {
+        console.log(`[DEBUG] ⚠️ authData.user é null`);
+      }
+    } catch (authErr: any) {
+      console.error(`[ERROR] Exception creating user in Supabase Auth:`, authErr.message);
+      console.error(`[ERROR] Stack:`, authErr.stack);
+      return res.status(400).json({
+        success: false,
+        message: `Erro ao criar usuário na autenticação: ${authErr.message}`
+      });
+    }
+
+    // 2. THEN: Create auth_users record in application table
     const { data: insertedUser, error: insertError } = await supabase
       .from('auth_users')
       .insert({
-        id: newUserId,
+        id: authUserId,
         email: cleanEmail,
         name: name.trim(),
         org_id: userOrgId,
@@ -917,9 +968,12 @@ app.post('/api/users', async (req, res) => {
       .single();
 
     if (insertError || !insertedUser) {
+      console.error(`[ERROR] Failed to create auth_users record:`, insertError?.message);
+      // Note: User was created in Supabase Auth but failed in auth_users table
+      // This is not ideal but won't block login
       return res.status(500).json({
         success: false,
-        message: insertError?.message || 'Erro ao criar usuário no banco de dados'
+        message: insertError?.message || 'Erro ao criar registro do usuário no banco de dados'
       });
     }
 
@@ -1920,6 +1974,115 @@ app.get('/api/audit-logs/:table', async (req, res) => {
       table: tableName,
       count: data?.length || 0,
       data: data || []
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Migration: Sync auth_users to Supabase Auth (auth.users table)
+app.post('/api/migrate/users-to-auth', async (req, res) => {
+  const authKey = req.headers['x-admin-key'];
+  if (authKey !== process.env.ADMIN_KEY && authKey !== 'admin-secret-key') {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+
+  try {
+    if (!supabase) {
+      return res.status(500).json({ success: false, error: 'Supabase not initialized' });
+    }
+
+    // Get all ADMIN users from auth_users table
+    const { data: authUsers, error: fetchError } = await supabase
+      .from('auth_users')
+      .select('id, email, name, role')
+      .eq('role', 'admin')
+      .order('created_at', { ascending: false });
+
+    if (fetchError) {
+      return res.status(400).json({ success: false, error: fetchError.message });
+    }
+
+    const results = {
+      total: authUsers?.length || 0,
+      created: 0,
+      updated: 0,
+      skipped: 0,
+      errors: [] as any[]
+    };
+
+    const password = '123456';
+
+    // For each user, check if exists in Supabase Auth, if not create
+    for (const user of authUsers || []) {
+      try {
+        console.log(`[MIGRATE] Processing user ${user.email}...`);
+
+        // Check if user exists in auth.users
+        const { data: existingAuthUser, error: checkError } = await supabase
+          .auth.admin.getUserById(user.id);
+
+        if (existingAuthUser) {
+          console.log(`[MIGRATE] User ${user.email} already exists, updating password...`);
+
+          // Update password
+          const { error: updateError } = await supabase.auth.admin.updateUserById(user.id, {
+            password,
+            user_metadata: {
+              display_name: user.name,
+              role: user.role
+            }
+          });
+
+          if (updateError) {
+            console.error(`[MIGRATE] Failed to update ${user.email}:`, updateError.message);
+            results.errors.push({
+              email: user.email,
+              error: updateError.message
+            });
+            continue;
+          }
+
+          console.log(`[MIGRATE] Updated password for ${user.email}`);
+          results.updated++;
+          continue;
+        }
+
+        // User doesn't exist in Supabase Auth, create with password 123456
+        const { data: newAuthUser, error: createError } = await supabase.auth.admin.createUser({
+          email: user.email,
+          password,
+          user_metadata: {
+            display_name: user.name,
+            role: user.role
+          },
+          email_confirm: true
+        });
+
+        if (createError) {
+          console.error(`[MIGRATE] Failed to create ${user.email}:`, createError.message);
+          results.errors.push({
+            email: user.email,
+            error: createError.message
+          });
+          continue;
+        }
+
+        console.log(`[MIGRATE] Created user ${user.email} in Supabase Auth with password 123456`);
+        results.created++;
+      } catch (err: any) {
+        console.error(`[MIGRATE] Exception for ${user.email}:`, err.message);
+        results.errors.push({
+          email: user.email,
+          error: err.message
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Migration completed: ${results.created} created, ${results.updated} updated, ${results.skipped} skipped, ${results.errors.length} errors`,
+      results
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

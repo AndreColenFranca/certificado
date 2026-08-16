@@ -15,7 +15,8 @@ interface JewelryCustomerQueryModalProps {
   initialCertId?: string | null;
   onOpenLinkModal?: (cert: JewelryCertificate) => void;
   onSelectCustomer?: (customer: Customer) => void;
-  onSelectCertForView?: (cert: JewelryCertificate, tab?: 'photo-inspector' | 'specs' | 'history' | 'care', viewMode?: 'public-passport' | 'public-certificate') => void;
+  onSelectCertForView?: (cert: JewelryCertificate, tab?: 'photo-inspector' | 'specs' | 'history' | 'care') => void;
+  onOpenPrintModal?: (cert: JewelryCertificate) => void;
 }
 
 export const JewelryCustomerQueryModal: React.FC<JewelryCustomerQueryModalProps> = ({
@@ -26,7 +27,8 @@ export const JewelryCustomerQueryModal: React.FC<JewelryCustomerQueryModalProps>
   initialCertId,
   onOpenLinkModal,
   onSelectCustomer,
-  onSelectCertForView
+  onSelectCertForView,
+  onOpenPrintModal
 }) => {
   if (!isOpen) return null;
 
@@ -286,16 +288,18 @@ export const JewelryCustomerQueryModal: React.FC<JewelryCustomerQueryModalProps>
                                   <ExternalLink className="w-3.5 h-3.5" />
                                 </button>
 
-                                <button
-                                  onClick={() => {
-                                    onSelectCertForView(child, 'photo-inspector', 'public-certificate');
-                                    onClose();
-                                  }}
-                                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-zinc-950 font-bold text-xs flex items-center gap-1 border border-amber-400 transition-colors shadow-sm cursor-pointer"
-                                >
-                                  <Award className="w-3.5 h-3.5" />
-                                  <span>Ver Certificado</span>
-                                </button>
+                                {onOpenPrintModal && (
+                                  <button
+                                    onClick={() => {
+                                      onOpenPrintModal(child);
+                                      onClose();
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-zinc-950 font-bold text-xs flex items-center gap-1 border border-amber-400 transition-colors shadow-sm cursor-pointer"
+                                  >
+                                    <Award className="w-3.5 h-3.5" />
+                                    <span>Ver Certificado</span>
+                                  </button>
+                                )}
                               </>
                             )}
 

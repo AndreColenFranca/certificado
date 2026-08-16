@@ -106,13 +106,13 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearchResultsModalOpen, setIsSearchResultsModalOpen] = useState(false);
 
-  const handleSelectCert = (cert: JewelryCertificate, tab: 'photo-inspector' | 'specs' | 'history' | 'care' = 'photo-inspector', viewMode?: 'public-passport' | 'public-certificate') => {
+  const handleSelectCert = (cert: JewelryCertificate, tab: 'photo-inspector' | 'specs' | 'history' | 'care' = 'photo-inspector') => {
     setSelectedCert(cert);
     setPublicViewTab(tab);
     if (typeof window !== 'undefined') {
       window.history.pushState(null, '', `/cert/${encodeURIComponent(cert.id)}`);
     }
-    navigateToView(viewMode || 'public-passport');
+    navigateToView('public-passport');
   };
 
   const handlePassportSearch = (query: string) => {
@@ -1457,9 +1457,14 @@ export default function App() {
           setSelectedCustomerIdInManagement(cust.id);
           setViewMode('customers');
         }}
-        onSelectCertForView={(cert, tab, viewMode) => {
+        onSelectCertForView={(cert, tab) => {
           setIsQueryModalOpen(false);
-          handleSelectCert(cert, tab || 'photo-inspector', viewMode);
+          handleSelectCert(cert, tab);
+        }}
+        onOpenPrintModal={(cert) => {
+          setIsPrintModalOpen(true);
+          setPrintTargetCert(cert);
+          setIsQueryModalOpen(false);
         }}
       />
 

@@ -1,48 +1,42 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const DEFAULT_ORG_ID = '550e8400-e29b-41d4-a716-446655440000';
-
-export default async function handler(_req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
+    const { id } = req.query;
+
+    if (!id) {
+      return res.status(400).json({ success: false, error: 'ID required' });
+    }
+
     const supabaseUrl = process.env.SUPABASE_URL;
     let supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      return res.status(500).json({
-        success: false,
-        error: 'Env vars not set'
-      });
+      return res.status(500).json({ success: false, error: 'Env vars not set' });
     }
 
     supabaseServiceKey = supabaseServiceKey.replace(/\s+/g, '');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { data, error } = await supabase
-      .from('jewelry_certificates')
+      .from('organizations')
       .select('*')
-      .eq('org_id', DEFAULT_ORG_ID)
-      .eq('is_root', true)
-      .order('created_at', { ascending: false });
+      .eq('id', id)
+      .single();
 
     if (error) {
-      return res.status(500).json({
-        success: false,
-        error: error.message,
-        data: []
-      });
+      return res.status(400).json({ success: false, error: error.message });
     }
 
     return res.status(200).json({
       success: true,
-      count: data?.length || 0,
-      data: data || []
+      data
     });
   } catch (err: any) {
     return res.status(500).json({
       success: false,
-      error: err.message,
-      data: []
+      error: err.message
     });
   }
 }

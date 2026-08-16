@@ -933,12 +933,31 @@ app.post('/api/users', async (req, res) => {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // Validação: Admin NÃO pode criar admin, apenas root pode
-    if (requesterRole === 'admin' && role === 'admin') {
-      console.log(`[SECURITY] Admin ${requesterEmail} tentou criar admin ${cleanEmail} - BLOQUEADO`);
+    // Validação de hierarquia rigorosa (apenas na tela de cadastro):
+    // ROOT: só pode criar ADMIN
+    // ADMIN: só pode criar OPERATOR
+    // OPERATOR/CUSTOMER: não pode criar ninguém
+    if (requesterRole === 'root' && role !== 'admin') {
+      console.log(`[SECURITY] Root tentou criar ${role} - apenas ADMIN é permitido`);
       return res.status(403).json({
         success: false,
-        message: 'Admins podem criar apenas usuários com roles: Cliente ou Operador. Apenas o usuário Raiz pode criar Admins.'
+        message: 'Usuário Raiz pode criar apenas Administradores.'
+      });
+    }
+
+    if (requesterRole === 'admin' && role !== 'operator') {
+      console.log(`[SECURITY] Admin ${requesterEmail} tentou criar ${role} - apenas OPERATOR é permitido`);
+      return res.status(403).json({
+        success: false,
+        message: 'Administradores podem criar apenas Operadores.'
+      });
+    }
+
+    if (requesterRole !== 'root' && requesterRole !== 'admin') {
+      console.log(`[SECURITY] ${requesterRole} tentou criar usuário - não permitido`);
+      return res.status(403).json({
+        success: false,
+        message: 'Apenas Administradores e o Usuário Raiz podem criar usuários.'
       });
     }
 

@@ -42,8 +42,11 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       fetchUsers();
+      // Define role padrão correto baseado no role do usuário no token
+      const defaultRole = currentUser?.role === 'root' ? 'customer' : 'operator';
+      setNewRole(defaultRole);
     }
-  }, [isOpen]);
+  }, [isOpen, currentUser?.role]);
 
   const fetchUsers = async () => {
     setIsLoading(true);

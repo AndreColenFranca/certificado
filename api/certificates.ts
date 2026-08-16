@@ -1,6 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { getCertificates } from './supabaseHelpers';
 
 const DEFAULT_ORG_ID = '550e8400-e29b-41d4-a716-446655440000';
 
@@ -12,30 +11,30 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     if (!supabaseUrl || !supabaseServiceKey) {
       return res.status(500).json({
         success: false,
-        error: 'Variáveis de ambiente Supabase não configuradas'
+        error: 'Env vars not set'
       });
     }
 
-    // Remove quebras de linha e espaços em branco da chave
     supabaseServiceKey = supabaseServiceKey.replace(/\s+/g, '');
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const userOrgId = DEFAULT_ORG_ID;
 
-    const result = await getCertificates(supabase, userOrgId);
+    const { data, error } = await supabase
+      .from('jewelry_certificates')
+      .select('*')
+      .eq('org_id', DEFAULT_ORG_ID);
 
-    if (result.success && result.data) {
-      return res.status(200).json({
-        success: true,
-        count: result.data.length,
-        data: result.data
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        error: error.message,
+        data: []
       });
     }
 
     return res.status(200).json({
       success: true,
-      count: 0,
-      data: []
+      count: data?.length || 0,
+      data: data || []
     });
   } catch (err: any) {
     return res.status(500).json({

@@ -39,10 +39,12 @@ app.use(express.json({ limit: '10mb' }));
 // Initialize Supabase Client
 let supabase: any = null;
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (supabaseUrl && supabaseServiceKey) {
   try {
+    // Remove all whitespace including newlines from service key
+    supabaseServiceKey = supabaseServiceKey.replace(/\s+/g, '').trim();
     supabase = createClient(supabaseUrl, supabaseServiceKey);
   } catch (err: any) {
     // Failed to initialize Supabase

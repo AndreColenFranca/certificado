@@ -511,6 +511,21 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
               </button>
             </div>
 
+            {feedback && (
+              <div className={`p-3 rounded-xl border text-xs font-medium flex items-center gap-2 mb-4 ${
+                feedback.type === 'success'
+                  ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+                  : 'bg-red-500/10 border-red-500/40 text-red-300'
+              }`}>
+                {feedback.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                ) : (
+                  <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
+                )}
+                <span>{feedback.message}</span>
+              </div>
+            )}
+
             <form onSubmit={handleUpdateUser} className="mt-4 space-y-3">
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-amber-200 uppercase">Nome</label>

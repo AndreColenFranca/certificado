@@ -72,9 +72,14 @@ CREATE POLICY "manage_org_users" ON auth_users
     AND (auth.jwt() ->> 'role') IN ('root', 'admin')
   )
   WITH CHECK (
-    -- Ao inserir/atualizar, apenas validar que é da mesma organização
-    -- O USING já validou que o requester é admin
     org_id::text = (auth.jwt() ->> 'org_id')
+    AND (
+      -- Root pode criar qualquer role
+      (auth.jwt() ->> 'role') = 'root'
+      OR
+      -- Admin pode criar apenas customer/operator, NÃO admin
+      ((auth.jwt() ->> 'role') = 'admin' AND role IN ('customer', 'operator'))
+    )
   );
 
 

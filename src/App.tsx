@@ -177,10 +177,9 @@ export default function App() {
 
   const handleLoginSuccess = async (user: AppUser) => {
     try {
-      // Buscar dados completos do usuário (incluindo org_id e orgName)
-      const res = await fetch('/api/auth/me', {
+      // Buscar dados completos do usuário (incluindo org_id, orgName, role)
+      const res = await fetchWithAuth('/api/auth/me', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: user.email })
       });
       if (res.ok) {
@@ -188,6 +187,7 @@ export default function App() {
         if (data.success && data.data) {
           const completeUser: AppUser = {
             ...user,
+            role: data.data.role || user.role,
             orgId: data.data.orgId,
             orgName: data.data.orgName
           };

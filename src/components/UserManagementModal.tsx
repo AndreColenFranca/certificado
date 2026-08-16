@@ -3,6 +3,7 @@ import { X, UserPlus, Users, Crown, ShieldAlert, Trash2, CheckCircle2, Mail, Loc
 import { AppUser } from '../types';
 import { OrgSelector } from './OrgSelector';
 import { ROOT_USER_EMAIL } from '../config/constants';
+import { fetchWithAuth } from '../utils/fetchWithAuth';
 
 interface UserManagementModalProps {
   isOpen: boolean;
@@ -41,7 +42,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/users');
+      const res = await fetchWithAuth('/api/users');
       const data = await res.json();
 
       if (data.success && Array.isArray(data.data)) {
@@ -86,9 +87,8 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
 
     try {
-      const res = await fetch('/api/users', {
+      const res = await fetchWithAuth('/api/users', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           requesterEmail: currentUser?.email || 'andreluiz.colen@gmail.com',
           name: newName.trim(),
@@ -134,7 +134,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
     }
 
     try {
-      const res = await fetch(`/api/users/${userToDelete.id}`, { method: 'DELETE' });
+      const res = await fetchWithAuth(`/api/users/${userToDelete.id}`, { method: 'DELETE' });
       if (!res.ok) {
         setFeedback({ type: 'error', message: 'Erro ao remover usuário' });
         return;

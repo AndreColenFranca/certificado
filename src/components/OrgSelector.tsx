@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Building2 } from 'lucide-react';
 import { AppUser } from '../types';
 import { ROOT_USER_EMAIL } from '../config/constants';
+import { fetchWithAuth } from '../utils/fetchWithAuth';
 
 interface Organization {
   id: string;
@@ -33,7 +34,7 @@ export const OrgSelector: React.FC<OrgSelectorProps> = ({
   const fetchOrganizations = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/organizations');
+      const res = await fetchWithAuth('/api/organizations');
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setOrganizations(data.data);

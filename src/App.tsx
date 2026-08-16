@@ -26,6 +26,7 @@ import { OrganizationsView } from './components/OrganizationsView';
 import { AttributesView } from './components/AttributesView';
 import { extractCertIdFromInput, findCertificateByQuery, findCertificatesByQuery } from './utils/certUtils';
 import { isRootCert, getChildCertificatesForParent } from './utils/certHierarchy';
+import { fetchWithAuth } from './utils/fetchWithAuth';
 import { ShieldAlert, Search, QrCode, LogIn } from 'lucide-react';
 
 export const getCertIdFromUrl = (): string | null => {
@@ -385,7 +386,7 @@ export default function App() {
         }
       }
 
-      const res = await fetch('/api/certificates');
+      const res = await fetchWithAuth('/api/certificates');
       if (res.ok) {
         const data = await res.json();
         if (data && data.success && Array.isArray(data.data)) {
@@ -422,7 +423,7 @@ export default function App() {
         }
       }
 
-      const res = await fetch('/api/customers');
+      const res = await fetchWithAuth('/api/customers');
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.data)) {
@@ -451,14 +452,14 @@ export default function App() {
       let updatedList: Customer[];
 
       if (existing) {
-        await fetch(`/api/customers/${custToSave.id}`, {
+        await fetchWithAuth(`/api/customers/${custToSave.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(custToSave)
         });
         updatedList = customers.map(c => c.id === custToSave.id ? custToSave : c);
       } else {
-        const response = await fetch('/api/customers', {
+        const response = await fetchWithAuth('/api/customers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(custToSave)
@@ -500,7 +501,7 @@ export default function App() {
     );
 
     try {
-      const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+      const res = await fetchWithAuth(`/api/customers/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) {
         alert('Erro ao deletar no servidor: ' + (data.message || data.error || 'Desconhecido'));
@@ -591,7 +592,7 @@ export default function App() {
 
       if (existing) {
         // Update API
-        const res = await fetch(`/api/certificates/${certToSave.id}`, {
+        const res = await fetchWithAuth(`/api/certificates/${certToSave.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(certToSave)
@@ -603,7 +604,7 @@ export default function App() {
         }
       } else {
         // Create API
-        const res = await fetch('/api/certificates', {
+        const res = await fetchWithAuth('/api/certificates', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(certToSave)
@@ -655,7 +656,7 @@ export default function App() {
     }
 
     try {
-      const res = await fetch(`/api/certificates/${id}`, { method: 'DELETE' });
+      const res = await fetchWithAuth(`/api/certificates/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok || !data.success) {
         alert(data.message || 'Não foi possível excluir esta joia.');
@@ -697,7 +698,7 @@ export default function App() {
     }
 
     try {
-      await fetch(`/api/certificates/${certId}`, {
+      await fetchWithAuth(`/api/certificates/${certId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedCert)
@@ -746,7 +747,7 @@ export default function App() {
     }
 
     try {
-      await fetch(`/api/certificates/${certId}`, {
+      await fetchWithAuth(`/api/certificates/${certId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedCert)
@@ -794,7 +795,7 @@ export default function App() {
     }
 
     try {
-      await fetch(`/api/certificates/${certId}`, {
+      await fetchWithAuth(`/api/certificates/${certId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedCert)
@@ -904,7 +905,7 @@ export default function App() {
       }
 
       try {
-        await fetch(`/api/certificates/${certId}`, {
+        await fetchWithAuth(`/api/certificates/${certId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedCert)

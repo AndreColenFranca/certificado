@@ -783,17 +783,35 @@ const handleLoginRequest = (req: any, res: any) => {
 app.post('/api/login', handleLoginRequest);
 app.post('/api/auth/login', handleLoginRequest);
 
-// Get all registered users
+// Get all registered users (filtered by org_id and role permissions)
 app.get('/api/users', async (req, res) => {
   try {
     if (!supabase) {
       return res.status(500).json({ success: false, message: 'Supabase não disponível' });
     }
 
-    const { data: users, error } = await supabase
+    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const userRole = (req as any).user?.role || 'user';
+
+    let query = supabase
       .from('auth_users')
       .select('id, name, email, role, org_id, created_at, updated_at')
       .order('created_at', { ascending: false });
+
+    // ROOT vê apenas admins de qualquer organização
+    if (userRole === 'root') {
+      query = query.eq('role', 'admin');
+    }
+    // ADMIN vê apenas operadores da mesma organização
+    else if (userRole === 'admin') {
+      query = query.eq('org_id', userOrgId).eq('role', 'operator');
+    }
+    // OPERADOR vê apenas dados da própria organização (sem listar usuários)
+    else {
+      return res.json({ success: true, count: 0, data: [] });
+    }
+
+    const { data: users, error } = await query;
 
     if (error) {
       return res.status(500).json({ success: false, message: 'Erro ao buscar usuários' });

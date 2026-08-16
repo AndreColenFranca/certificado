@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Building2, Plus, Edit2, Trash2, X, Search, Mail, Globe } from 'lucide-react';
+import { fetchWithAuth } from '../utils/fetchWithAuth';
 
 interface Organization {
   id: string;
@@ -49,7 +50,7 @@ export const OrganizationsView = ({
 
   const fetchOrganizations = async () => {
     try {
-      const res = await fetch('/api/organizations');
+      const res = await fetchWithAuth('/api/organizations');
       const data = await res.json();
       if (data.success) {
         setOrgs(data.data);
@@ -118,7 +119,7 @@ export const OrganizationsView = ({
     if (!confirm('Tem certeza que quer deletar essa organização?')) return;
 
     try {
-      const res = await fetch(`/api/organizations/${id}`, { method: 'DELETE' });
+      const res = await fetchWithAuth(`/api/organizations/${id}`, { method: 'DELETE' });
       const data = await res.json();
 
       if (data.success) {

@@ -194,14 +194,14 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto py-6 space-y-6 pr-1 custom-scrollbar">
-          
-          {/* Non-Root Warning */}
-          {!isRootUser ? (
-            <div className="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-center space-y-3">
-              <ShieldAlert className="w-10 h-10 text-amber-400 mx-auto" />
-              <h3 className="font-bold text-sm">Acesso Restrito do Usuário Raiz</h3>
+
+          {/* Access Restricted for Operators */}
+          {currentUser?.role === 'operator' ? (
+            <div className="p-6 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-200 text-center space-y-3">
+              <ShieldAlert className="w-10 h-10 text-red-400 mx-auto" />
+              <h3 className="font-bold text-sm">Acesso Não Permitido</h3>
               <p className="text-xs text-zinc-300 max-w-md mx-auto leading-relaxed">
-                Apenas o usuário principal cadastrado (<strong>{ROOT_USER_EMAIL}</strong>) possui autorização técnica para cadastrar ou gerenciar novos usuários no sistema.
+                Operadores não podem cadastrar usuários. Apenas administradores e o usuário raiz podem realizar esta ação.
               </p>
             </div>
           ) : (
@@ -215,7 +215,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                   </h3>
                 </div>
 
-                {isRootUser && (
+                {isRootUser ? (
                   <div className="bg-zinc-900/50 p-3 rounded-lg border border-amber-900/30">
                     <OrgSelector
                       selectedOrgId={selectedOrgId}
@@ -223,6 +223,15 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                       currentUser={currentUser}
                       label="Organização do Usuário"
                     />
+                  </div>
+                ) : (
+                  <div className="bg-zinc-900/50 p-3 rounded-lg border border-amber-900/30">
+                    <label className="text-[11px] font-bold text-amber-200 uppercase block mb-2">
+                      Organização
+                    </label>
+                    <p className="text-sm text-amber-100 font-medium">
+                      {currentUser?.orgName || 'Organização não identificada'}
+                    </p>
                   </div>
                 )}
 
@@ -309,9 +318,15 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                         onChange={(e) => setNewRole(e.target.value as any)}
                         className="w-full px-3 py-2 bg-zinc-900 border border-amber-900/50 rounded-xl text-xs text-amber-50 focus:outline-none focus:border-amber-500 font-medium"
                       >
-                        <option value="customer" className="bg-zinc-900 text-amber-50">Cliente (Acesso Restrito às Próprias Joias)</option>
-                        <option value="operator" className="bg-zinc-900 text-amber-50">Operador / Joalheiro Atendente</option>
-                        <option value="admin" className="bg-zinc-900 text-amber-50">Administrador Secundário</option>
+                        {isRootUser ? (
+                          <>
+                            <option value="customer" className="bg-zinc-900 text-amber-50">Cliente (Acesso Restrito às Próprias Joias)</option>
+                            <option value="operator" className="bg-zinc-900 text-amber-50">Operador / Joalheiro Atendente</option>
+                            <option value="admin" className="bg-zinc-900 text-amber-50">Administrador Secundário</option>
+                          </>
+                        ) : (
+                          <option value="operator" className="bg-zinc-900 text-amber-50">Operador / Joalheiro Atendente</option>
+                        )}
                       </select>
                     </div>
                   </div>

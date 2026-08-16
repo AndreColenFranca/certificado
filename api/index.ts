@@ -363,11 +363,63 @@ app.post('/api/auth/me', async (req, res) => {
       });
     }
 
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Try to find user in auth_users table
     const { data: user, error: userError } = await supabase
       .from('auth_users')
       .select('*')
-      .eq('email', email)
+      .eq('email', cleanEmail)
       .single();
+
+    // If user not found in auth_users, create a default entry from auth.users
+    if (userError && userError.code === 'PGRST116') {
+      // User not found - try to get from Supabase Auth and create in auth_users
+      const { data: authUser, error: authError } = await supabase.auth.admin.listUsers();
+      const foundAuthUser = authUser?.users?.find(u => u.email?.toLowerCase() === cleanEmail);
+
+      if (foundAuthUser) {
+        // Create default auth_users entry for this auth user
+        const { data: newUser, error: insertError } = await supabase
+          .from('auth_users')
+          .insert({
+            id: foundAuthUser.id,
+            email: cleanEmail,
+            name: foundAuthUser.user_metadata?.display_name || cleanEmail.split('@')[0],
+            org_id: DEFAULT_ORG_ID,
+            role: foundAuthUser.user_metadata?.role || 'customer',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (newUser) {
+          const { data: org } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('id', DEFAULT_ORG_ID)
+            .single();
+
+          return res.json({
+            success: true,
+            data: {
+              id: newUser.id,
+              name: newUser.name,
+              email: newUser.email,
+              role: newUser.role,
+              orgId: newUser.org_id,
+              orgName: org?.display_name || org?.name || 'Organização'
+            }
+          });
+        }
+      }
+
+      return res.status(404).json({
+        success: false,
+        error: 'Usuário não encontrado'
+      });
+    }
 
     if (userError) {
       return res.status(500).json({

@@ -177,7 +177,11 @@ export default function App() {
   const handleLoginSuccess = async (user: AppUser) => {
     try {
       // Buscar dados completos do usuário (incluindo org_id e orgName)
-      const res = await fetch('/api/auth/me');
+      const res = await fetch('/api/auth/me', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email })
+      });
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.data) {

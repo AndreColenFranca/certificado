@@ -1093,7 +1093,20 @@ app.put('/api/users/:id', async (req, res) => {
     const now = new Date().toISOString();
     const cleanEmail = email ? email.trim().toLowerCase() : undefined;
 
-    // Atualizar no Supabase
+    // Se email foi alterado, atualizar também no Supabase Auth
+    if (cleanEmail && cleanEmail !== user.email?.toLowerCase()) {
+      try {
+        await supabase.auth.admin.updateUserById(user.id, {
+          email: cleanEmail
+        });
+        console.log(`[UPDATE] Email atualizado no Supabase Auth: ${user.email} → ${cleanEmail}`);
+      } catch (authErr: any) {
+        console.error(`[UPDATE] Erro ao atualizar email em Supabase Auth: ${authErr.message}`);
+        // Continua mesmo se falhar aqui
+      }
+    }
+
+    // Atualizar no Supabase auth_users
     const updateData: any = {
       name: name.trim(),
       role: role,

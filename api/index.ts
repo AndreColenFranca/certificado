@@ -152,9 +152,11 @@ app.use(async (req: any, res, next) => {
           if (authUser && !error) {
             req.user.org_id = authUser.org_id || DEFAULT_ORG_ID;
             req.user.role = authUser.role || 'user';
+          } else if (error) {
+            console.error('Auth user lookup error:', error.message, 'for email:', email);
           }
         } catch (e) {
-          // Use default if Supabase query fails
+          console.error('Auth user query failed:', e instanceof Error ? e.message : String(e), 'for email:', email);
         }
       }
     } catch (e) {

@@ -87,6 +87,9 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
 
     try {
+      // ROOT pode selecionar org, outros usam sua própria org
+      const orgId = isRootUser ? selectedOrgId : (currentUser?.orgId || selectedOrgId);
+
       const res = await fetchWithAuth('/api/users', {
         method: 'POST',
         body: JSON.stringify({
@@ -95,7 +98,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
           email: cleanEmail,
           password: newPassword,
           role: newRole,
-          orgId: selectedOrgId
+          orgId: orgId
         })
       });
 
@@ -212,14 +215,16 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                   </h3>
                 </div>
 
-                <div className="bg-zinc-900/50 p-3 rounded-lg border border-amber-900/30">
-                  <OrgSelector
-                    selectedOrgId={selectedOrgId}
-                    onOrgChange={setSelectedOrgId}
-                    currentUser={currentUser}
-                    label="Organização do Usuário"
-                  />
-                </div>
+                {isRootUser && (
+                  <div className="bg-zinc-900/50 p-3 rounded-lg border border-amber-900/30">
+                    <OrgSelector
+                      selectedOrgId={selectedOrgId}
+                      onOrgChange={setSelectedOrgId}
+                      currentUser={currentUser}
+                      label="Organização do Usuário"
+                    />
+                  </div>
+                )}
 
                 {feedback && (
                   <div className={`p-3 rounded-xl border text-xs font-medium flex items-center gap-2 ${

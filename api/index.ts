@@ -4,7 +4,6 @@ import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
-import 'dotenv/config';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import { INITIAL_CERTIFICATES } from '../src/data/sampleCertificates';

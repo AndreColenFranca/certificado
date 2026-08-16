@@ -21,11 +21,11 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
   const [usersList, setUsersList] = useState<AppUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // New user form state
+  // New user form state - role padrão baseado no tipo de usuário do token
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [newRole, setNewRole] = useState<'admin' | 'operator' | 'customer'>('customer');
+  const [newRole, setNewRole] = useState<'admin' | 'operator' | 'customer'>(currentUser?.role === 'root' ? 'customer' : 'operator');
   const [selectedOrgId, setSelectedOrgId] = useState('550e8400-e29b-41d4-a716-446655440000');
 
   // Edit user state
@@ -121,7 +121,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
         setNewName('');
         setNewEmail('');
         setNewPassword('');
-        setNewRole('customer');
+        setNewRole(currentUser?.role === 'root' ? 'customer' : 'operator');
       } else {
         setFeedback({ type: 'error', message: data.message || 'Erro ao cadastrar usuário' });
       }

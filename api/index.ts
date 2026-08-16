@@ -1153,7 +1153,16 @@ app.delete('/api/users/:id', async (req, res) => {
       return res.status(403).json({ success: false, message: 'O Usuário Raiz principal não pode ser removido!' });
     }
 
-    // Deletar do Supabase
+    // 1. Deletar do Supabase Auth (auth.users)
+    try {
+      await supabase.auth.admin.deleteUser(user.id);
+      console.log(`[DELETE] Usuário ${user.email} removido do Supabase Auth`);
+    } catch (authErr: any) {
+      console.error(`[DELETE] Erro ao remover do Supabase Auth: ${authErr.message}`);
+      // Continua mesmo se falhar aqui
+    }
+
+    // 2. Deletar de auth_users
     const { error: deleteError } = await supabase
       .from('auth_users')
       .delete()

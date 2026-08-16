@@ -106,13 +106,13 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearchResultsModalOpen, setIsSearchResultsModalOpen] = useState(false);
 
-  const handleSelectCert = (cert: JewelryCertificate, tab: 'photo-inspector' | 'specs' | 'history' | 'care' = 'photo-inspector') => {
+  const handleSelectCert = (cert: JewelryCertificate, tab: 'photo-inspector' | 'specs' | 'history' | 'care' = 'photo-inspector', viewMode?: 'public-passport' | 'public-certificate') => {
     setSelectedCert(cert);
     setPublicViewTab(tab);
     if (typeof window !== 'undefined') {
       window.history.pushState(null, '', `/cert/${encodeURIComponent(cert.id)}`);
     }
-    navigateToView('public-passport');
+    navigateToView(viewMode || 'public-passport');
   };
 
   const handlePassportSearch = (query: string) => {

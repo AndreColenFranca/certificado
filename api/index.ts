@@ -1157,7 +1157,7 @@ app.post('/api/certificates', async (req, res) => {
       owner_email: newCert.ownerEmail,
       owner_id: newCert.ownerId,
       authenticity_hash: authHash,
-      is_root: true, // Nova joia = PAI (root)
+      is_root: newCert.isRoot !== undefined ? newCert.isRoot : true,
       org_id: (req as any).user?.org_id || DEFAULT_ORG_ID
     };
 

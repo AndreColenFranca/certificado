@@ -31,6 +31,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
   // Edit user state
   const [editingUser, setEditingUser] = useState<AppUser | null>(null);
   const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
   const [editRole, setEditRole] = useState<'admin' | 'operator' | 'customer'>('operator');
 
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -134,6 +135,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
   const handleEditUser = (user: AppUser) => {
     setEditingUser(user);
     setEditName(user.name);
+    setEditEmail(user.email);
     setEditRole(user.role as any);
   };
 
@@ -141,8 +143,8 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
     e.preventDefault();
 
     if (!editingUser) return;
-    if (!editName.trim()) {
-      setFeedback({ type: 'error', message: 'Nome é obrigatório' });
+    if (!editName.trim() || !editEmail.trim()) {
+      setFeedback({ type: 'error', message: 'Nome e e-mail são obrigatórios' });
       return;
     }
 
@@ -154,6 +156,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
         method: 'PUT',
         body: JSON.stringify({
           name: editName.trim(),
+          email: editEmail.trim().toLowerCase(),
           role: editRole
         })
       });
@@ -164,12 +167,13 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
         setFeedback({ type: 'success', message: 'Usuário atualizado com sucesso!' });
         const updatedUsers = usersList.map(u =>
           u.id === editingUser.id
-            ? { ...u, name: editName.trim(), role: editRole }
+            ? { ...u, name: editName.trim(), email: editEmail.trim().toLowerCase(), role: editRole }
             : u
         );
         setUsersList(updatedUsers);
         setEditingUser(null);
         setEditName('');
+        setEditEmail('');
       } else {
         setFeedback({ type: 'error', message: data.message || 'Erro ao atualizar usuário' });
       }
@@ -460,7 +464,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                                   <Edit2 className="w-4 h-4" />
                                 </button>
                               )}
-                              {isRootUser && (
+                              {(currentUser?.role === 'admin' || isRootUser) && (
                                 <button
                                   onClick={() => handleDeleteUser(usr)}
                                   title="Remover este usuário"
@@ -524,9 +528,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                 <label className="text-[11px] font-bold text-amber-200 uppercase">E-mail</label>
                 <input
                   type="email"
-                  value={editingUser.email}
-                  disabled
-                  className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-xl text-xs text-zinc-400 font-medium cursor-not-allowed"
+                  required
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full px-3 py-2 bg-zinc-900 border border-amber-900/50 rounded-xl text-xs text-amber-50 focus:outline-none focus:border-amber-500 font-medium"
                 />
               </div>
 

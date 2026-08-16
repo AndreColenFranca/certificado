@@ -929,7 +929,7 @@ app.put('/api/users/:id', async (req, res) => {
     }
 
     const param = req.params.id;
-    const { name, role } = req.body;
+    const { name, email, role } = req.body;
 
     if (!name || !role) {
       return res.status(400).json({ success: false, message: 'Nome e role são obrigatórios' });
@@ -951,15 +951,22 @@ app.put('/api/users/:id', async (req, res) => {
     }
 
     const now = new Date().toISOString();
+    const cleanEmail = email ? email.trim().toLowerCase() : undefined;
 
     // Atualizar no Supabase
+    const updateData: any = {
+      name: name.trim(),
+      role: role,
+      updated_at: now
+    };
+
+    if (cleanEmail) {
+      updateData.email = cleanEmail;
+    }
+
     const { data: updatedUser, error: updateError } = await supabase
       .from('auth_users')
-      .update({
-        name: name.trim(),
-        role: role,
-        updated_at: now
-      })
+      .update(updateData)
       .eq('id', user.id)
       .select()
       .single();

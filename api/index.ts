@@ -111,8 +111,8 @@ app.get('/api/debug/health', async (req, res) => {
 // Default Organization UUID for local testing
 const DEFAULT_ORG_ID = '550e8400-e29b-41d4-a716-446655440000'; // UUID correspondente a 'default'
 
-// Middleware to extract org_id from JWT
-app.use((req: any, res, next) => {
+// Middleware to extract org_id from JWT and fetch from database
+app.use(async (req: any, res, next) => {
   // Extract token from Authorization header
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
@@ -129,12 +129,34 @@ app.use((req: any, res, next) => {
           .join('')
       );
       const decoded = JSON.parse(jsonPayload);
+      const userId = decoded.sub;
+      const email = decoded.email;
+
+      // Set default user object
       req.user = {
-        id: decoded.sub,
-        org_id: decoded.org_id || DEFAULT_ORG_ID,
-        role: decoded.role || 'user',
-        email: decoded.email
+        id: userId,
+        org_id: DEFAULT_ORG_ID,
+        role: 'user',
+        email: email
       };
+
+      // Try to fetch user from auth_users table to get org_id
+      if (supabase && email) {
+        try {
+          const { data: authUser, error } = await supabase
+            .from('auth_users')
+            .select('org_id, role')
+            .eq('email', email)
+            .single();
+
+          if (authUser && !error) {
+            req.user.org_id = authUser.org_id || DEFAULT_ORG_ID;
+            req.user.role = authUser.role || 'user';
+          }
+        } catch (e) {
+          // Use default if Supabase query fails
+        }
+      }
     } catch (e) {
       req.user = { org_id: DEFAULT_ORG_ID };
     }

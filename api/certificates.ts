@@ -38,7 +38,6 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       data: []
     });
   } catch (err: any) {
-    console.error('[ERROR] /api/certificates:', err);
     return res.status(500).json({
       success: false,
       error: err.message,

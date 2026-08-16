@@ -784,14 +784,34 @@ app.post('/api/login', handleLoginRequest);
 app.post('/api/auth/login', handleLoginRequest);
 
 // Get all registered users
-app.get('/api/users', (req, res) => {
-  const usersList = usersDb.map(({ password, ...u }) => u);
-  res.json({ success: true, count: usersList.length, data: usersList });
+app.get('/api/users', async (req, res) => {
+  try {
+    if (!supabase) {
+      return res.status(500).json({ success: false, message: 'Supabase não disponível' });
+    }
+
+    const { data: users, error } = await supabase
+      .from('auth_users')
+      .select('id, name, email, role, org_id, created_at, updated_at')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return res.status(500).json({ success: false, message: 'Erro ao buscar usuários' });
+    }
+
+    res.json({ success: true, count: users?.length || 0, data: users || [] });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // Create new user (Allowed for Root, Admins or authenticated system requests)
 app.post('/api/users', async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({ success: false, message: 'Supabase não disponível' });
+    }
+
     const { requesterEmail, name, email, password, role, orgId } = req.body;
     const userOrgId = (req as any).user?.org_id || orgId || DEFAULT_ORG_ID;
 
@@ -800,86 +820,93 @@ app.post('/api/users', async (req, res) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const existing = usersDb.find(u => u.email.toLowerCase() === cleanEmail);
+
+    // Verificar duplicata no Supabase
+    const { data: existing, error: checkError } = await supabase
+      .from('auth_users')
+      .select('id')
+      .eq('email', cleanEmail)
+      .single();
+
     if (existing) {
       return res.status(400).json({ success: false, message: 'Este e-mail já está cadastrado no sistema.' });
     }
 
-    const newUser = {
-      id: `user-${Date.now()}`,
-      name: name.trim(),
-      email: cleanEmail,
-      password: password,
-      role: role || 'operator',
-      createdAt: new Date().toISOString(),
-      isRoot: false
-    };
+    const newUserId = `user-${Date.now()}`;
+    const now = new Date().toISOString();
 
-    usersDb.push(newUser);
-    const { password: _, ...safeUser } = newUser;
+    // Salvar no Supabase
+    const { data: insertedUser, error: insertError } = await supabase
+      .from('auth_users')
+      .insert({
+        id: newUserId,
+        email: cleanEmail,
+        name: name.trim(),
+        org_id: userOrgId,
+        role: role || 'operator',
+        created_at: now,
+        updated_at: now
+      })
+      .select()
+      .single();
 
-    // Criar entry em auth_users com org_id (vinculação automática)
-    try {
-      const { error: authUserError } = await supabase
-        .from('auth_users')
-        .insert({
-          id: newUser.id,
-          email: cleanEmail,
-          name: name.trim(),
-          org_id: userOrgId,
-          role: role || 'operator',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-
-      if (authUserError) {
-      }
-    } catch (supabaseErr) {
-    }
-
-    // Automatically sync customer role users to customersDb
-    if (newUser.role === 'customer') {
-      const existingCust = customersDb.find(c => c.email.trim().toLowerCase() === cleanEmail);
-      if (!existingCust) {
-        const newCustRecord: Customer = {
-          id: `CLI-${Math.floor(1000 + Math.random() * 9000)}`,
-          name: name.trim(),
-          cpf: '',
-          email: cleanEmail,
-          phone: '',
-          notes: 'Cliente Cadastrado via Gestão de Usuários',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-        customersDb.unshift(newCustRecord);
-      }
+    if (insertError || !insertedUser) {
+      return res.status(500).json({
+        success: false,
+        message: insertError?.message || 'Erro ao criar usuário no banco de dados'
+      });
     }
 
     res.status(201).json({
       success: true,
-      data: safeUser,
-      message: `Usuário "${name.trim()}" cadastrado com sucesso na org ${userOrgId}!`
+      data: insertedUser,
+      message: `Usuário "${name.trim()}" cadastrado com sucesso!`
     });
   } catch (error: any) {
+    console.error('Erro ao criar usuário:', error);
     res.status(500).json({ success: false, message: error.message || 'Erro ao cadastrar usuário' });
   }
 });
 
 // Delete user
-app.delete('/api/users/:id', (req, res) => {
-  const param = req.params.id;
-  const target = usersDb.find(u => u.id === param || u.email.toLowerCase() === param.toLowerCase());
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    if (!supabase) {
+      return res.status(500).json({ success: false, message: 'Supabase não disponível' });
+    }
 
-  if (!target) {
-    return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
+    const param = req.params.id;
+
+    // Buscar usuário no Supabase
+    const { data: user, error: findError } = await supabase
+      .from('auth_users')
+      .select('id, email')
+      .or(`id.eq.${param},email.eq.${param}`)
+      .single();
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
+    }
+
+    if (user.email?.toLowerCase() === 'andreluiz.colen@gmail.com') {
+      return res.status(403).json({ success: false, message: 'O Usuário Raiz principal não pode ser removido!' });
+    }
+
+    // Deletar do Supabase
+    const { error: deleteError } = await supabase
+      .from('auth_users')
+      .delete()
+      .eq('id', user.id);
+
+    if (deleteError) {
+      return res.status(500).json({ success: false, message: 'Erro ao remover usuário' });
+    }
+
+    res.json({ success: true, message: 'Usuário removido com sucesso' });
+  } catch (error: any) {
+    console.error('Erro ao deletar usuário:', error);
+    res.status(500).json({ success: false, message: error.message || 'Erro ao remover usuário' });
   }
-
-  if (target.isRoot || target.email.toLowerCase() === 'andreluiz.colen@gmail.com') {
-    return res.status(403).json({ success: false, message: 'O Usuário Raiz principal não pode ser removido!' });
-  }
-
-  usersDb = usersDb.filter(u => u.id !== target.id && u.email.toLowerCase() !== target.email.toLowerCase());
-  res.json({ success: true, message: 'Usuário removido com sucesso' });
 });
 
 // --- Customers API ---

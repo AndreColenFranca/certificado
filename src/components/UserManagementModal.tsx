@@ -46,18 +46,9 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 
       if (data.success && Array.isArray(data.data)) {
         setUsersList(data.data);
-      } else {
-        // Fallback from localStorage
-        const localUsers = localStorage.getItem('aureum_users_db');
-        if (localUsers) {
-          setUsersList(JSON.parse(localUsers));
-        }
       }
     } catch (e) {
-      const localUsers = localStorage.getItem('aureum_users_db');
-      if (localUsers) {
-        try { setUsersList(JSON.parse(localUsers)); } catch (err) {}
-      }
+      console.error('Erro ao carregar usuários:', e);
     } finally {
       setIsLoading(false);
     }
@@ -93,34 +84,6 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
       isRoot: false
     };
 
-    // Local helper to sync customer list if role is 'customer'
-    const syncCustomerLocal = () => {
-      if (newRole === 'customer') {
-        try {
-          const storedCustsRaw = localStorage.getItem('aureum_customers');
-          const storedCusts: any[] = storedCustsRaw ? JSON.parse(storedCustsRaw) : [];
-          if (!storedCusts.some(c => c.email && c.email.toLowerCase() === cleanEmail)) {
-            const newCustObj = {
-              id: `CLI-${Math.floor(1000 + Math.random() * 9000)}`,
-              name: newName.trim(),
-              cpf: '',
-              email: cleanEmail,
-              phone: '',
-              notes: 'Cliente Cadastrado via Gestão de Usuários',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
-            storedCusts.unshift(newCustObj);
-            localStorage.setItem('aureum_customers', JSON.stringify(storedCusts));
-          }
-        } catch (e) {
-          console.warn('Error syncing customer locally:', e);
-        }
-        if (onCustomerCreated) {
-          onCustomerCreated();
-        }
-      }
-    };
 
     try {
       const res = await fetch('/api/users', {
@@ -143,35 +106,18 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
         const createdUser = data.data || newUserObj;
         const updatedUsers = [...usersList, { ...createdUser, password: newPassword }];
         setUsersList(updatedUsers);
-        localStorage.setItem('aureum_users_db', JSON.stringify(updatedUsers));
-        syncCustomerLocal();
+        if (newRole === 'customer' && onCustomerCreated) {
+          onCustomerCreated();
+        }
         setNewName('');
         setNewEmail('');
         setNewPassword('');
         setNewRole('customer');
       } else {
-        // Fallback local save if server error response
-        const updatedUsers = [...usersList, newUserObj];
-        setUsersList(updatedUsers);
-        localStorage.setItem('aureum_users_db', JSON.stringify(updatedUsers));
-        syncCustomerLocal();
-        setFeedback({ type: 'success', message: `Usuário "${newName.trim()}" cadastrado com sucesso!` });
-        setNewName('');
-        setNewEmail('');
-        setNewPassword('');
-        setNewRole('customer');
+        setFeedback({ type: 'error', message: data.message || 'Erro ao cadastrar usuário' });
       }
     } catch (err: any) {
-      // Offline fallback: save locally so registration is never blocked
-      const updatedUsers = [...usersList, newUserObj];
-      setUsersList(updatedUsers);
-      localStorage.setItem('aureum_users_db', JSON.stringify(updatedUsers));
-      syncCustomerLocal();
-      setFeedback({ type: 'success', message: `Usuário "${newName.trim()}" cadastrado com sucesso!` });
-      setNewName('');
-      setNewEmail('');
-      setNewPassword('');
-      setNewRole('customer');
+      setFeedback({ type: 'error', message: 'Erro ao conectar com o servidor. Tente novamente.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -188,19 +134,21 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
     }
 
     try {
-      await fetch(`/api/users/${userToDelete.id}`, { method: 'DELETE' });
-      await fetch(`/api/users/${encodeURIComponent(userToDelete.email)}`, { method: 'DELETE' });
-    } catch (e) {
-      console.warn('Erro ao deletar usuário do servidor:', e);
-    }
+      const res = await fetch(`/api/users/${userToDelete.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        setFeedback({ type: 'error', message: 'Erro ao remover usuário' });
+        return;
+      }
 
-    const filtered = usersList.filter(u => 
-      u.id !== userToDelete.id && 
-      u.email.toLowerCase() !== userToDelete.email.toLowerCase()
-    );
-    setUsersList(filtered);
-    localStorage.setItem('aureum_users_db', JSON.stringify(filtered));
-    setFeedback({ type: 'success', message: `Acesso do usuário "${userToDelete.name}" foi removido com sucesso.` });
+      const filtered = usersList.filter(u =>
+        u.id !== userToDelete.id &&
+        u.email.toLowerCase() !== userToDelete.email.toLowerCase()
+      );
+      setUsersList(filtered);
+      setFeedback({ type: 'success', message: `Acesso do usuário "${userToDelete.name}" foi removido com sucesso.` });
+    } catch (e) {
+      setFeedback({ type: 'error', message: 'Erro ao conectar com o servidor' });
+    }
   };
 
   if (!isOpen) return null;

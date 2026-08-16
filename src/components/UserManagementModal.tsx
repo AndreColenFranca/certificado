@@ -375,7 +375,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                         Nível de Acesso
                       </label>
                       <select
-                        value={newRole}
+                        value={isRootUser ? newRole : 'operator'}
                         onChange={(e) => setNewRole(e.target.value as any)}
                         className="w-full px-3 py-2 bg-zinc-900 border border-amber-900/50 rounded-xl text-xs text-amber-50 focus:outline-none focus:border-amber-500 font-medium"
                       >

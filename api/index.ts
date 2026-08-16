@@ -41,35 +41,18 @@ let supabase: any = null;
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-console.log('[DEBUG] Supabase URL:', !!supabaseUrl);
-console.log('[DEBUG] Service Key configured:', !!supabaseServiceKey);
-
 if (supabaseUrl && supabaseServiceKey) {
   try {
     supabase = createClient(supabaseUrl, supabaseServiceKey);
-    console.log('[DEBUG] Supabase client initialized successfully');
   } catch (err: any) {
-    console.error('[ERROR] Failed to initialize Supabase:', err.message);
+    // Failed to initialize Supabase
   }
-} else {
-  console.warn('[WARN] Supabase credentials not configured');
 }
 
 // Root route
 // Health check - only for API requests
 app.get('/api/health', (req, res) => {
   res.json({ message: 'API Certificado de Joias', status: 'online', version: '1.0' });
-});
-
-// Debug endpoint to check environment variables
-app.get('/api/debug/env', (req, res) => {
-  res.json({
-    supabaseUrl: !!process.env.SUPABASE_URL,
-    supabaseServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    supabaseInitialized: !!supabase,
-    nodeEnv: process.env.NODE_ENV,
-    timestamp: new Date().toISOString()
-  });
 });
 
 // Default Organization UUID for local testing
@@ -162,93 +145,6 @@ const saveDataStore = () => {
 
 // loadDataStore(); // Removed - using Supabase only
 
-// Supabase Credentials Test Endpoint
-app.get('/api/supabase/credentials', async (req, res) => {
-  return res.json({
-    url: supabaseUrl,
-    anonKeyPrefix: supabaseServiceKey.substring(0, 50) + '...',
-    serviceKeyPrefix: supabaseServiceKey.substring(0, 50) + '...'
-  });
-});
-
-// Supabase Connection Test Endpoint
-app.get('/api/supabase/test', async (req, res) => {
-  try {
-    // Test connection
-    const { count, error } = await supabase
-      .from('organizations')
-      .select('*', { count: 'exact', head: true });
-
-    if (error) {
-      return res.status(500).json({
-        success: false,
-        error: error.message,
-        details: error,
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    return res.json({
-      success: true,
-      message: 'Supabase connection OK',
-      organizationsCount: count || 0,
-      supabaseUrl: supabaseUrl,
-      timestamp: new Date().toISOString()
-    });
-  } catch (err: any) {
-    return res.status(500).json({
-      success: false,
-      error: err.message || 'Unknown error',
-      details: err,
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
-// Diagnostic endpoint - Get ALL certificates and customers without org_id filter
-app.get('/api/supabase/diagnostic', async (req, res) => {
-  try {
-    const { data: allCerts, error: certsError } = await supabase
-      .from('jewelry_certificates')
-      .select('id, cert_code, org_id, title, current_owner_name, created_at');
-
-    const { data: allCustomers, error: custsError } = await supabase
-      .from('customers')
-      .select('id, customer_code, org_id, name, email, created_at');
-
-    const { data: allOrgs, error: orgsError } = await supabase
-      .from('organizations')
-      .select('id, name, display_name, created_at');
-
-    return res.json({
-      success: true,
-      timestamp: new Date().toISOString(),
-      supabaseConnected: !certsError && !custsError && !orgsError,
-      totalCertificates: allCerts?.length || 0,
-      totalCustomers: allCustomers?.length || 0,
-      totalOrganizations: allOrgs?.length || 0,
-      certificateOrgIds: [...new Set(allCerts?.map(c => c.org_id) || [])],
-      customerOrgIds: [...new Set(allCustomers?.map(c => c.org_id) || [])],
-      currentRequestOrgId: (req as any).user?.org_id || DEFAULT_ORG_ID,
-      certificates: allCerts?.slice(0, 5),
-      customers: allCustomers?.slice(0, 5),
-      organizations: allOrgs?.slice(0, 5),
-      errors: {
-        certificates: certsError?.message,
-        customers: custsError?.message,
-        organizations: orgsError?.message
-      }
-    });
-  } catch (err: any) {
-    return res.status(500).json({
-      success: false,
-      error: err.message || 'Unknown error',
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
-
 // Supabase User Registration Endpoint (for creating users via Supabase)
 app.post('/api/auth/register', async (req, res) => {
   try {
@@ -307,7 +203,6 @@ app.post('/api/auth/register', async (req, res) => {
       }
     });
   } catch (err: any) {
-    console.error('Registration error:', err);
     res.status(500).json({
       success: false,
       error: err.message || 'Registration failed'
@@ -352,7 +247,6 @@ app.post('/api/auth/set-root-profile', async (req, res) => {
       data
     });
   } catch (err: any) {
-    console.error('Set root profile error:', err);
     res.status(500).json({
       success: false,
       error: err.message || 'Failed to set root profile'
@@ -391,7 +285,6 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       data
     });
   } catch (err: any) {
-    console.error('Forgot password error:', err);
     res.status(500).json({
       success: false,
       error: err.message || 'Failed to send reset email'
@@ -499,7 +392,6 @@ app.post('/api/auth/create-root-user', async (req, res) => {
       }
     });
   } catch (err: any) {
-    console.error('Root user creation error:', err);
     res.status(500).json({
       success: false,
       error: err.message || 'Root user creation failed'
@@ -769,10 +661,8 @@ app.post('/api/users', async (req, res) => {
         });
 
       if (authUserError) {
-        console.warn('Erro ao criar entry em auth_users:', authUserError);
       }
     } catch (supabaseErr) {
-      console.warn('Supabase error creating auth_users:', supabaseErr);
     }
 
     // Automatically sync customer role users to customersDb
@@ -1093,7 +983,6 @@ app.get('/api/certificates/:id', async (req, res) => {
 
     res.json({ success: true, data: cert });
   } catch (err: any) {
-    console.error('Error fetching certificate:', err);
     // Fallback to in-memory on error
     const query = req.params.id.trim().toUpperCase();
     const cert = certificatesDb.find(
@@ -1164,7 +1053,6 @@ app.post('/api/certificates', async (req, res) => {
 
     if (!result.success) {
       const errMsg = result.error || 'Erro ao salvar certificado';
-      console.error('POST Certificate Error:', errMsg);
       return res.status(400).json({ success: false, message: errMsg });
     }
 

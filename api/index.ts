@@ -1553,16 +1553,9 @@ const createAttributeEndpoints = (tableName: string, apiPath: string) => {
   // GET all
   app.get(`/api/${apiPath}`, async (req, res) => {
     try {
-      console.log(`[${apiPath}] Fetching attributes from ${tableName}`);
-      if (!supabase) {
-        console.error(`[${apiPath}] Supabase client not initialized`);
-        return res.status(500).json({ success: false, error: 'Supabase not initialized' });
-      }
       const data = await getAttributes(supabase, tableName);
-      console.log(`[${apiPath}] Success - ${data.length} records`);
-      res.json({ success: true, data, count: data.length });
+      res.json({ success: true, data, count: data?.length || 0 });
     } catch (err: any) {
-      console.error(`[${apiPath}] Error:`, err.message);
       res.status(500).json({ success: false, error: err.message });
     }
   });

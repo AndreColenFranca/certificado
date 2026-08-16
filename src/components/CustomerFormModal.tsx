@@ -3,7 +3,6 @@ import { Customer } from '../types';
 import { AppUser } from '../types';
 import { isValidCPF, formatCPF } from '../utils/cpfUtils';
 import { X, UserPlus, UserCheck, ShieldCheck, Mail, CreditCard, Phone, FileText, Lock, Eye, EyeOff, KeyRound } from 'lucide-react';
-import { OrgSelector } from './OrgSelector';
 
 interface CustomerFormModalProps {
   isOpen: boolean;
@@ -34,7 +33,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedOrgId, setSelectedOrgId] = useState('550e8400-e29b-41d4-a716-446655440000');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; cpf?: string; email?: string; password?: string }>({});
   const [serverError, setServerError] = useState<string>('');
@@ -56,7 +54,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         setNotes('');
         setPassword('');
       }
-      setSelectedOrgId('550e8400-e29b-41d4-a716-446655440000');
       setShowPassword(false);
     } else {
       setErrors({});
@@ -159,7 +156,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       phone: phone.trim() || undefined,
       notes: notes.trim() || undefined,
       password: password.trim(),
-      orgId: selectedOrgId,
+      orgId: currentUser?.orgId || '550e8400-e29b-41d4-a716-446655440000',
       createdAt: initialCustomer?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -197,16 +194,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
 
         {/* Modal Body / Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-
-          {/* Organização */}
-          <div className="pb-4 border-b border-zinc-800">
-            <OrgSelector
-              selectedOrgId={selectedOrgId}
-              onOrgChange={setSelectedOrgId}
-              currentUser={currentUser}
-              label="Organização do Cliente"
-            />
-          </div>
 
           {/* Nome */}
           <div>

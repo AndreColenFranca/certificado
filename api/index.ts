@@ -867,12 +867,22 @@ app.post('/api/users', async (req, res) => {
 
     const { requesterEmail, name, email, password, role, orgId } = req.body;
     const userOrgId = orgId || (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const requesterRole = (req as any).user?.role || 'user';
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Nome, e-mail e senha são obrigatórios' });
     }
 
     const cleanEmail = email.trim().toLowerCase();
+
+    // Validação: Admin NÃO pode criar admin, apenas root pode
+    if (requesterRole === 'admin' && role === 'admin') {
+      console.log(`[SECURITY] Admin ${requesterEmail} tentou criar admin ${cleanEmail} - BLOQUEADO`);
+      return res.status(403).json({
+        success: false,
+        message: 'Admins podem criar apenas usuários com roles: Cliente ou Operador. Apenas o usuário Raiz pode criar Admins.'
+      });
+    }
 
     // Verificar duplicata no Supabase
     const { data: existing, error: checkError } = await supabase

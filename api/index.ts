@@ -55,6 +55,57 @@ app.get('/api/health', (req, res) => {
   res.json({ message: 'API Certificado de Joias', status: 'online', version: '1.0' });
 });
 
+// Debug endpoint to check Supabase connection
+app.get('/api/debug/health', async (req, res) => {
+  try {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return res.status(500).json({
+        status: 'error',
+        message: 'Env vars not configured',
+        supabaseUrl: !!supabaseUrl,
+        supabaseServiceKey: !!supabaseServiceKey
+      });
+    }
+
+    if (!supabase) {
+      return res.status(500).json({
+        status: 'error',
+        message: 'Supabase client not initialized'
+      });
+    }
+
+    // Test basic query
+    const { data: orgs, error: orgError } = await supabase
+      .from('organizations')
+      .select('id, name')
+      .limit(1);
+
+    if (orgError) {
+      return res.status(500).json({
+        status: 'error',
+        message: 'Organizations query failed',
+        error: orgError.message,
+        code: orgError.code
+      });
+    }
+
+    return res.json({
+      status: 'ok',
+      supabaseInitialized: !!supabase,
+      organizationsCount: orgs?.length || 0,
+      message: 'Supabase connection OK'
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      status: 'error',
+      message: err.message
+    });
+  }
+});
+
 // Default Organization UUID for local testing
 const DEFAULT_ORG_ID = '550e8400-e29b-41d4-a716-446655440000'; // UUID correspondente a 'default'
 
@@ -275,11 +326,19 @@ app.post('/api/auth/me', async (req, res) => {
       });
     }
 
-    const { data: user } = await supabase
+    const { data: user, error: userError } = await supabase
       .from('auth_users')
       .select('*')
       .eq('email', email)
       .single();
+
+    if (userError) {
+      return res.status(500).json({
+        success: false,
+        error: `Failed to fetch user: ${userError.message}`,
+        code: userError.code
+      });
+    }
 
     if (!user) {
       return res.status(404).json({
@@ -288,11 +347,19 @@ app.post('/api/auth/me', async (req, res) => {
       });
     }
 
-    const { data: org } = await supabase
+    const { data: org, error: orgError } = await supabase
       .from('organizations')
       .select('*')
       .eq('id', user.org_id)
       .single();
+
+    if (orgError && orgError.code !== 'PGRST116') {
+      return res.status(500).json({
+        success: false,
+        error: `Failed to fetch org: ${orgError.message}`,
+        code: orgError.code
+      });
+    }
 
     res.json({
       success: true,
@@ -817,6 +884,10 @@ app.delete('/api/users/:id', (req, res) => {
 // Get all customers
 app.get('/api/customers', async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({ success: false, error: 'Supabase not initialized', data: [] });
+    }
+
     // Get org_id from JWT or use default
     const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
 
@@ -827,7 +898,11 @@ app.get('/api/customers', async (req, res) => {
       return res.json({ success: true, count: result.data.length, data: result.data });
     }
 
-    // If Supabase fails, return empty (not local data)
+    // If Supabase fails, return error
+    if (!result.success) {
+      return res.status(500).json({ success: false, error: result.error || 'Unknown error', data: [] });
+    }
+
     res.json({ success: true, count: 0, data: [] });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message, data: [] });
@@ -1046,6 +1121,10 @@ app.get('/api/certificates', async (req, res) => {
     // Get org_id from JWT or use default
     const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
 
+    if (!supabase) {
+      return res.status(500).json({ success: false, error: 'Supabase not initialized' });
+    }
+
     // ALWAYS load from Supabase - no local data, filter by org_id
     const result = await getCertificates(supabase, userOrgId);
 
@@ -1054,10 +1133,14 @@ app.get('/api/certificates', async (req, res) => {
       return res.json({ success: true, count: transformedData.length, data: transformedData });
     }
 
-    // If Supabase fails, return empty (not local data)
+    // If Supabase fails, return error
+    if (!result.success) {
+      return res.status(500).json({ success: false, error: result.error || 'Unknown error' });
+    }
+
     res.json({ success: true, count: 0, data: [] });
   } catch (err: any) {
-    res.json({ success: true, count: 0, data: [] });
+    res.status(500).json({ success: false, error: err.message || 'Erro ao carregar certificados' });
   }
 });
 
@@ -1356,6 +1439,11 @@ app.get('/api/organizations', async (req, res) => {
 app.get('/api/organizations/:id', async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (!supabase) {
+      return res.status(500).json({ success: false, error: 'Supabase not initialized' });
+    }
+
     const { data, error } = await supabase
       .from('organizations')
       .select('*')
@@ -1363,7 +1451,11 @@ app.get('/api/organizations/:id', async (req, res) => {
       .single();
 
     if (error) {
-      return res.status(400).json({ success: false, error: error.message });
+      return res.status(500).json({
+        success: false,
+        error: `Failed to fetch organization: ${error.message}`,
+        code: error.code
+      });
     }
 
     res.json({ success: true, data });

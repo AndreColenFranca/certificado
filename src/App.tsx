@@ -1457,9 +1457,9 @@ export default function App() {
           setSelectedCustomerIdInManagement(cust.id);
           setViewMode('customers');
         }}
-        onSelectCertForView={(cert, tab) => {
+        onSelectCertForView={(cert, tab, viewMode) => {
           setIsQueryModalOpen(false);
-          handleSelectCert(cert, tab || 'certificate');
+          handleSelectCert(cert, tab || 'photo-inspector', viewMode);
         }}
       />
 

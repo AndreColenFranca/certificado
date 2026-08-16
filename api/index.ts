@@ -256,6 +256,63 @@ app.post('/api/auth/register-profile', async (req, res) => {
   }
 });
 
+// Get current user profile
+app.post('/api/auth/me', async (req, res) => {
+  try {
+    const { email } = req.body || {};
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email é obrigatório'
+      });
+    }
+
+    if (!supabase) {
+      return res.status(500).json({
+        success: false,
+        error: 'Supabase not initialized'
+      });
+    }
+
+    const { data: user } = await supabase
+      .from('auth_users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Usuário não encontrado'
+      });
+    }
+
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('id', user.org_id)
+      .single();
+
+    res.json({
+      success: true,
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        orgId: user.org_id,
+        orgName: org?.display_name || org?.name || 'Organização'
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
 // Update User Profile to Root Endpoint
 app.post('/api/auth/set-root-profile', async (req, res) => {
   try {

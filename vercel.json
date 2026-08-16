@@ -5,12 +5,17 @@
   "devCommand": "npm run dev",
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
+      "source": "/api/(.*)",
+      "destination": "/api"
     },
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 30
+    }
+  }
 }

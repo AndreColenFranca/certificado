@@ -31,20 +31,22 @@ export const supabaseAuth = {
         return { success: false, error: 'Usuário não criado' };
       }
 
-      // Associar usuário a organização (usar default se não especificada)
-      const userOrgId = orgId || '550e8400-e29b-41d4-a716-446655440000'; // UUID da org default
+      const userOrgId = orgId || '550e8400-e29b-41d4-a716-446655440000';
 
-      const { error: authUserError } = await supabase
-        .from('auth_users')
-        .insert({
-          id: authData.user.id,
-          email: email,
-          name: name,
-          org_id: userOrgId,
-          role: 'operator',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+      try {
+        await fetch('/api/auth/register-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: authData.user.id,
+            email,
+            name,
+            orgId: userOrgId,
+            role: 'customer'
+          })
         });
+      } catch (e) {
+      }
 
       return {
         success: true,
@@ -52,7 +54,7 @@ export const supabaseAuth = {
           id: authData.user.id,
           name: name || authData.user.user_metadata?.display_name || email,
           email: authData.user.email || email,
-          role: 'operator',
+          role: 'customer',
           isRoot: false,
           createdAt: new Date().toISOString()
         }
@@ -78,26 +80,44 @@ export const supabaseAuth = {
         return { success: false, error: 'Falha ao autenticar usuário' };
       }
 
-      // Special case for root user
       const isRootEmail = email === ROOT_USER_EMAIL;
 
-      // Get user profile from auth_users table
-      const { data: userProfile, error: profileError } = await supabase
-        .from('auth_users')
-        .select('*')
-        .eq('id', authData.user.id)
-        .single();
+      try {
+        const meRes = await fetch('/api/auth/me', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          if (meData.success && meData.data) {
+            return {
+              success: true,
+              user: {
+                id: authData.user.id,
+                name: meData.data.name || authData.user.user_metadata?.display_name || email,
+                email: authData.user.email || email,
+                role: meData.data.role,
+                isRoot: isRootEmail || meData.data.role === 'root',
+                orgId: meData.data.orgId,
+                createdAt: authData.user.created_at || new Date().toISOString()
+              }
+            };
+          }
+        }
+      } catch (e) {
+      }
 
       return {
         success: true,
         user: {
           id: authData.user.id,
-          name: userProfile?.name || authData.user.user_metadata?.display_name || (isRootEmail ? 'André Luiz Colen (Administrador Raiz)' : email),
+          name: authData.user.user_metadata?.display_name || (isRootEmail ? 'André Luiz Colen (Administrador Raiz)' : email),
           email: authData.user.email || email,
-          role: isRootEmail ? 'root' : (userProfile?.role || 'customer'),
-          cpf: userProfile?.cpf,
-          isRoot: isRootEmail || userProfile?.role === 'root' || false,
-          orgId: userProfile?.org_id || '550e8400-e29b-41d4-a716-446655440000',
+          role: isRootEmail ? 'root' : 'customer',
+          isRoot: isRootEmail,
+          orgId: '550e8400-e29b-41d4-a716-446655440000',
           createdAt: authData.user.created_at || new Date().toISOString()
         }
       };

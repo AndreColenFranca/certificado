@@ -183,11 +183,11 @@ app.post('/api/auth/register', async (req, res) => {
     }
 
     // Create auth_users record
-    const { error: profileError } = await supabase
+    await supabase
       .from('auth_users')
       .insert({
         id: authData.user.id,
-        org_id: 'default-org', // You may want to create a default org or pass this
+        org_id: 'default-org',
         email,
         name,
         role: 'customer'
@@ -206,6 +206,52 @@ app.post('/api/auth/register', async (req, res) => {
     res.status(500).json({
       success: false,
       error: err.message || 'Registration failed'
+    });
+  }
+});
+
+// Register profile after signup
+app.post('/api/auth/register-profile', async (req, res) => {
+  try {
+    const { id, email, name, orgId, role } = req.body;
+
+    if (!id || !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID e email são obrigatórios'
+      });
+    }
+
+    const userOrgId = orgId || DEFAULT_ORG_ID;
+
+    // Create auth_users record
+    const { error } = await supabase
+      .from('auth_users')
+      .upsert({
+        id,
+        email,
+        name: name || email.split('@')[0],
+        org_id: userOrgId,
+        role: role || 'customer',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        error: error.message
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Perfil registrado com sucesso'
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message || 'Erro ao registrar perfil'
     });
   }
 });

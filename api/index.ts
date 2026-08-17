@@ -1331,12 +1331,18 @@ app.post('/api/customers/sync/missing-auth', async (req, res) => {
 app.delete('/api/customers/:id', async (req, res) => {
   try {
     const id = req.params.id;
+    const userOrgId = (req as any).user?.org_id;
 
-    // 1. Find customer in Supabase
+    if (!userOrgId) {
+      return res.status(401).json({ success: false, message: 'Usuário não autenticado' });
+    }
+
+    // 1. Find customer in Supabase (with org_id check)
     const { data: targetCust, error: fetchError } = await supabase
       .from('customers')
       .select('*')
       .eq('id', id)
+      .eq('org_id', userOrgId)
       .single();
 
     if (fetchError || !targetCust) {
@@ -1362,7 +1368,8 @@ app.delete('/api/customers/:id', async (req, res) => {
     const { error: deleteError } = await supabase
       .from('customers')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('org_id', userOrgId);
 
     if (deleteError) {
       console.error(`[CUSTOMER-DELETE] Erro ao deletar customer:`, deleteError.message);

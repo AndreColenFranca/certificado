@@ -112,8 +112,8 @@ export const SupabaseLoginView = ({
                 <Crown className="w-8 h-8 text-amber-500" />
               )}
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-              {companyName || 'Estilo Raro'}
+            <h1 className="text-xl font-semibold text-amber-700">
+              Emissão de Certificado
             </h1>
             {isSignUp && (
               <p className="text-sm opacity-60">

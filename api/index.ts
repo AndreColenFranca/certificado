@@ -150,11 +150,12 @@ app.use(async (req: any, res, next) => {
           console.log('[AUTH] Querying auth_users for email:', email);
           const { data: authUser, error } = await supabase
             .from('auth_users')
-            .select('org_id, role')
-            .eq('email', email)
+            .select('org_id, role, id, email')
+            .eq('email', email.toLowerCase())
             .maybeSingle();
 
           console.log('[AUTH] Query result:', { authUser, error: error?.message, hasData: !!authUser });
+          if (authUser) console.log('[AUTH] Full user data:', JSON.stringify(authUser));
 
           if (authUser) {
             req.user.org_id = authUser.org_id || DEFAULT_ORG_ID;

@@ -105,11 +105,11 @@ export const SupabaseLoginView = ({
 
           {/* Header */}
           <div className="text-center space-y-3 mb-8">
-            <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 mb-2 shadow-inner">
+            <div className="inline-flex items-center justify-center mb-4">
               {companyLogoUrl ? (
-                <img src={companyLogoUrl} alt="Logo" className="h-8 w-auto" />
+                <img src={companyLogoUrl} alt="Logo" className="h-20 w-auto max-w-xs" />
               ) : (
-                <Crown className="w-6 h-6 text-amber-500" />
+                <Crown className="w-8 h-8 text-amber-500" />
               )}
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">

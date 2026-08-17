@@ -1137,25 +1137,28 @@ app.get('/api/customers', async (req, res) => {
 app.post('/api/customers', async (req, res) => {
   try {
     const newCust: Customer = req.body;
+    const cleanEmail = (newCust.email || '').trim().toLowerCase();
+    const password = (newCust.password || '').trim();
+
+    if (!cleanEmail || !password) {
+      return res.status(400).json({ success: false, message: 'Email e senha são obrigatórios' });
+    }
+
     if (!newCust.id) {
       newCust.id = `CLI-${Math.floor(1000 + Math.random() * 9000)}`;
     }
 
-    const cleanEmail = (newCust.email || '').trim().toLowerCase();
-
-    // Validations removed - Supabase handles duplicates via unique constraints
-
     const now = new Date().toISOString();
     newCust.createdAt = now;
     newCust.updatedAt = now;
-
-    // Try to save to Supabase with org_id from JWT
     const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+
+    // 1. Create in Supabase customers table
     const supabaseCreateResult = await createCustomer(supabase, {
       customer_code: newCust.id,
       name: newCust.name,
       cpf: String(newCust.cpf),
-      email: newCust.email,
+      email: cleanEmail,
       phone: newCust.phone || '',
       notes: newCust.notes || '',
       org_id: userOrgId
@@ -1165,31 +1168,45 @@ app.post('/api/customers', async (req, res) => {
       return res.status(400).json({ success: false, message: supabaseCreateResult.error });
     }
 
-    // Sync to usersDb so auth and user management endpoints see the customer user
-    if (cleanEmail) {
-      const existingUserIdx = usersDb.findIndex(u => u.email.toLowerCase() === cleanEmail);
-      const userObj = {
-        id: `user-customer-${newCust.id}`,
-        name: newCust.name,
-        email: cleanEmail,
-        password: newCust.password || '123456',
+    // 2. Create in Supabase Auth
+    console.log(`[CUSTOMER] Criando Supabase Auth para ${cleanEmail}...`);
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: cleanEmail,
+      password: password,
+      email_confirm: true,
+      user_metadata: {
+        display_name: newCust.name,
         role: 'customer',
-        customerId: newCust.id,
-        cpf: newCust.cpf,
-        createdAt: now,
-        isRoot: false
-      };
-      if (existingUserIdx >= 0) {
-        usersDb[existingUserIdx] = { ...usersDb[existingUserIdx], ...userObj };
-      } else {
-        usersDb.push(userObj);
+        customer_id: newCust.id
       }
-    }
+    });
 
-    // saveDataStore(); // Removed - using Supabase only
+    console.log(`[CUSTOMER] Resultado: authData=${authData?.user?.id}, erro=${authError?.message}`);
+    if (authError || !authData?.user) {
+      console.error(`[CUSTOMER] ❌ Erro ao criar Supabase Auth para ${cleanEmail}:`, authError?.message);
+      return res.status(400).json({ success: false, message: `Falha ao criar autenticação: ${authError?.message}` });
+    }
+    console.log(`[CUSTOMER] ✅ Usuário Auth criado: ${authData.user.id}`);
+
+    // 3. Create profile in auth_users table
+    const { error: profileError } = await supabase.from('auth_users').insert({
+      id: authData.user.id,
+      email: cleanEmail,
+      name: newCust.name,
+      role: 'customer',
+      org_id: userOrgId,
+      created_at: now,
+      updated_at: now
+    });
+
+    if (profileError) {
+      console.error(`[CUSTOMER] Erro ao criar perfil auth_users:`, profileError.message);
+      return res.status(400).json({ success: false, message: `Falha ao criar perfil: ${profileError.message}` });
+    }
 
     res.status(201).json({ success: true, data: newCust, message: 'Cliente cadastrado com sucesso' });
   } catch (error: any) {
+    console.error(`[CUSTOMER] Erro ao cadastrar cliente:`, error.message);
     res.status(400).json({ success: false, message: error.message || 'Erro ao cadastrar cliente' });
   }
 });
@@ -1198,70 +1215,47 @@ app.post('/api/customers', async (req, res) => {
 app.put('/api/customers/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    const index = customersDb.findIndex(c => c.id === id || c.cpf === id);
+    const newCust: Customer = req.body;
+    const cleanEmail = (newCust.email || '').trim().toLowerCase();
+    const password = (newCust.password || '').trim();
 
-    if (index === -1) {
+    const { data: existingCust, error: fetchError } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('customer_code', id)
+      .single();
+
+    if (fetchError || !existingCust) {
       return res.status(404).json({ success: false, message: 'Cliente não encontrado' });
     }
 
-    const newCust: Customer = req.body;
-    const cleanEmail = (newCust.email || '').trim().toLowerCase();
+    const emailChanged = existingCust.email?.toLowerCase() !== cleanEmail;
+    const { error: updateError } = await supabase
+      .from('customers')
+      .update({ ...newCust, updated_at: new Date().toISOString() })
+      .eq('customer_code', id);
 
-    if (newCust.cpf) {
-      const dupCpf = customersDb.find(c => c.id !== id && c.cpf === newCust.cpf);
-      if (dupCpf) {
-        return res.status(400).json({
-          success: false,
-          message: `CPF já cadastrado!`
-        });
+    if (updateError) {
+      return res.status(400).json({ success: false, message: updateError.message });
+    }
+
+    if (emailChanged || password) {
+      const { data: authUsers } = await supabase.auth.admin.listUsers();
+      const authUser = authUsers?.users?.find((u: any) => u.email?.toLowerCase() === existingCust.email?.toLowerCase());
+
+      if (authUser) {
+        const updateData: any = {};
+        if (emailChanged) updateData.email = cleanEmail;
+        if (password) updateData.password = password;
+
+        const { error: authErr } = await supabase.auth.admin.updateUserById(authUser.id, updateData);
+        if (authErr) return res.status(400).json({ success: false, message: authErr.message });
+
+        await supabase.from('auth_users').update({ email: cleanEmail, name: newCust.name, updated_at: new Date().toISOString() }).eq('id', authUser.id);
       }
     }
 
-    if (cleanEmail) {
-      const dupEmail = customersDb.find(c => c.id !== id && c.email.trim().toLowerCase() === cleanEmail);
-      if (dupEmail) {
-        return res.status(400).json({
-          success: false,
-          message: `E-mail já Cadastrado!`
-        });
-      }
-    }
-
-    const updatedCust = {
-      ...customersDb[index],
-      ...req.body,
-      updatedAt: new Date().toISOString()
-    };
-
-    // Try to update in Supabase
-    await updateCustomer(supabase, id, updatedCust);
-
-    customersDb[index] = updatedCust;
-
-    // Sync to usersDb
-    if (cleanEmail) {
-      const existingUserIdx = usersDb.findIndex(u => u.email.toLowerCase() === cleanEmail || u.customerId === id);
-      const userObj = {
-        id: `user-customer-${updatedCust.id}`,
-        name: updatedCust.name,
-        email: cleanEmail,
-        password: updatedCust.password || '123456',
-        role: 'customer',
-        customerId: updatedCust.id,
-        cpf: updatedCust.cpf,
-        createdAt: updatedCust.createdAt || new Date().toISOString(),
-        isRoot: false
-      };
-      if (existingUserIdx >= 0) {
-        usersDb[existingUserIdx] = { ...usersDb[existingUserIdx], ...userObj };
-      } else {
-        usersDb.push(userObj);
-      }
-    }
-
-    // saveDataStore(); // Removed - using Supabase only
-
-    res.json({ success: true, data: updatedCust, message: 'Cliente atualizado com sucesso' });
+    res.json({ success: true, data: newCust, message: 'Cliente atualizado com sucesso' });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message || 'Erro ao atualizar cliente' });
   }
@@ -1271,45 +1265,47 @@ app.put('/api/customers/:id', async (req, res) => {
 app.delete('/api/customers/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
 
-    // Find customer from Supabase first (to get details for cleanup)
-    const getResult = await getCustomerById(supabase, id);
-    if (!getResult.success || !getResult.data) {
+    // 1. Find customer in Supabase
+    const { data: targetCust, error: fetchError } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('customer_code', id)
+      .single();
+
+    if (fetchError || !targetCust) {
       return res.status(404).json({ success: false, message: 'Cliente não encontrado' });
     }
-    const targetCust = getResult.data;
 
-    // Delete from Supabase
-    const deleteResult = await deleteCustomer(supabase, id);
-    if (!deleteResult.success) {
-      // Continua mesmo se falhar no Supabase
+    // 2. Delete from Supabase Auth
+    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    const authUser = authUsers?.users?.find((u: any) => u.email?.toLowerCase() === targetCust.email?.toLowerCase());
+
+    if (authUser) {
+      const { error: authDeleteError } = await supabase.auth.admin.deleteUser(authUser.id);
+      if (authDeleteError) {
+        console.error(`[CUSTOMER-DELETE] Erro ao deletar Supabase Auth:`, authDeleteError.message);
+        return res.status(400).json({ success: false, message: `Falha ao deletar autenticação: ${authDeleteError.message}` });
+      }
+
+      // Delete from auth_users table
+      await supabase.from('auth_users').delete().eq('id', authUser.id);
     }
 
-    // Delete from local DB - customersDb not used anymore
+    // 3. Delete from customers table
+    const { error: deleteError } = await supabase
+      .from('customers')
+      .delete()
+      .eq('customer_code', id);
 
-    // Delete associated user if exists
-    const userToDelete = usersDb.find(u => u.customerId === id || (u.email && u.email.toLowerCase() === targetCust?.email?.toLowerCase()));
-    if (userToDelete) {
-      usersDb = usersDb.filter(u => u.id !== userToDelete.id);
+    if (deleteError) {
+      console.error(`[CUSTOMER-DELETE] Erro ao deletar customer:`, deleteError.message);
+      return res.status(400).json({ success: false, message: `Falha ao deletar cliente: ${deleteError.message}` });
     }
 
-    // Delete all certificates/passports associated with this customer
-    const custId = targetCust.id;
-    const custCpf = String(targetCust.cpf || '').trim();
-    const custName = targetCust.name?.trim();
-
-    certificatesDb = certificatesDb.filter(c => {
-      if (c.ownerId && c.ownerId === custId) return false;
-      if (custCpf && c.ownerCpf && String(c.ownerCpf).trim() === custCpf) return false;
-      if (custName && c.currentOwnerName && c.currentOwnerName.trim() === custName) return false;
-      return true;
-    });
-
-    // saveDataStore(); // Removed - using Supabase only
-
-    res.json({ success: true, message: 'Cliente e todos os seus passaportes removidos com sucesso' });
+    res.json({ success: true, message: 'Cliente removido com sucesso (autenticação e dados)' });
   } catch (error: any) {
+    console.error(`[CUSTOMER-DELETE] Erro:`, error.message);
     res.status(400).json({ success: false, message: error.message || 'Erro ao remover cliente' });
   }
 });

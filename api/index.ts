@@ -192,6 +192,53 @@ app.get('/api/debug/user', (req, res) => {
   });
 });
 
+// Sync/Create user in auth_users table with correct org_id
+app.post('/api/sync-user-org', async (req, res) => {
+  try {
+    const { userId, email, org_id, role = 'operator' } = req.body;
+
+    if (!userId || !email || !org_id) {
+      return res.status(400).json({ error: 'userId, email, and org_id required' });
+    }
+
+    // Check if exists
+    const { data: existing } = await supabase
+      .from('auth_users')
+      .select('id')
+      .eq('id', userId)
+      .single();
+
+    if (existing) {
+      // Update
+      const { error } = await supabase
+        .from('auth_users')
+        .update({ org_id, role, updated_at: new Date().toISOString() })
+        .eq('id', userId);
+
+      if (error) throw error;
+      return res.json({ success: true, message: 'User updated', action: 'update' });
+    } else {
+      // Insert
+      const { error } = await supabase
+        .from('auth_users')
+        .insert({
+          id: userId,
+          email,
+          name: email.split('@')[0],
+          org_id,
+          role,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+      return res.json({ success: true, message: 'User created', action: 'insert' });
+    }
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // All data now from Supabase only - no local caches
 let certificatesDb: JewelryCertificate[] = []; // Not used
 let customersDb: Customer[] = []; // Not used
@@ -1101,6 +1148,43 @@ app.delete('/api/users/:id', async (req, res) => {
   } catch (error: any) {
     console.error('Erro ao deletar usuário:', error);
     res.status(500).json({ success: false, message: error.message || 'Erro ao remover usuário' });
+  }
+});
+
+// DEBUG: Get ALL customers (no filter)
+app.get('/api/debug/all-customers', async (req, res) => {
+  try {
+    const { data } = await supabase.from('customers').select('id, email, org_id, name');
+    res.json({ total: data?.length, data });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// DEBUG: Get customer by UUID
+app.get('/api/debug/customer-by-id/:id', async (req, res) => {
+  try {
+    const { data } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+    res.json({ data });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// DEBUG: Check user org_id from JWT
+app.get('/api/debug/user-org', async (req, res) => {
+  try {
+    const user = (req as any).user;
+    res.json({
+      user: user ? { id: user.id, email: user.email, org_id: user.org_id } : null,
+      defaultOrgId: '550e8400-e29b-41d4-a716-446655440000'
+    });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
   }
 });
 

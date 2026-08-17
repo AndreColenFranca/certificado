@@ -206,10 +206,10 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
           {/* QR Code Card & Quick Actions */}
           <div className="flex flex-col sm:flex-row items-center gap-4 bg-zinc-900/90 border border-amber-500/30 p-4 rounded-2xl backdrop-blur-md self-stretch lg:self-auto justify-between sm:justify-start">
             {isLinked && qrCodeDataUrl && (
-              <div className="flex flex-col items-center">
-                <img 
-                  src={qrCodeDataUrl} 
-                  alt="QR Code de Autenticidade" 
+              <div className="hidden sm:flex flex-col items-center">
+                <img
+                  src={qrCodeDataUrl}
+                  alt="QR Code de Autenticidade"
                   className="w-24 h-24 rounded-lg shadow-md border border-amber-300/30 p-1 bg-amber-100"
                 />
                 <span className="text-[10px] text-zinc-400 mt-1 font-mono">Escanear para verificar</span>

@@ -1168,7 +1168,7 @@ app.post('/api/customers', async (req, res) => {
       return res.status(400).json({ success: false, message: supabaseCreateResult.error });
     }
 
-    // 2. Create in Supabase Auth
+    // 2. Create in Supabase Auth (OBRIGATÓRIO)
     console.log(`[CUSTOMER] Criando Supabase Auth para ${cleanEmail}...`);
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: cleanEmail,
@@ -1181,12 +1181,13 @@ app.post('/api/customers', async (req, res) => {
       }
     });
 
-    console.log(`[CUSTOMER] Resultado: authData=${authData?.user?.id}, erro=${authError?.message}`);
     if (authError || !authData?.user) {
-      console.error(`[CUSTOMER] ❌ Erro ao criar Supabase Auth para ${cleanEmail}:`, authError?.message);
-      return res.status(400).json({ success: false, message: `Falha ao criar autenticação: ${authError?.message}` });
+      console.error(`[CUSTOMER] ❌ Falha Supabase Auth:`, authError?.message);
+      // Rollback: delete from customers if auth fails
+      await supabase.from('customers').delete().eq('customer_code', newCust.id);
+      return res.status(400).json({ success: false, message: `Autenticação obrigatória falhou: ${authError?.message || 'Desconhecido'}` });
     }
-    console.log(`[CUSTOMER] ✅ Usuário Auth criado: ${authData.user.id}`);
+    console.log(`[CUSTOMER] ✅ Auth OK: ${authData.user.id}`);
 
     // 3. Create profile in auth_users table
     const { error: profileError } = await supabase.from('auth_users').insert({
@@ -1258,6 +1259,71 @@ app.put('/api/customers/:id', async (req, res) => {
     res.json({ success: true, data: newCust, message: 'Cliente atualizado com sucesso' });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message || 'Erro ao atualizar cliente' });
+  }
+});
+
+// Sync missing Supabase Auth for customers (admin endpoint)
+app.post('/api/customers/sync/missing-auth', async (req, res) => {
+  try {
+    console.log('[SYNC] Sincronizando clientes sem Supabase Auth...');
+
+    // Get all customers
+    const { data: allCustomers } = await supabase.from('customers').select('*');
+    if (!allCustomers || allCustomers.length === 0) {
+      return res.json({ success: true, synced: 0, message: 'Nenhum cliente encontrado' });
+    }
+
+    // Get all auth users
+    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    const authEmails = new Set(authUsers?.users?.map(u => u.email?.toLowerCase()) || []);
+
+    let synced = 0;
+    const errors = [];
+
+    // For each customer not in Supabase Auth
+    for (const customer of allCustomers) {
+      const custEmail = customer.email?.toLowerCase();
+      if (!custEmail) continue;
+
+      if (!authEmails.has(custEmail)) {
+        console.log(`[SYNC] Criando Auth para ${custEmail}...`);
+
+        // Create in Supabase Auth with default password
+        const { data: newAuth, error: authError } = await supabase.auth.admin.createUser({
+          email: custEmail,
+          password: '123456',
+          email_confirm: true,
+          user_metadata: {
+            display_name: customer.name,
+            role: 'customer',
+            customer_id: customer.customer_code
+          }
+        });
+
+        if (authError) {
+          errors.push(`${custEmail}: ${authError.message}`);
+          continue;
+        }
+
+        // Create profile in auth_users
+        await supabase.from('auth_users').insert({
+          id: newAuth.user?.id,
+          email: custEmail,
+          name: customer.name,
+          role: 'customer',
+          org_id: customer.org_id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+        synced++;
+        console.log(`[SYNC] ✅ ${custEmail} sincronizado`);
+      }
+    }
+
+    res.json({ success: true, synced, errors, message: `${synced} clientes sincronizados` });
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
   }
 });
 

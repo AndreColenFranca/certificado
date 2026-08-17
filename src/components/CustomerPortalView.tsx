@@ -279,12 +279,7 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
                   <div className="space-y-2 pt-1">
                     <div className="grid grid-cols-2 gap-2">
                       <button
-                        onClick={() => {
-                          if (typeof window !== 'undefined') {
-                            window.history.pushState(null, '', `/cert/${encodeURIComponent(cert.id)}`);
-                          }
-                          onSelectCertificate(cert, 'photo-inspector');
-                        }}
+                        onClick={() => onSelectCertificate(cert, 'photo-inspector')}
                         className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-amber-200 font-semibold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-amber-900/40"
                         id={`customer-btn-view-passport-${cert.id}`}
                       >

@@ -109,9 +109,6 @@ export default function App() {
   const handleSelectCert = (cert: JewelryCertificate, tab: 'photo-inspector' | 'specs' | 'history' | 'care' = 'photo-inspector') => {
     setSelectedCert(cert);
     setPublicViewTab(tab);
-    if (typeof window !== 'undefined') {
-      window.history.pushState(null, '', `/cert/${encodeURIComponent(cert.id)}`);
-    }
     navigateToView('public-passport');
   };
 

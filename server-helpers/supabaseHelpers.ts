@@ -316,7 +316,14 @@ export async function getCustomers(
       return { success: false, error: error.message, data: null };
     }
 
-    return { success: true, data: data || [] };
+    // Transform: map customer_code to id for frontend compatibility, keep UUID internal
+    const transformed = (data || []).map((cust: any) => ({
+      ...cust,
+      id: cust.customer_code || cust.id,
+      _uuid: cust.id // Store UUID for backend operations
+    }));
+
+    return { success: true, data: transformed };
   } catch (err: any) {
     return { success: false, error: err.message, data: null };
   }

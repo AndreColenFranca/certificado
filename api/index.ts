@@ -1418,19 +1418,44 @@ app.delete('/api/customers/:id', async (req, res) => {
     const id = req.params.id;
     const userOrgId = (req as any).user?.org_id;
 
-    console.log(`[DELETE-CUSTOMER] Tentando deletar ID/customer_code: ${id}, userOrgId: ${userOrgId}`);
+    console.log(`[DELETE-CUSTOMER] Tentando deletar ID: ${id}, userOrgId: ${userOrgId}`);
 
     if (!userOrgId) {
       return res.status(401).json({ success: false, message: 'Usuário não autenticado' });
     }
 
-    // 1. Find customer by customer_code (frontend sends customer_code as id)
-    const { data: targetCust, error: fetchError } = await supabase
+    // 1. Find customer - try customer_code first, then UUID
+    let targetCust: any = null;
+    let fetchError: any = null;
+
+    // Try by customer_code first (usual case)
+    const { data: custByCode, error: errCode } = await supabase
       .from('customers')
       .select('*')
       .eq('customer_code', id)
       .eq('org_id', userOrgId)
       .single();
+
+    if (custByCode) {
+      targetCust = custByCode;
+    } else if (errCode?.code !== 'PGRST116') {
+      // Actual error (not "no rows")
+      fetchError = errCode;
+    } else {
+      // Try by UUID
+      const { data: custByUuid, error: errUuid } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', id)
+        .eq('org_id', userOrgId)
+        .single();
+
+      if (custByUuid) {
+        targetCust = custByUuid;
+      } else {
+        fetchError = errUuid;
+      }
+    }
 
     console.log(`[DELETE-CUSTOMER] Cliente encontrado:`, !!targetCust, 'erro:', fetchError?.message);
 
@@ -1453,7 +1478,7 @@ app.delete('/api/customers/:id', async (req, res) => {
       await supabase.from('auth_users').delete().eq('id', authUser.id);
     }
 
-    // 3. Delete from customers table using UUID (targetCust.id)
+    // 3. Delete from customers table using UUID
     const { error: deleteError } = await supabase
       .from('customers')
       .delete()

@@ -367,7 +367,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
                 {cert.widthCm && Number(cert.widthCm) > 0 ? (
                   <div className="bg-zinc-950 p-2.5 rounded-lg border border-zinc-800">
-                    <span className="text-zinc-500 text-[10px] block">Largura da Peça</span>
+                    <span className="text-zinc-500 text-[10px] block">Largura Aprox.</span>
                     <span className="font-semibold text-amber-300">{cert.widthCm} cm</span>
                   </div>
                 ) : null}
@@ -434,7 +434,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
                   {hasWidth && (
                     <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-1">
-                      <span className="text-xs text-zinc-500">Largura da Peça</span>
+                      <span className="text-xs text-zinc-500">Largura Aprox.</span>
                       <p className="text-base font-bold text-amber-300">{cert.widthCm} cm</p>
                     </div>
                   )}

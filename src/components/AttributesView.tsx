@@ -26,13 +26,13 @@ const ATTRIBUTES: Attribute[] = [
   },
   {
     key: 'metal_purities',
-    label: 'Teor do Metal',
+    label: 'Metal',
     description: 'Gerenciar pureza do metal (ex: 18K, 14K)',
     icon: '⚙️'
   },
   {
     key: 'metal_colors',
-    label: 'Cor do Metal',
+    label: 'Cor',
     description: 'Gerenciar cores de metal (ex: ouro, prata)',
     icon: '🎨'
   },
@@ -75,8 +75,8 @@ interface AttributesViewProps {
 const ATTRIBUTE_CONFIG: Record<AttributeType, { endpoint: string; label: string }> = {
   collections: { endpoint: '/api/collections', label: 'Coleção' },
   manufacturers: { endpoint: '/api/manufacturers', label: 'Fabricante / Marca' },
-  metal_purities: { endpoint: '/api/metal-purities', label: 'Teor do Metal' },
-  metal_colors: { endpoint: '/api/metal-colors', label: 'Cor do Metal' },
+  metal_purities: { endpoint: '/api/metal-purities', label: 'Metal' },
+  metal_colors: { endpoint: '/api/metal-colors', label: 'Cor' },
   finishes: { endpoint: '/api/finishes', label: 'Acabamento' },
   stone_types: { endpoint: '/api/stone-types', label: 'Tipo da Gema' },
   setting_types: { endpoint: '/api/setting-types', label: 'Tipo de Cravação' },

@@ -240,12 +240,12 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
 
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="bg-zinc-950/70 p-2.5 rounded-xl border border-zinc-800">
-                      <span className="text-zinc-500 text-[10px] block font-medium">Teor do Metal</span>
+                      <span className="text-zinc-500 text-[10px] block font-medium">Metal</span>
                       <span className="font-bold text-amber-200">{cert.metalPurity}</span>
                     </div>
 
                     <div className="bg-zinc-950/70 p-2.5 rounded-xl border border-zinc-800">
-                      <span className="text-zinc-500 text-[10px] block font-medium">Peso Bruto</span>
+                      <span className="text-zinc-500 text-[10px] block font-medium">Peso Aprox.</span>
                       <span className="font-bold text-amber-200">
                         {cert.grossWeightGrams}g{cert.widthCm && Number(cert.widthCm) > 0 ? ` (${cert.widthCm}cm)` : ''}
                       </span>

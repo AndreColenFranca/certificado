@@ -556,7 +556,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-stretch">
               {/* a) Teor do Metal */}
               <div className="flex flex-col justify-between h-full space-y-1">
-                <label className="block text-zinc-400 text-xs font-medium mb-0.5">Teor do Metal</label>
+                <label className="block text-zinc-400 text-xs font-medium mb-0.5">Metal</label>
                 <select
                   value={metalPurity}
                   onChange={(e) => setMetalPurity(e.target.value)}
@@ -570,7 +570,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
 
               {/* b) Cor do Metal */}
               <div className="flex flex-col justify-between h-full space-y-1">
-                <label className="block text-zinc-400 text-xs font-medium mb-0.5">Cor do Metal</label>
+                <label className="block text-zinc-400 text-xs font-medium mb-0.5">Cor</label>
                 <select
                   value={metalColor}
                   onChange={(e) => setMetalColor(e.target.value)}
@@ -585,7 +585,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
               {/* c) Peso Bruto */}
               <div className="flex flex-col justify-between h-full space-y-1">
                 <div>
-                  <label className="block text-zinc-400 text-xs font-medium mb-0.5">Peso Bruto (Gramas)</label>
+                  <label className="block text-zinc-400 text-xs font-medium mb-0.5">Peso Aprox. (Gramas)</label>
                   <div className="min-h-[24px] pb-0.5" />
                 </div>
                 <div className="mt-auto">

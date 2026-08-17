@@ -71,7 +71,7 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentCustomer || !currentCert) return;
+    if (!currentCustomer || !currentCert || !issueDate) return;
 
     onConfirmLink(
       currentCert.id,
@@ -250,14 +250,16 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
                   <div>
                     <label className="block text-xs font-semibold text-amber-200 mb-1 flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Data de Emissão / Entrega ao Cliente</span>
+                      <span>Data de Emissão / Entrega ao Cliente *</span>
                     </label>
                     <input
                       type="date"
+                      required
                       value={issueDate}
                       onChange={(e) => setIssueDate(e.target.value)}
                       className="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500"
                     />
+                    <p className="text-[11px] text-amber-300/80 mt-1">Campo obrigatório para emissão do passaporte</p>
                   </div>
 
                   <div>
@@ -294,7 +296,7 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
               </button>
               <button
                 type="submit"
-                disabled={!currentCustomer || !currentCert}
+                disabled={!currentCustomer || !currentCert || !issueDate}
                 className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-zinc-950 font-bold text-xs shadow-lg shadow-amber-950/60 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4" />

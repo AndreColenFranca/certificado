@@ -961,6 +961,111 @@ const handleLoginRequest = async (req: any, res: any) => {
 app.post('/api/login', handleLoginRequest);
 app.post('/api/auth/login', handleLoginRequest);
 
+// NEW: Simple Supabase-only login (no local fallback)
+app.post('/api/login-v2', async (req: any, res: any) => {
+  try {
+    const { email = '', password = '' } = req.body || {};
+    const rawEmail = String(email || '').trim().toLowerCase();
+    const rawPass = String(password || '').trim();
+
+    console.log(`[LOGIN-V2] Tentando login: ${rawEmail}`);
+
+    if (!supabase) {
+      return res.status(503).json({ success: false, error: 'Supabase não disponível' });
+    }
+
+    if (!rawEmail || !rawPass) {
+      return res.status(400).json({ success: false, error: 'Email e senha obrigatórios' });
+    }
+
+    // 1. Check if user exists in Supabase Auth
+    console.log(`[LOGIN-V2] 1️⃣ Procurando usuário em auth.users...`);
+    const { data: allUsers } = await supabase.auth.admin.listUsers();
+    const foundAuthUser = allUsers?.users?.find(u => u.email?.toLowerCase() === rawEmail);
+
+    if (!foundAuthUser) {
+      console.log(`[LOGIN-V2] ❌ Usuário não encontrado: ${rawEmail}`);
+      return res.status(401).json({
+        success: false,
+        error: 'Email ou senha inválidos'
+      });
+    }
+
+    console.log(`[LOGIN-V2] ✅ Usuário encontrado: ${foundAuthUser.email}`);
+
+    // 2. Get user profile from auth_users table
+    console.log(`[LOGIN-V2] 2️⃣ Buscando perfil em auth_users...`);
+    const { data: userProfile } = await supabase
+      .from('auth_users')
+      .select('*')
+      .eq('id', foundAuthUser.id)
+      .single();
+
+    if (!userProfile) {
+      console.log(`[LOGIN-V2] ⚠️ Perfil não encontrado em auth_users para ID: ${foundAuthUser.id}`);
+      // User exists in Supabase Auth but not in our profile table - create default profile
+      const { data: newProfile } = await supabase
+        .from('auth_users')
+        .insert({
+          id: foundAuthUser.id,
+          email: foundAuthUser.email,
+          name: foundAuthUser.user_metadata?.display_name || foundAuthUser.email.split('@')[0],
+          role: foundAuthUser.user_metadata?.role || 'customer',
+          org_id: '550e8400-e29b-41d4-a716-446655440000',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (newProfile) {
+        return res.json({
+          success: true,
+          message: 'Login realizado com sucesso',
+          user: {
+            id: newProfile.id,
+            name: newProfile.name,
+            email: newProfile.email,
+            role: newProfile.role,
+            orgId: newProfile.org_id,
+            orgName: 'Organização',
+            createdAt: newProfile.created_at,
+            isRoot: newProfile.role === 'root'
+          }
+        });
+      }
+    }
+
+    console.log(`[LOGIN-V2] ✅ Perfil encontrado: role=${userProfile.role}`);
+
+    // 3. Get organization details
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('id', userProfile.org_id)
+      .single();
+
+    return res.json({
+      success: true,
+      message: 'Login realizado com sucesso',
+      user: {
+        id: userProfile.id,
+        name: userProfile.name,
+        email: userProfile.email,
+        role: userProfile.role,
+        orgId: userProfile.org_id,
+        orgName: org?.display_name || org?.name || 'Organização',
+        createdAt: userProfile.created_at,
+        isRoot: userProfile.role === 'root'
+      }
+    });
+
+  } catch (err: any) {
+    console.error(`[LOGIN-V2] Erro:`, err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Get all registered users (filtered by org_id and role permissions)
 app.get('/api/users', async (req, res) => {
   try {

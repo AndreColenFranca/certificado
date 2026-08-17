@@ -242,9 +242,9 @@ export const SupabaseLoginView = ({
             </button>
           </form>
 
-          {/* Toggle Sign Up / Sign In / Forgot Password */}
+          {/* Toggle Forgot Password */}
           <div className="mt-6 text-center text-sm opacity-70">
-            {isForgotPassword ? (
+            {isForgotPassword && (
               <>
                 Lembrou a senha?{' '}
                 <button

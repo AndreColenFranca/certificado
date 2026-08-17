@@ -277,20 +277,6 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
 
                   {/* Action Buttons for Customer */}
                   <div className="space-y-2 pt-1">
-                    <button
-                      onClick={() => {
-                        if (typeof window !== 'undefined') {
-                          window.history.pushState(null, '', `/cert/${encodeURIComponent(cert.id)}?type=certificate`);
-                        }
-                        onSelectCertificate(cert, 'photo-inspector');
-                      }}
-                      className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs uppercase tracking-wider shadow-md hover:scale-[1.01] transition-all flex items-center justify-center gap-2 cursor-pointer border border-amber-400"
-                      id={`customer-btn-view-cert-${cert.id}`}
-                    >
-                      <Award className="w-4 h-4 text-zinc-950" />
-                      <span>Ver Certificado da Peça</span>
-                    </button>
-
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => {

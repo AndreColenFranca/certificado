@@ -1362,7 +1362,7 @@ app.delete('/api/customers/:id', async (req, res) => {
     const { error: deleteError } = await supabase
       .from('customers')
       .delete()
-      .eq('customer_code', id);
+      .eq('id', id);
 
     if (deleteError) {
       console.error(`[CUSTOMER-DELETE] Erro ao deletar customer:`, deleteError.message);

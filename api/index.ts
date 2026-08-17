@@ -743,7 +743,7 @@ app.post('/api/login', async (req: any, res: any) => {
         id: foundAuthUser.id, email: foundAuthUser.email,
         name: foundAuthUser.user_metadata?.display_name || foundAuthUser.email.split('@')[0],
         role: foundAuthUser.user_metadata?.role || 'customer',
-        org_id: '550e8400-e29b-41d4-a716-446655440000',
+        org_id: foundAuthUser.user_metadata?.org_id || DEFAULT_ORG_ID,
         created_at: new Date().toISOString(), updated_at: new Date().toISOString()
       }).select().single();
       if (!newProfile) return res.status(500).json({ success: false, error: 'Falha ao criar perfil' });
@@ -783,7 +783,7 @@ app.post('/api/auth/login', async (req: any, res: any) => {
         id: foundAuthUser.id, email: foundAuthUser.email,
         name: foundAuthUser.user_metadata?.display_name || foundAuthUser.email.split('@')[0],
         role: foundAuthUser.user_metadata?.role || 'customer',
-        org_id: '550e8400-e29b-41d4-a716-446655440000',
+        org_id: foundAuthUser.user_metadata?.org_id || DEFAULT_ORG_ID,
         created_at: new Date().toISOString(), updated_at: new Date().toISOString()
       }).select().single();
       if (!newProfile) return res.status(500).json({ success: false, error: 'Falha ao criar perfil' });
@@ -1418,17 +1418,21 @@ app.delete('/api/customers/:id', async (req, res) => {
     const id = req.params.id;
     const userOrgId = (req as any).user?.org_id;
 
+    console.log(`[DELETE-CUSTOMER] Tentando deletar ID/customer_code: ${id}, userOrgId: ${userOrgId}`);
+
     if (!userOrgId) {
       return res.status(401).json({ success: false, message: 'Usuário não autenticado' });
     }
 
-    // 1. Find customer in Supabase (with org_id check)
+    // 1. Find customer by customer_code (frontend sends customer_code as id)
     const { data: targetCust, error: fetchError } = await supabase
       .from('customers')
       .select('*')
-      .eq('id', id)
+      .eq('customer_code', id)
       .eq('org_id', userOrgId)
       .single();
+
+    console.log(`[DELETE-CUSTOMER] Cliente encontrado:`, !!targetCust, 'erro:', fetchError?.message);
 
     if (fetchError || !targetCust) {
       return res.status(404).json({ success: false, message: 'Cliente não encontrado' });
@@ -1449,12 +1453,11 @@ app.delete('/api/customers/:id', async (req, res) => {
       await supabase.from('auth_users').delete().eq('id', authUser.id);
     }
 
-    // 3. Delete from customers table
+    // 3. Delete from customers table using UUID (targetCust.id)
     const { error: deleteError } = await supabase
       .from('customers')
       .delete()
-      .eq('id', id)
-      .eq('org_id', userOrgId);
+      .eq('id', targetCust.id);
 
     if (deleteError) {
       console.error(`[CUSTOMER-DELETE] Erro ao deletar customer:`, deleteError.message);

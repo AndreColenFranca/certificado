@@ -1216,7 +1216,6 @@ app.put('/api/customers/:id', async (req, res) => {
   try {
     const id = req.params.id;
     const newCust: Customer = req.body;
-    const cleanEmail = (newCust.email || '').trim().toLowerCase();
     const password = (newCust.password || '').trim();
 
     const { data: existingCust, error: fetchError } = await supabase
@@ -1229,29 +1228,30 @@ app.put('/api/customers/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Cliente não encontrado' });
     }
 
-    const emailChanged = existingCust.email?.toLowerCase() !== cleanEmail;
+    // 1. Update in customers table (but NEVER change email - it's a credential)
+    const updateData = { ...newCust, updated_at: new Date().toISOString() };
+    delete (updateData as any).email; // Remove email from update to prevent credential changes
+
     const { error: updateError } = await supabase
       .from('customers')
-      .update({ ...newCust, updated_at: new Date().toISOString() })
+      .update(updateData)
       .eq('customer_code', id);
 
     if (updateError) {
       return res.status(400).json({ success: false, message: updateError.message });
     }
 
-    if (emailChanged || password) {
+    // 2. Update password in Supabase Auth ONLY (email is immutable credential)
+    if (password) {
       const { data: authUsers } = await supabase.auth.admin.listUsers();
       const authUser = authUsers?.users?.find((u: any) => u.email?.toLowerCase() === existingCust.email?.toLowerCase());
 
       if (authUser) {
-        const updateData: any = {};
-        if (emailChanged) updateData.email = cleanEmail;
-        if (password) updateData.password = password;
+        const { error: authErr } = await supabase.auth.admin.updateUserById(authUser.id, { password });
+        if (authErr) return res.status(400).json({ success: false, message: `Falha ao atualizar senha: ${authErr.message}` });
 
-        const { error: authErr } = await supabase.auth.admin.updateUserById(authUser.id, updateData);
-        if (authErr) return res.status(400).json({ success: false, message: authErr.message });
-
-        await supabase.from('auth_users').update({ email: cleanEmail, name: newCust.name, updated_at: new Date().toISOString() }).eq('id', authUser.id);
+        // Update name in auth_users profile
+        await supabase.from('auth_users').update({ name: newCust.name, updated_at: new Date().toISOString() }).eq('id', authUser.id);
       }
     }
 

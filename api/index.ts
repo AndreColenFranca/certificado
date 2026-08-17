@@ -1033,7 +1033,13 @@ app.post('/api/login-v2', async (req: any, res: any) => {
             isRoot: newProfile.role === 'root'
           }
         });
+      } else {
+        return res.status(500).json({ success: false, error: 'Falha ao criar perfil de usuário' });
       }
+    }
+
+    if (!userProfile) {
+      return res.status(500).json({ success: false, error: 'Perfil não encontrado' });
     }
 
     console.log(`[LOGIN-V2] ✅ Perfil encontrado: role=${userProfile.role}`);

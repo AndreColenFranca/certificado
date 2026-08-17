@@ -151,16 +151,18 @@ app.use(async (req: any, res, next) => {
             .from('auth_users')
             .select('org_id, role')
             .eq('email', email)
-            .single();
+            .maybeSingle();
 
-          console.log('[AUTH] Query result:', { authUser, error: error?.message });
+          console.log('[AUTH] Query result:', { authUser, error: error?.message, hasData: !!authUser });
 
-          if (authUser && !error) {
+          if (authUser) {
             req.user.org_id = authUser.org_id || DEFAULT_ORG_ID;
             req.user.role = authUser.role || 'user';
             console.log('[AUTH] User found - org_id:', req.user.org_id, 'role:', req.user.role);
           } else if (error) {
             console.error('[AUTH] Lookup error:', error.message, 'for email:', email);
+          } else {
+            console.log('[AUTH] User not found in auth_users for email:', email);
           }
         } catch (e) {
           console.error('[AUTH] Query failed:', e instanceof Error ? e.message : String(e), 'for email:', email);
@@ -179,6 +181,14 @@ app.use(async (req: any, res, next) => {
   }
 
   next();
+});
+
+// Debug endpoint - check user org_id
+app.get('/api/debug/user', (req, res) => {
+  res.json({
+    user: (req as any).user,
+    message: 'User info for debugging'
+  });
 });
 
 // All data now from Supabase only - no local caches

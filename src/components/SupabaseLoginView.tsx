@@ -273,19 +273,6 @@ export const SupabaseLoginView = ({
                   Entre aqui
                 </button>
               </>
-            ) : (
-              <>
-                Não tem conta?{' '}
-                <button
-                  onClick={() => {
-                    setIsSignUp(true);
-                    setErrorMsg('');
-                  }}
-                  className="text-amber-400 hover:text-amber-300 font-semibold"
-                >
-                  Criar nova
-                </button>
-              </>
             )}
           </div>
 

@@ -247,7 +247,7 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
 
                   {hasWidth && (
                     <div className="p-2 bg-zinc-50 rounded-lg border border-zinc-200">
-                      <span className="text-[9px] text-zinc-500 font-bold block uppercase tracking-wider">Largura da Peça:</span>
+                      <span className="text-[9px] text-zinc-500 font-bold block uppercase tracking-wider">Largura Aprox.:</span>
                       <strong className="text-zinc-950 font-bold text-xs block mt-0.5">{cert.widthCm} cm</strong>
                     </div>
                   )}

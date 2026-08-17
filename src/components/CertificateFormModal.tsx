@@ -602,7 +602,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
               {/* d) Largura da Peça (cm) */}
               <div className="flex flex-col justify-between h-full space-y-1">
                 <div>
-                  <label className="block text-zinc-400 text-xs font-medium mb-0.5">Largura da Peça (cm)</label>
+                  <label className="block text-zinc-400 text-xs font-medium mb-0.5">Largura Aprox. (cm)</label>
                   <div className="min-h-[24px] pb-0.5 text-[10px] text-zinc-500 font-normal">0 = não exibir</div>
                 </div>
                 <div className="mt-auto">

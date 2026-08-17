@@ -285,7 +285,7 @@ export default function App() {
 
   // Theme Switcher State
   const [theme, setTheme] = useState<'luxury-dark' | 'classic-light'>(() => {
-    return (localStorage.getItem('aureum_theme') as 'luxury-dark' | 'classic-light') || 'luxury-dark';
+    return (localStorage.getItem('aureum_theme') as 'luxury-dark' | 'classic-light') || 'classic-light';
   });
 
   const handleToggleTheme = () => {

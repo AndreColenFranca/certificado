@@ -142,38 +142,23 @@ app.use(async (req: any, res, next) => {
         email: email
       };
 
-      console.log('[AUTH] Token decoded - Email:', email, 'UserId:', userId);
-
       // Try to fetch user from auth_users table to get org_id
       if (supabase && email) {
         try {
-          console.log('[AUTH] Querying auth_users for email:', email);
           const { data: authUser, error } = await supabase
             .from('auth_users')
             .select('org_id, role, id, email')
             .eq('email', email.toLowerCase())
             .maybeSingle();
 
-          console.log('[AUTH] Query result:', { authUser, error: error?.message, hasData: !!authUser });
-          if (authUser) console.log('[AUTH] Full user data:', JSON.stringify(authUser));
-
           if (authUser) {
             req.user.org_id = authUser.org_id || DEFAULT_ORG_ID;
             req.user.role = authUser.role || 'user';
-            console.log('[AUTH] User found - org_id:', req.user.org_id, 'role:', req.user.role);
-          } else if (error) {
-            console.error('[AUTH] Lookup error:', error.message, 'for email:', email);
-          } else {
-            console.log('[AUTH] User not found in auth_users for email:', email);
           }
         } catch (e) {
-          console.error('[AUTH] Query failed:', e instanceof Error ? e.message : String(e), 'for email:', email);
+          // Silent fail - use defaults
         }
-      } else {
-        console.log('[AUTH] Skipped auth_users lookup - supabase:', !!supabase, 'email:', email);
       }
-
-      console.log('[AUTH] Final user object:', req.user);
     } catch (e) {
       req.user = { org_id: DEFAULT_ORG_ID };
     }

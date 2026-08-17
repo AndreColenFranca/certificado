@@ -13,7 +13,6 @@ import { PrintCertificateModal } from './components/PrintCertificateModal';
 import { QRScannerModal } from './components/QRScannerModal';
 import { MaintenanceModal } from './components/MaintenanceModal';
 import { OwnershipTransferModal } from './components/OwnershipTransferModal';
-import { AIGemologistAssistant } from './components/AIGemologistAssistant';
 import { CompanyLogoModal } from './components/CompanyLogoModal';
 import { DeleteConfirmModal } from './components/DeleteConfirmModal';
 import { JewelryCustomerLinkModal } from './components/JewelryCustomerLinkModal';
@@ -269,9 +268,6 @@ export default function App() {
 
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [transferTargetCert, setTransferTargetCert] = useState<JewelryCertificate | null>(null);
-
-  const [isAIGemologistOpen, setIsAIGemologistOpen] = useState(false);
-  const [aiTargetCert, setAiTargetCert] = useState<JewelryCertificate | null>(null);
 
   // Delete modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -1201,10 +1197,6 @@ export default function App() {
               setTransferTargetCert(c);
               setIsTransferModalOpen(true);
             }}
-            onOpenAIGemologist={(c) => {
-              setAiTargetCert(c);
-              setIsAIGemologistOpen(true);
-            }}
             onDeleteCertificate={onRequestDeleteCertificate}
             onEditCertificate={(c) => {
               setEditingCert(c);
@@ -1420,12 +1412,6 @@ export default function App() {
         cert={transferTargetCert || selectedCert}
         customers={customers}
         onTransferOwner={handleTransferOwner}
-      />
-
-      <AIGemologistAssistant
-        isOpen={isAIGemologistOpen}
-        onClose={() => setIsAIGemologistOpen(false)}
-        cert={aiTargetCert || selectedCert}
       />
 
       <JewelryCustomerLinkModal

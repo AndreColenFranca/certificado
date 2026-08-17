@@ -220,8 +220,6 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   const [warrantyTerms, setWarrantyTerms] = useState(initialCert?.warranty_terms || initialCert?.warrantyTerms || 'Garantia Vitalícia cobrindo autenticidade do ouro e gemas naturais.');
   const [estimatedValueBRL, setEstimatedValueBRL] = useState<number>(initialCert?.estimated_value_brl ?? initialCert?.estimatedValueBRL ?? '');
 
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-
   // Sync state if options change or initialCert changes
   useEffect(() => {
     const purityValue = initialCert?.metal_purity || initialCert?.metalPurity;
@@ -347,37 +345,6 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   };
 
   // AI Description Generator (Gemini)
-  const handleGenerateAIHelper = async () => {
-    setIsGeneratingAI(true);
-    try {
-      const response = await fetch('/api/gemini/analyze-jewel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          metalPurity,
-          metalColor,
-          stones: hasStones ? stones : [],
-          collection
-        })
-      });
-
-      const res = await response.json();
-      if (res.success && res.data) {
-        if (res.data.marketingHighlight) {
-          setCollection(`${collection} - ${res.data.marketingHighlight}`);
-        }
-        if (res.data.description) {
-          setWarrantyTerms(`[Laudo Pericial IA]: ${res.data.description}\n\n${warrantyTerms}`);
-        }
-      }
-    } catch (e) {
-      console.error('Error generating AI text:', e);
-    } finally {
-      setIsGeneratingAI(false);
-    }
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -474,26 +441,6 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
         {/* Scrollable Form Body */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 text-xs text-zinc-200">
           
-          {/* AI Assist Button */}
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-6 h-6 text-amber-400 shrink-0" />
-              <div>
-                <span className="font-bold text-amber-200 block text-sm">Assistente Gemólogo Gemini IA</span>
-                <span className="text-zinc-400 text-xs">Gere descrições técnicas e laudos de joalheria automaticamente com base nos metais e gemas selecionados.</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleGenerateAIHelper}
-              disabled={isGeneratingAI}
-              className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-zinc-950 font-bold rounded-xl shrink-0 transition-all shadow-md text-xs disabled:opacity-50"
-            >
-              {isGeneratingAI ? 'Analisando Joia...' : 'Preencher com IA'}
-            </button>
-          </div>
-
           {/* Section 1: Basic Information */}
           <div className="space-y-4">
             <h3 className="text-amber-300 font-bold uppercase tracking-wider text-[11px]">

@@ -244,27 +244,22 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             )}
           </div>
 
-          {/* E-mail */}
+          {/* E-mail (Read-only - identidade do usuário) */}
           <div>
             <label className="block text-xs font-semibold text-amber-200 mb-1 flex items-center gap-1.5">
               <Mail className="w-3.5 h-3.5 text-amber-400" />
-              <span>E-mail de Contato *</span>
+              <span>E-mail de Contato (Não editável) *</span>
             </label>
             <input
               type="email"
               value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
-              }}
+              disabled
+              readOnly
               placeholder="cliente@exemplo.com.br"
-              className={`w-full px-3.5 py-2.5 bg-zinc-950 border rounded-xl text-sm text-amber-100 placeholder-zinc-600 focus:outline-none focus:ring-1 transition-all ${
-                errors.email 
-                  ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/50' 
-                  : 'border-zinc-800 focus:border-amber-500/80 focus:ring-amber-500/50'
-              }`}
+              className={`w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-700 rounded-xl text-sm text-zinc-400 placeholder-zinc-600 cursor-not-allowed opacity-60`}
+              title="Email não pode ser alterado após cadastro (é a identidade do usuário)"
             />
-            {errors.email && <p className="text-xs text-rose-400 mt-1">{errors.email}</p>}
+            <p className="text-[11px] text-amber-300/80 mt-1">⚠️ Email é a identidade do usuário e não pode ser alterado por motivos de segurança.</p>
           </div>
 
           {/* Senha */}

@@ -115,9 +115,11 @@ export const SupabaseLoginView = ({
             <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
               {companyName || 'Maison Lumière'}
             </h1>
-            <p className="text-sm opacity-60">
-              {isSignUp ? 'Crie sua conta' : 'Autenticação Supabase'}
-            </p>
+            {isSignUp && (
+              <p className="text-sm opacity-60">
+                Crie sua conta
+              </p>
+            )}
           </div>
 
           {/* Error Message */}

@@ -351,6 +351,20 @@ export default function App() {
     }
   }, [selectedCert, viewMode, publicViewTab]);
 
+  // Reset notFoundQuery when certificates are loaded and cert exists
+  useEffect(() => {
+    if (notFoundQuery && certificates.length > 0) {
+      const found = findCertificateByQuery(certificates, notFoundQuery);
+      if (found) {
+        setSelectedCert(found);
+        setNotFoundQuery(null);
+        if (viewMode !== 'public-passport' && viewMode !== 'public-certificate') {
+          navigateToView('public-passport');
+        }
+      }
+    }
+  }, [certificates, notFoundQuery, viewMode]);
+
   // Ensure public certificate view is active when requested via URL parameter
   useEffect(() => {
     if (selectedCert && (window.location.search.includes('type=certificate') || window.location.search.includes('doc=certificate'))) {

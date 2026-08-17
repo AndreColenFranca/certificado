@@ -1239,7 +1239,6 @@ app.post('/api/customers', async (req, res) => {
     }
 
     // 2. Create in Supabase Auth (OBRIGATÓRIO)
-    console.log(`[CUSTOMER] Criando Supabase Auth para ${cleanEmail}...`);
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: cleanEmail,
       password: password,
@@ -1252,12 +1251,10 @@ app.post('/api/customers', async (req, res) => {
     });
 
     if (authError || !authData?.user) {
-      console.error(`[CUSTOMER] ❌ Falha Supabase Auth:`, authError?.message);
       // Rollback: delete from customers if auth fails
       await supabase.from('customers').delete().eq('customer_code', newCust.id);
       return res.status(400).json({ success: false, message: `Autenticação obrigatória falhou: ${authError?.message || 'Desconhecido'}` });
     }
-    console.log(`[CUSTOMER] ✅ Auth OK: ${authData.user.id}`);
 
     // 3. Create profile in auth_users table
     const { error: profileError } = await supabase.from('auth_users').insert({
@@ -1271,7 +1268,6 @@ app.post('/api/customers', async (req, res) => {
     });
 
     if (profileError) {
-      console.error(`[CUSTOMER] Erro ao criar perfil auth_users:`, profileError.message);
       return res.status(400).json({ success: false, message: `Falha ao criar perfil: ${profileError.message}` });
     }
 
@@ -1403,8 +1399,6 @@ app.delete('/api/customers/:id', async (req, res) => {
     const id = req.params.id;
     const userOrgId = (req as any).user?.org_id;
 
-    console.log(`[DELETE-CUSTOMER] Tentando deletar ID: ${id}, userOrgId: ${userOrgId}`);
-
     if (!userOrgId) {
       return res.status(401).json({ success: false, message: 'Usuário não autenticado' });
     }
@@ -1442,59 +1436,37 @@ app.delete('/api/customers/:id', async (req, res) => {
       }
     }
 
-    console.log(`[DELETE-CUSTOMER] Cliente encontrado:`, !!targetCust, 'erro:', fetchError?.message);
-
     if (fetchError || !targetCust) {
       return res.status(404).json({ success: false, message: 'Cliente não encontrado' });
     }
 
     // 2. Delete from Supabase Auth and auth_users table
-    console.log(`[CUSTOMER-DELETE] Deletando usuário de autenticação para email: ${targetCust.email}`);
-
     // Delete from auth_users table FIRST (easier, less risky)
     try {
-      const { error: authUsersDeleteError } = await supabase
+      await supabase
         .from('auth_users')
         .delete()
         .eq('email', targetCust.email);
-
-      if (authUsersDeleteError) {
-        console.error(`[CUSTOMER-DELETE] Erro ao deletar de auth_users:`, authUsersDeleteError.message);
-      } else {
-        console.log(`[CUSTOMER-DELETE] ✅ Deletado de auth_users para email: ${targetCust.email}`);
-      }
     } catch (authUsersErr: any) {
-      console.error(`[CUSTOMER-DELETE] Exceção ao deletar de auth_users:`, authUsersErr.message);
+      // Silent fail
     }
 
     // Then try to delete from Supabase Auth
     try {
-      const { data: authUsers, error: listErr } = await supabase.auth.admin.listUsers();
+      const { data: authUsers } = await supabase.auth.admin.listUsers();
 
-      if (listErr) {
-        console.error(`[CUSTOMER-DELETE] Erro ao listar usuários auth:`, listErr.message);
-      } else {
-        const authUser = authUsers?.users?.find((u: any) => u.email?.toLowerCase() === targetCust.email?.toLowerCase());
+      if (authUsers) {
+        const authUser = authUsers.users?.find((u: any) => u.email?.toLowerCase() === targetCust.email?.toLowerCase());
 
         if (authUser) {
-          console.log(`[CUSTOMER-DELETE] Encontrado usuário auth com ID: ${authUser.id}, email: ${authUser.email}`);
-
-          const { error: authDeleteError } = await supabase.auth.admin.deleteUser(authUser.id);
-          if (authDeleteError) {
-            console.error(`[CUSTOMER-DELETE] Erro ao deletar Supabase Auth:`, authDeleteError.message);
-          } else {
-            console.log(`[CUSTOMER-DELETE] ✅ Deletado de Supabase Auth: ${authUser.id}`);
-          }
-        } else {
-          console.log(`[CUSTOMER-DELETE] ⚠️ Nenhum usuário auth encontrado para email: ${targetCust.email}`);
+          await supabase.auth.admin.deleteUser(authUser.id);
         }
       }
     } catch (authErr: any) {
-      console.error(`[CUSTOMER-DELETE] Exceção ao processar Supabase Auth:`, authErr.message);
+      // Silent fail
     }
 
     // 3. Delete from customers table using UUID (double-check org_id for security)
-    console.log(`[CUSTOMER-DELETE] Deletando cliente da tabela customers com UUID: ${targetCust.id}`);
     const { error: deleteError } = await supabase
       .from('customers')
       .delete()
@@ -1502,14 +1474,11 @@ app.delete('/api/customers/:id', async (req, res) => {
       .eq('org_id', userOrgId);
 
     if (deleteError) {
-      console.error(`[CUSTOMER-DELETE] Erro ao deletar customer:`, deleteError.message);
       return res.status(400).json({ success: false, message: `Falha ao deletar cliente: ${deleteError.message}` });
     }
-    console.log(`[CUSTOMER-DELETE] ✅ Deletado de customers: ${targetCust.id}`);
 
     res.json({ success: true, message: 'Cliente removido com sucesso (autenticação e dados)' });
   } catch (error: any) {
-    console.error(`[CUSTOMER-DELETE] Erro:`, error.message);
     res.status(400).json({ success: false, message: error.message || 'Erro ao remover cliente' });
   }
 });

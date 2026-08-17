@@ -22,7 +22,8 @@ import {
   createCustomer,
   updateCustomer,
   deleteCustomer,
-  transformCertificateFromDb
+  transformCertificateFromDb,
+  createOrUpdateAuthUser
 } from '../server-helpers/supabaseHelpers.js';
 import {
   getAttributes,
@@ -1272,7 +1273,7 @@ app.post('/api/customers', async (req, res) => {
     newCust.updatedAt = now;
 
     // Try to save to Supabase with org_id from JWT
-    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const orgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
     const supabaseCreateResult = await createCustomer(supabase, {
       customer_code: newCust.id,
       name: newCust.name,
@@ -1280,16 +1281,19 @@ app.post('/api/customers', async (req, res) => {
       email: newCust.email,
       phone: newCust.phone || '',
       notes: newCust.notes || '',
-      org_id: userOrgId
+      org_id: orgId
     });
 
     if (!supabaseCreateResult.success) {
       return res.status(400).json({ success: false, message: supabaseCreateResult.error });
     }
 
+    // Criar/atualizar auth_user no Supabase
+    await createOrUpdateAuthUser(supabase, newCust.id, cleanEmail, newCust.name, newCust.cpf, orgId);
+
     // Sync to usersDb so auth and user management endpoints see the customer user
     if (cleanEmail) {
-      const existingUserIdx = usersDb.findIndex(u => u.email.toLowerCase() === cleanEmail);
+      const existingUserIdx = usersDb.findIndex((u: any) => u.email.toLowerCase() === cleanEmail);
       const userObj = {
         id: `user-customer-${newCust.id}`,
         name: newCust.name,
@@ -1326,6 +1330,7 @@ app.put('/api/customers/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Cliente não encontrado' });
     }
 
+    const oldCust = customersDb[index];
     const newCust: Customer = req.body;
     const cleanEmail = (newCust.email || '').trim().toLowerCase();
 
@@ -1355,14 +1360,18 @@ app.put('/api/customers/:id', async (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
-    // Try to update in Supabase
-    await updateCustomer(supabase, id, updatedCust);
+    // Try to update in Supabase (passa email antigo para sincronizar auth_users)
+    await updateCustomer(supabase, id, updatedCust, oldCust.email);
+
+    // Criar/atualizar auth_user com dados novos
+    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    await createOrUpdateAuthUser(supabase, id, cleanEmail, updatedCust.name, updatedCust.cpf, userOrgId);
 
     customersDb[index] = updatedCust;
 
     // Sync to usersDb
     if (cleanEmail) {
-      const existingUserIdx = usersDb.findIndex(u => u.email.toLowerCase() === cleanEmail || u.customerId === id);
+      const existingUserIdx = usersDb.findIndex((u: any) => u.email.toLowerCase() === cleanEmail || u.customerId === id);
       const userObj = {
         id: `user-customer-${updatedCust.id}`,
         name: updatedCust.name,

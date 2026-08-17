@@ -14,7 +14,6 @@ import {
   LogOut,
   Crown,
   UserCheck,
-  QrCode,
   ArrowRightLeft,
   FileText,
   ChevronDown,
@@ -78,17 +77,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           isActive: currentMode === 'customer-portal',
           badge: null
         },
-        {
-          id: 'scanner',
-          label: 'Escanear QR Code',
-          icon: QrCode,
-          onClick: () => {
-            onSelectMode('scanner');
-            if (onCloseMobile) onCloseMobile();
-          },
-          isActive: currentMode === 'scanner',
-          badge: null
-        }
       ]
     : [
         {

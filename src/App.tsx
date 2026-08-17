@@ -10,7 +10,6 @@ import { CertificateFormModal } from './components/CertificateFormModal';
 import { CustomerFormModal } from './components/CustomerFormModal';
 import { CustomerDeleteModal } from './components/CustomerDeleteModal';
 import { PrintCertificateModal } from './components/PrintCertificateModal';
-import { QRScannerModal } from './components/QRScannerModal';
 import { MaintenanceModal } from './components/MaintenanceModal';
 import { OwnershipTransferModal } from './components/OwnershipTransferModal';
 import { CompanyLogoModal } from './components/CompanyLogoModal';
@@ -27,7 +26,7 @@ import { supabaseAuth } from './utils/supabaseAuth';
 import { extractCertIdFromInput, findCertificateByQuery, findCertificatesByQuery } from './utils/certUtils';
 import { isRootCert } from './utils/certHierarchy';
 import { fetchWithAuth } from './utils/fetchWithAuth';
-import { ShieldAlert, Search, QrCode } from 'lucide-react';
+import { ShieldAlert, Search } from 'lucide-react';
 
 export const getCertIdFromUrl = (): string | null => {
   if (typeof window === 'undefined') return null;
@@ -83,7 +82,7 @@ export default function App() {
     }
     // Tenta recuperar o viewMode salvo
     const storedViewMode = localStorage.getItem('aureum_view_mode');
-    if (storedViewMode && ['jeweler-dashboard', 'customers', 'customer-portal', 'attributes', 'public-passport', 'public-certificate', 'scanner', 'create-new'].includes(storedViewMode)) {
+    if (storedViewMode && ['jeweler-dashboard', 'customers', 'customer-portal', 'attributes', 'public-passport', 'public-certificate', 'create-new'].includes(storedViewMode)) {
       return storedViewMode as ViewMode;
     }
     const storedUser = localStorage.getItem('aureum_logged_user');
@@ -260,8 +259,6 @@ export default function App() {
 
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [printTargetCert, setPrintTargetCert] = useState<JewelryCertificate | null>(null);
-
-  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
 
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
   const [maintenanceTargetCert, setMaintenanceTargetCert] = useState<JewelryCertificate | null>(null);
@@ -508,8 +505,6 @@ export default function App() {
       setEditingCert(null);
       setSelectedCustomerForNewCert(null);
       setIsFormModalOpen(true);
-    } else if (mode === 'scanner') {
-      setIsScannerModalOpen(true);
     } else if (mode === 'public-passport') {
       // Mostrar tela de busca ao clicar em Passaporte Público
       setSelectedCert(null as any);
@@ -1085,13 +1080,6 @@ export default function App() {
                 >
                   Voltar ao Início
                 </button>
-                <button
-                  onClick={() => setIsScannerModalOpen(true)}
-                  className="px-4 py-2 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <QrCode className="w-4 h-4 text-amber-400" />
-                  <span>Escanear Outro QR Code</span>
-                </button>
               </div>
             </div>
           </div>
@@ -1205,7 +1193,7 @@ export default function App() {
           />
         )}
 
-        {(viewMode === 'customer-portal' || (currentUser?.role === 'customer' && viewMode !== 'public-passport' && viewMode !== 'public-certificate' && viewMode !== 'scanner')) && currentUser && (
+        {(viewMode === 'customer-portal' || (currentUser?.role === 'customer' && viewMode !== 'public-passport' && viewMode !== 'public-certificate')) && currentUser && (
           <CustomerPortalView
             currentUser={currentUser}
             certificates={certificates}
@@ -1214,7 +1202,6 @@ export default function App() {
               setPrintTargetCert(c);
               setIsPrintModalOpen(true);
             }}
-            onOpenScanner={() => setIsScannerModalOpen(true)}
             companyName={companyName}
             companyLogoUrl={companyLogoUrl}
           />
@@ -1390,13 +1377,6 @@ export default function App() {
           setPrintTargetCert(null);
         }}
         cert={printTargetCert || selectedCert || (certificates.length > 0 ? certificates[0] : null)}
-      />
-
-      <QRScannerModal
-        isOpen={isScannerModalOpen}
-        onClose={() => setIsScannerModalOpen(false)}
-        certificates={certificates}
-        onSelectCert={handleSelectCert}
       />
 
       <MaintenanceModal

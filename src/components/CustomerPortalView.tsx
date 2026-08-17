@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { JewelryCertificate, AppUser } from '../types';
-import { 
-  ShieldCheck, 
-  Award, 
-  Search, 
-  Printer, 
+import {
+  ShieldCheck,
+  Award,
+  Search,
+  Printer,
   Download,
-  QrCode, 
-  Sparkles, 
-  Gem, 
-  CheckCircle2, 
-  Eye, 
+  Sparkles,
+  Gem,
+  CheckCircle2,
+  Eye,
   Layers,
   Clock,
   UserCheck
@@ -23,7 +22,6 @@ interface CustomerPortalViewProps {
   certificates: JewelryCertificate[];
   onSelectCertificate: (cert: JewelryCertificate, tab?: 'photo-inspector' | 'specs' | 'history' | 'care') => void;
   onOpenPrintModal: (cert: JewelryCertificate) => void;
-  onOpenScanner: () => void;
   companyName: string;
   companyLogoUrl: string;
 }
@@ -33,7 +31,6 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
   certificates,
   onSelectCertificate,
   onOpenPrintModal,
-  onOpenScanner,
   companyName,
   companyLogoUrl
 }) => {
@@ -347,15 +344,6 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
             )}
           </p>
 
-          <div className="pt-2">
-            <button
-              onClick={onOpenScanner}
-              className="px-5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-xs font-bold transition-all inline-flex items-center gap-2 cursor-pointer"
-            >
-              <QrCode className="w-4 h-4 text-amber-400" />
-              <span>Escanear QR Code de uma Peça</span>
-            </button>
-          </div>
         </div>
       )}
 

@@ -161,7 +161,7 @@ export const Header: React.FC<HeaderProps> = ({
             
             {/* Debug Badge - Organization & User Info */}
             {currentUser && (
-              <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-zinc-800/80 border border-zinc-600/60 text-base text-zinc-200 whitespace-nowrap">
+              <div className="hidden sm:flex items-center gap-3 px-4 py-2.5 rounded-lg bg-zinc-800/80 border border-zinc-600/60 text-base text-zinc-200 whitespace-nowrap">
                 <Building2 className="w-5 h-5 text-zinc-400 shrink-0" />
                 <span className="font-medium" title={orgName || 'Org'}>
                   {orgName || 'Org'}

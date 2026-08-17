@@ -50,7 +50,7 @@ export const HighResPhotoInspector: React.FC<HighResPhotoInspectorProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-3.5 bg-zinc-900/90 border-b border-amber-900/30 text-xs">
         <div className="flex items-center gap-2 text-amber-300 font-semibold">
           <Sparkles className="w-4 h-4 text-amber-400" />
-          <span>Fotografia em Alta Resolução</span>
+          <span>Minha Joia</span>
           <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono text-[10px]">
             HD {selectedImageIndex + 1}/{photoList.length}
           </span>

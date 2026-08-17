@@ -4,19 +4,18 @@ import { JewelryCertificate, AppUser } from '../types';
 import { HighResPhotoInspector } from './HighResPhotoInspector';
 import { formatImageUrl } from '../utils/imageUtils';
 import { isCustomerLinkedToCertificate } from '../utils/customerUtils';
-import { 
-  ShieldCheck, 
-  Award, 
-  Calendar, 
-  User, 
-  Printer, 
+import {
+  ShieldCheck,
+  Award,
+  Calendar,
+  User,
+  Printer,
   Download,
-  Share2, 
-  Sparkles, 
-  Wrench, 
-  ArrowRightLeft, 
-  FileText, 
-  CheckCircle2, 
+  Sparkles,
+  Wrench,
+  ArrowRightLeft,
+  FileText,
+  CheckCircle2,
   ExternalLink,
   Layers,
   Scale,
@@ -59,9 +58,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
     if (initialTab && initialTab !== ('certificate' as any)) return initialTab;
     return 'photo-inspector';
   });
-  const [selectedGalleryImage, setSelectedGalleryImage] = useState<string>(cert.images[0] || '');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
-  const [shareCopied, setShareCopied] = useState<boolean>(false);
   const isLinked = isCustomerLinkedToCertificate(cert);
 
   // Synchronize activeTab if initialTab changes
@@ -93,7 +90,6 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
       }
     };
     generateQR();
-    setSelectedGalleryImage(cert.images[0] || '');
   }, [cert]);
 
   // Gold Purity calculation (% pure gold)
@@ -108,14 +104,6 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
     return purity;
   };
 
-  const handleShare = () => {
-    const shareUrl = `${window.location.origin}/cert/${encodeURIComponent(cert.id)}`;
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(shareUrl);
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 3000);
-    }
-  };
 
   const primaryStone = cert.stones && cert.stones.length > 0 ? cert.stones[0] : null;
 
@@ -239,15 +227,6 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
               </button>
 
               <div className="flex gap-2">
-                <button
-                  onClick={handleShare}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-amber-200 text-xs font-semibold rounded-xl border border-amber-900/40 transition-colors"
-                  id="btn-share-certificate"
-                >
-                  <Share2 className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{shareCopied ? 'Copiado!' : 'Compartilhar'}</span>
-                </button>
-
                 {currentUser && currentUser.role !== 'customer' && (
                   <button
                     onClick={() => onOpenTransferModal(cert)}
@@ -308,7 +287,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
           id="tab-photo-inspector"
         >
           <Sparkles className={`w-4 h-4 shrink-0 ${activeTab === 'photo-inspector' ? 'text-zinc-950' : 'text-amber-400'}`} />
-          <span>Fotografia em Alta Resolução</span>
+          <span>Minha Joia</span>
         </button>
 
         <button
@@ -321,7 +300,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
           id="tab-specs"
         >
           <Scale className={`w-4 h-4 shrink-0 ${activeTab === 'specs' ? 'text-zinc-950' : 'text-amber-400'}`} />
-          <span>Especificações Gemológicas</span>
+          <span>Detalhes da Joia</span>
         </button>
 
         <button
@@ -377,12 +356,12 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="bg-zinc-950 p-2.5 rounded-lg border border-zinc-800">
-                  <span className="text-zinc-500 text-[10px] block">Teor do Metal</span>
+                  <span className="text-zinc-500 text-[10px] block">Metal</span>
                   <span className="font-semibold text-amber-300">{cert.metalPurity}</span>
                 </div>
 
                 <div className="bg-zinc-950 p-2.5 rounded-lg border border-zinc-800">
-                  <span className="text-zinc-500 text-[10px] block">Peso Bruto</span>
+                  <span className="text-zinc-500 text-[10px] block">Peso Aprox.</span>
                   <span className="font-semibold text-amber-300">{cert.grossWeightGrams} g</span>
                 </div>
 
@@ -399,7 +378,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
                 </div>
 
                 <div className="bg-zinc-950 p-2.5 rounded-lg border border-zinc-800">
-                  <span className="text-zinc-500 text-[10px] block">Gemas Preciosas</span>
+                  <span className="text-zinc-500 text-[10px] block">Gemas</span>
                   <span className="font-semibold text-amber-300">
                     {cert.hasStones ? `${cert.stones.length} tipo(s)` : 'Sem Pedras'}
                   </span>
@@ -429,11 +408,8 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
             <div className="flex items-center justify-between">
               <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
                 <Scale className="w-5 h-5 text-amber-400" />
-                Análise Química e Teor do Metal
+                O Metal
               </h3>
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                Certificação Metallurgic ISO
-              </span>
             </div>
 
             {(() => {
@@ -441,18 +417,18 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
               return (
                 <div className={`grid ${hasWidth ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'} gap-4 pt-2`}>
                   <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-1">
-                    <span className="text-xs text-zinc-500">Teor do Metal</span>
+                    <span className="text-xs text-zinc-500">Metal</span>
                     <p className="text-base font-bold text-amber-300">{cert.metalPurity}</p>
                     <p className="text-[11px] text-zinc-400">{getGoldPurityPercentage(cert.metalPurity)}</p>
                   </div>
 
                   <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-1">
-                    <span className="text-xs text-zinc-500">Coloração da Liga</span>
+                    <span className="text-xs text-zinc-500">Cor</span>
                     <p className="text-base font-bold text-amber-300">{cert.metalColor}</p>
                   </div>
 
                   <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-1">
-                    <span className="text-xs text-zinc-500">Peso Bruto Total</span>
+                    <span className="text-xs text-zinc-500">Peso Aprox.</span>
                     <p className="text-base font-bold text-amber-300">{cert.grossWeightGrams} gramas</p>
                   </div>
 
@@ -464,7 +440,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
                   )}
 
                   <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-1">
-                    <span className="text-xs text-zinc-500">Técnica de Acabamento</span>
+                    <span className="text-xs text-zinc-500">Acabamento</span>
                     <p className="text-base font-bold text-amber-300">{cert.finish}</p>
                   </div>
                 </div>
@@ -476,7 +452,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
           <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
             <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
               <Gem className="w-5 h-5 text-amber-400" />
-              Relatório Gemológico das Pedras Preciosas
+              As Pedras
             </h3>
 
             {cert.hasStones && cert.stones.length > 0 ? (
@@ -486,9 +462,9 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
                     <tr className="border-b border-amber-900/40 text-amber-400 font-semibold uppercase tracking-wider bg-zinc-950/60">
                       <th className="p-3">Gema / Tipo</th>
                       <th className="p-3">Qtd</th>
-                      <th className="p-3">Quilates (Carats)</th>
-                      <th className="p-3">Lapidação / Formato</th>
-                      <th className="p-3">Cor / Graduação</th>
+                      <th className="p-3">Quilates Aprox.</th>
+                      <th className="p-3">Lapidação</th>
+                      <th className="p-3">Cor</th>
                       <th className="p-3">Tipo de Cravação</th>
                     </tr>
                   </thead>

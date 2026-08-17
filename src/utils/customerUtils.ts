@@ -79,9 +79,6 @@ export const formatUserGreeting = (user?: { name?: string; email?: string } | nu
       .map(w => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
 
-    if (email) {
-      return `${firstTwoWords} (${email})`;
-    }
     return firstTwoWords;
   }
 

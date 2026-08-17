@@ -832,7 +832,7 @@ export default function App() {
       setCertificates(prev => [childCert, ...prev]);
 
       try {
-        await fetch('/api/certificates', {
+        await fetchWithAuth('/api/certificates', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(childCert)

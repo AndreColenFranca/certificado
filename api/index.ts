@@ -1336,7 +1336,7 @@ app.delete('/api/customers/:id', async (req, res) => {
     const { data: targetCust, error: fetchError } = await supabase
       .from('customers')
       .select('*')
-      .eq('customer_code', id)
+      .eq('id', id)
       .single();
 
     if (fetchError || !targetCust) {

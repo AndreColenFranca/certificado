@@ -88,7 +88,7 @@ export const CompanyLogoModal: React.FC<CompanyLogoModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const [name, setName] = useState(companyName || 'Maison Lumière Joias');
+  const [name, setName] = useState(companyName || 'Estilo Raro Joias');
   const [logoUrl, setLogoUrl] = useState(companyLogoUrl || LUXURY_LOGO_PRESETS[0].url);
   const [inputUrl, setInputUrl] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);

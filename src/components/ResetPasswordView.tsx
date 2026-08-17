@@ -99,7 +99,7 @@ export const ResetPasswordView = ({
               )}
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-              {companyName || 'Maison Lumière'}
+              {companyName || 'Estilo Raro'}
             </h1>
             <p className="text-sm opacity-60">
               Redefinir Senha

@@ -71,7 +71,7 @@ export interface JewelryCertificate {
   title: string; // e.g. "Anel Solitário Étoile Royale"
   collection: string; // e.g. "High Jewelry Solitaires"
   model: string; // e.g. "Étoile-V18"
-  manufacturer: string; // e.g. "Maison Lumière Joias"
+  manufacturer: string; // e.g. "Estilo Raro Joias"
   manufacturerLogoUrl?: string;
   manufacturingDate: string; // "YYYY-MM-DD"
   issueDate: string; // "YYYY-MM-DD"

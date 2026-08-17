@@ -33,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({
   activeCertId,
   totalCertificatesCount,
   totalCustomersCount,
-  companyName = 'Maison Lumière Joias',
+  companyName = 'Estilo Raro Joias',
   companyLogoUrl,
   onOpenCompanyLogoModal,
   onOpenQueryCustomersModal,

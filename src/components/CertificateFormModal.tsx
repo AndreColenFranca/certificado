@@ -83,7 +83,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const defaultCompanyName = 'Maison Lumière Joias';
+  const defaultCompanyName = 'Estilo Raro Joias';
   const defaultCompanyLogo = '';
 
   const [purityOptions, setPurityOptions] = useState<string[]>(DEFAULT_PURITIES);

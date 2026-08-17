@@ -242,7 +242,7 @@ export default function App() {
   };
 
   // Company Brand State
-  const [companyName, setCompanyName] = useState<string>('Maison Lumière Joias');
+  const [companyName, setCompanyName] = useState<string>('Estilo Raro Joias');
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string>('https://drive.google.com/file/d/1EzDvqFIdNjWtIU4KIxYQtZ3RYQI6BnrR/view?usp=sharing');
 
   // Certificate Modals state
@@ -682,7 +682,7 @@ export default function App() {
       id: `m-tr-${Date.now()}`,
       date: new Date().toISOString().split('T')[0],
       type: 'Transferência de Posse' as const,
-      performer: companyName || 'Maison Lumière',
+      performer: companyName || 'Estilo Raro',
       notes: `Transferência de titularidade registrada de "${target.currentOwnerName || 'Estoque/Anônimo'}" para "${newOwnerName}".`,
       customerId: ownerId,
       customerName: newOwnerName,
@@ -734,7 +734,7 @@ export default function App() {
       id: `m-un-${Date.now()}`,
       date: new Date().toISOString().split('T')[0],
       type: 'Transferência de Posse' as const,
-      performer: companyName || 'Maison Lumière',
+      performer: companyName || 'Estilo Raro',
       notes: `Desvinculação de posse registrada: a joia "${target.title}" foi desvinculada do cliente "${previousOwner}" e retornou ao acervo da joalheria.`,
     };
 
@@ -795,7 +795,7 @@ export default function App() {
         id: `m-link-${Date.now()}`,
         date: issueDateStr,
         type: 'Emissão de Certificado' as const,
-        performer: companyName || 'Maison Lumière',
+        performer: companyName || 'Estilo Raro',
         notes: notes || `Emissão de passaporte digital (Joia Filha) para "${target.title}" adquirida por "${customer.name}".`,
         customerId: customer.id,
         customerName: customer.name,
@@ -837,7 +837,7 @@ export default function App() {
             certId: childCert.id,
             maintenanceDate: issueDateStr,
             maintenanceType: 'Emissão de Certificado',
-            performer: companyName || 'Maison Lumière',
+            performer: companyName || 'Estilo Raro',
             notes: notes || `Emissão de passaporte digital (Joia Filha) para "${childCert.title}" adquirida por "${customer.name}".`,
             customerName: customer.name,
             customerCpf: String(customer.cpf),
@@ -855,7 +855,7 @@ export default function App() {
         id: `m-link-${Date.now()}`,
         date: issueDateStr,
         type: 'Emissão de Certificado' as const,
-        performer: companyName || 'Maison Lumière',
+        performer: companyName || 'Estilo Raro',
         notes: notes || `Vínculo de aquisição/titularidade registrado com sucesso para o cliente "${customer.name}".`,
         customerId: customer.id,
         customerName: customer.name,
@@ -894,7 +894,7 @@ export default function App() {
             certId: certId,
             maintenanceDate: issueDateStr,
             maintenanceType: 'Emissão de Certificado',
-            performer: companyName || 'Maison Lumière',
+            performer: companyName || 'Estilo Raro',
             notes: notes || `Vínculo de aquisição/titularidade registrado com sucesso para o cliente "${customer.name}".`,
             customerName: customer.name,
             customerCpf: String(customer.cpf),

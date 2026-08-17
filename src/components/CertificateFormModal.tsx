@@ -204,15 +204,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   const [finish, setFinish] = useState<string>(initialCert?.finish || finishOptions[0] || 'Polido Espelhado');
 
   const [hasStones, setHasStones] = useState<boolean>(initialCert?.has_stones ?? initialCert?.hasStones ?? true);
-  const [stones, setStones] = useState<StoneDetail[]>(initialCert?.stones || [
-    {
-      id: 'st-new-1',
-      type: stoneTypeOptions[0] || 'Diamante Natural',
-      quantity: 1,
-      caratWeight: 1.0,
-      settingType: 'Garra'
-    }
-  ]);
+  const [stones, setStones] = useState<StoneDetail[]>(initialCert?.stones && initialCert.stones.length > 0 ? initialCert.stones : []);
 
   const [images, setImages] = useState<string[]>(
     initialCert?.images && initialCert.images.length > 0 

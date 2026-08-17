@@ -673,11 +673,54 @@ app.post('/api/auth/create-root-user', async (req, res) => {
 
 // --- Auth & User Management API ---
 // Login Endpoint (handles both /api/login and /api/auth/login)
-const handleLoginRequest = (req: any, res: any) => {
+const handleLoginRequest = async (req: any, res: any) => {
   try {
     const { email = '', password = '', localUsers = [], localCustomers = [] } = req.body || {};
     const rawInput = String(email || '').trim();
     const rawPass = String(password || '').trim();
+
+    // 0. FIRST: Try Supabase Auth if email looks valid
+    if (supabase && rawInput.includes('@') && rawPass) {
+      try {
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email: rawInput,
+          password: rawPass
+        });
+
+        if (!authError && authData?.user) {
+          const { data: userProfile } = await supabase
+            .from('auth_users')
+            .select('*')
+            .eq('id', authData.user.id)
+            .single();
+
+          if (userProfile) {
+            const { data: orgData } = await supabase
+              .from('organizations')
+              .select('*')
+              .eq('id', userProfile.org_id)
+              .single();
+
+            return res.json({
+              success: true,
+              message: 'Autenticação realizada com sucesso',
+              user: {
+                id: userProfile.id,
+                name: userProfile.name,
+                email: userProfile.email,
+                role: userProfile.role,
+                orgId: userProfile.org_id,
+                orgName: orgData?.display_name || orgData?.name || 'Organização',
+                isRoot: userProfile.role === 'root',
+                createdAt: userProfile.created_at
+              }
+            });
+          }
+        }
+      } catch (e: any) {
+        console.log('[LOGIN] Supabase auth falhou, tentando fallback local:', e.message);
+      }
+    }
 
     // Strip accents and normalize
     const cleanInput = rawInput

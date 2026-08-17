@@ -77,10 +77,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
           {/* Top Logo and Title */}
           <div className="text-center space-y-3 mb-8">
             <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 mb-2 shadow-inner">
-              <img 
-                src={companyLogoUrl} 
+              <img
+                src={companyLogoUrl}
                 alt={companyName}
-                className="w-12 h-12 rounded-xl object-contain shadow-md"
+                className="w-16 h-16 rounded-xl object-contain shadow-md"
                 onError={(e) => {
                   (e.target as HTMLElement).style.display = 'none';
                 }}

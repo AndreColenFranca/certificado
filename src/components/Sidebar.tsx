@@ -290,7 +290,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               )}
               <div className="min-w-0 flex-1">
                 <span className="block font-bold text-xs text-amber-100 truncate">{formatUserGreeting(currentUser)}</span>
-                <span className="block text-[10px] text-zinc-400 truncate">{currentUser.email}</span>
               </div>
             </div>
 

@@ -83,14 +83,11 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
               Ateliê & Fabricante
             </span>
-            <span className="text-xs text-zinc-400">Cadastro de Joias Pai / Matrizes</span>
+            <span className="text-xs text-zinc-400">Cadastro de Joias</span>
           </div>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold text-amber-100 mt-1">
-            Cadastro e Acervo de Joias (Joias Pai / Raiz)
+            Cadastro e Acervo de Joias
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
-            Exibindo os modelos originais do acervo. As Joias Pai são a base para a emissão das Joias Filhas dos clientes.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -100,7 +97,7 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
             id="btn-create-new-cert"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>Cadastrar Nova Joia Pai</span>
+            <span>Cadastrar Joia</span>
           </button>
         </div>
       </div>
@@ -110,20 +107,18 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
         
         <div className="bg-zinc-900/80 border border-amber-900/40 p-5 rounded-2xl space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-zinc-400 font-medium">Modelos Pai / Raiz</span>
+            <span className="text-xs text-zinc-400 font-medium">Peças</span>
             <Award className="w-5 h-5 text-amber-400" />
           </div>
           <p className="text-2xl font-bold font-mono text-amber-100">{totalRootCertificates}</p>
-          <span className="text-[10px] text-zinc-500">1 Joia Pai principal por modelo</span>
         </div>
 
         <div className="bg-zinc-900/80 border border-amber-900/40 p-5 rounded-2xl space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-zinc-400 font-medium">Joias Filhas Emitidas</span>
+            <span className="text-xs text-zinc-400 font-medium">Certificados Emitidos</span>
             <Users className="w-5 h-5 text-amber-400" />
           </div>
           <p className="text-2xl font-bold font-mono text-amber-300">{totalChildIssued}</p>
-          <span className="text-[10px] text-zinc-500">Passaportes vinculados a clientes</span>
         </div>
 
         <div className="bg-zinc-900/80 border border-amber-900/40 p-5 rounded-2xl space-y-1">
@@ -134,7 +129,6 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
           <p className="text-2xl font-bold font-mono text-emerald-300">
             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(totalValueBRL)}
           </p>
-          <span className="text-[10px] text-zinc-500">Valor total estimado no acervo</span>
         </div>
 
         <div className="bg-zinc-900/80 border border-amber-900/40 p-5 rounded-2xl space-y-1">
@@ -143,7 +137,6 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
             <Layers className="w-5 h-5 text-amber-400" />
           </div>
           <p className="text-2xl font-bold font-mono text-amber-300">{collectionsList.length}</p>
-          <span className="text-[10px] text-zinc-500">Linhas de catálogo registradas</span>
         </div>
 
       </div>

@@ -1484,9 +1484,10 @@ app.get('/api/certificates', async (req, res) => {
 app.get('/api/certificates/:id', async (req, res) => {
   try {
     const query = req.params.id.trim().toUpperCase();
+    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
 
     // Try Supabase first - search by cert_code, serial_number, or id
-    const result = await getCertificateByQuery(supabase, query);
+    const result = await getCertificateByQuery(supabase, query, userOrgId);
     if (result.success && result.data) {
       const transformedData = transformCertificateFromDb(result.data);
       return res.json({ success: true, data: transformedData });
@@ -1597,9 +1598,10 @@ app.post('/api/certificates', async (req, res) => {
 app.put('/api/certificates/:id', async (req, res) => {
   try {
     const id = req.params.id;
+    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
 
     // Get existing certificate from Supabase
-    const getCertResult = await getCertificateById(supabase, id);
+    const getCertResult = await getCertificateById(supabase, id, userOrgId);
     if (!getCertResult.success || !getCertResult.data) {
       return res.status(404).json({ success: false, message: 'Certificado não encontrado' });
     }
@@ -1628,9 +1630,10 @@ app.put('/api/certificates/:id', async (req, res) => {
 app.delete('/api/certificates/:id', async (req, res) => {
   try {
     const id = req.params.id;
+    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
 
     // Get certificate from Supabase
-    const getCertResult = await getCertificateById(supabase, id);
+    const getCertResult = await getCertificateById(supabase, id, userOrgId);
     if (!getCertResult.success || !getCertResult.data) {
       return res.status(404).json({ success: false, message: 'Certificado não encontrado' });
     }
@@ -1653,6 +1656,27 @@ app.delete('/api/certificates/:id', async (req, res) => {
         success: false,
         message: `Exclusão Proibida: A joia "${cert.title}" possui um cliente vinculado (${ownerName || 'Cliente Cadastrado'}).`
       });
+    }
+
+    // Check if this is a Root certificate with child certificates
+    const isRoot = !cert.parentCertId && !cert.ownerId && !cert.currentOwnerName;
+    if (isRoot) {
+      // Get all certificates to check for children
+      const allCertsResult = await getCertificates(supabase);
+      if (allCertsResult.success && allCertsResult.data) {
+        const allCerts = allCertsResult.data;
+        const childCerts = allCerts.filter(c => {
+          if (c.parentCertId === id) return true;
+          return c.title.trim().toLowerCase() === cert.title.trim().toLowerCase() && c.id !== id;
+        });
+
+        if (childCerts.length > 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Exclusão Proibida: A peça "${cert.title}" possui ${childCerts.length} certificado(s) emitido(s). Remova os certificados filhos antes de deletar a peça.`
+          });
+        }
+      }
     }
 
     // Delete from Supabase

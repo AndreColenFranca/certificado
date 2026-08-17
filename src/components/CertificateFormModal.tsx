@@ -110,7 +110,8 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
           { key: 'stone_types', setState: setStoneTypeOptions },
           { key: 'setting_types', setState: setSettingTypeOptions },
           { key: 'cut_shapes', setState: setCutShapeOptions },
-          { key: 'color_grades', setState: setColorGradeOptions }
+          { key: 'color_grades', setState: setColorGradeOptions },
+          { key: 'clarity_grades', setState: setClarityGradeOptions }
         ];
 
         for (const endpoint of endpoints) {
@@ -122,22 +123,33 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
               const sorted = [...data.data].sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
               const names = sorted.map((item: any) => item.name);
               endpoint.setState(names);
+
+              // Se carregou coleções, atualiza o estado se estiver vazio
+              if (endpoint.key === 'collections' && !initialCert?.collection && names.length > 0) {
+                setCollection(names[0]);
+              }
+              // Se carregou fabricantes, atualiza o estado se estiver vazio
+              if (endpoint.key === 'manufacturers' && !initialCert?.manufacturer && names.length > 0) {
+                setManufacturer(names[0]);
+              }
             }
           } catch (err: any) {
+            console.error(`Erro ao carregar ${endpoint.key}:`, err);
           }
         }
       } catch (err) {
+        console.error('Erro ao carregar atributos:', err);
       }
     };
 
     loadAttributes();
-  }, []);
+  }, [initialCert]);
 
   // Certificate Fields
   const [title, setTitle] = useState(initialCert?.title || '');
-  const [collection, setCollection] = useState(initialCert?.collection || 'Haute Joaillerie 2026');
+  const [collection, setCollection] = useState(initialCert?.collection || collectionOptions[0] || '');
   const [model, setModel] = useState(initialCert?.model || '');
-  const [manufacturer, setManufacturer] = useState(initialCert?.manufacturer || defaultCompanyName);
+  const [manufacturer, setManufacturer] = useState(initialCert?.manufacturer || manufacturerOptions[0] || '');
   const [manufacturerLogoUrl, setManufacturerLogoUrl] = useState(
     initialCert?.manufacturerLogoUrl || defaultCompanyLogo || DEFAULT_BRAND_LOGO_DRIVE_URL
   );

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Lock, Mail, Eye, EyeOff, ShieldCheck, Crown, Sparkles, KeyRound, User } from 'lucide-react';
-import { AppUser, Customer } from '../types';
-import { INITIAL_CUSTOMERS } from '../data/sampleCustomers';
+import { Lock, Eye, EyeOff, ShieldCheck, Sparkles, KeyRound, User } from 'lucide-react';
+import { AppUser } from '../types';
 import { ROOT_USER_EMAIL } from '../config/constants';
 
 interface LoginViewProps {
@@ -23,153 +22,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fallback client-side authentication function
-  const authenticateFallback = (rawInput: string, rawPass: string): AppUser => {
-    const rawTrim = (rawInput || '').trim();
-    const cleanInput = rawTrim
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .trim();
-    const cleanDigits = cleanInput.replace(/\D/g, '');
-
-    // 1. Check Root Admin Aliases
-    const rootKeywords = [
-      ROOT_USER_EMAIL,
-      ROOT_USER_EMAIL.split('@')[0],
-      'andreluiz.colen',
-      'andreluiz',
-      'colen',
-      'andre',
-      'andre luiz',
-      'andre luiz colen',
-      'root@aureum.com',
-      'admin@aureum.com',
-      'root',
-      'admin',
-      'administrador',
-      'gestor'
-    ];
-
-    const isRootAlias = cleanInput.length === 0 ||
-      rootKeywords.includes(cleanInput) ||
-      cleanInput.includes('andreluiz') ||
-      cleanInput.includes('colen') ||
-      cleanInput.includes('root') ||
-      cleanInput.includes('admin');
-
-    if (isRootAlias) {
-      return {
-        id: 'user-root-001',
-        name: 'André Luiz Colen (Administrador Raiz)',
-        email: ROOT_USER_EMAIL,
-        role: 'root',
-        createdAt: new Date().toISOString(),
-        isRoot: true
-      };
-    }
-
-    // 2. Check customers in localStorage + INITIAL_CUSTOMERS first
-    let allCustomers: Customer[] = [...INITIAL_CUSTOMERS];
-    try {
-      const storedCustomersRaw = localStorage.getItem('aureum_customers');
-      if (storedCustomersRaw) {
-        const storedCustomers: Customer[] = JSON.parse(storedCustomersRaw);
-        storedCustomers.forEach(sc => {
-          const idx = allCustomers.findIndex(ac => ac.id === sc.id);
-          if (idx >= 0) {
-            allCustomers[idx] = sc;
-          } else {
-            allCustomers.push(sc);
-          }
-        });
-      }
-    } catch (e) {}
-
-    const matchedCust = allCustomers.find(c => {
-      const custEmail = String(c.email || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const custCpfDigits = String(c.cpf || '').replace(/\D/g, '');
-      const custName = String(c.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const custId = String(c.id || '').toLowerCase();
-
-      return (
-        custEmail === cleanInput ||
-        (cleanDigits.length >= 4 && custCpfDigits.includes(cleanDigits)) ||
-        custName === cleanInput ||
-        custName.includes(cleanInput) ||
-        custId === cleanInput
-      );
-    });
-
-    if (matchedCust) {
-      return {
-        id: `user-customer-${matchedCust.id}`,
-        name: matchedCust.name, // "Nome Completo (Alfanumérico)" from Customer record
-        email: matchedCust.email,
-        role: 'customer',
-        customerId: matchedCust.id,
-        cpf: matchedCust.cpf,
-        createdAt: matchedCust.createdAt || new Date().toISOString(),
-        isRoot: false
-      };
-    }
-
-    // 3. Check stored users in localStorage (`aureum_users_db`)
-    try {
-      const storedUsersRaw = localStorage.getItem('aureum_users_db');
-      if (storedUsersRaw) {
-        const storedUsers: any[] = JSON.parse(storedUsersRaw);
-        const matchedUser = storedUsers.find(u => {
-          const uEmail = String(u.email || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          const uName = String(u.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          const uId = String(u.id || '').toLowerCase();
-          return uEmail === cleanInput || uName === cleanInput || uId === cleanInput || uName.includes(cleanInput);
-        });
-        if (matchedUser) {
-          const { password: _, ...userSafe } = matchedUser;
-          return userSafe;
-        }
-      }
-    } catch (e) {}
-
-    // 4. Check stored certificates in localStorage
-    try {
-      const storedCertsRaw = localStorage.getItem('aureum_certificates');
-      if (storedCertsRaw) {
-        const storedCerts: any[] = JSON.parse(storedCertsRaw);
-        const matchedCert = storedCerts.find(c => {
-          const certEmail = String(c.ownerEmail || '').toLowerCase();
-          const certCpf = String(c.ownerCpf || '').replace(/\D/g, '');
-          const certName = String(c.currentOwnerName || '').toLowerCase();
-          return certEmail === cleanInput || (cleanDigits.length >= 4 && certCpf.includes(cleanDigits)) || certName === cleanInput;
-        });
-
-        if (matchedCert && matchedCert.currentOwnerName) {
-          return {
-            id: `user-customer-cert-${Date.now()}`,
-            name: matchedCert.currentOwnerName, // "Nome Completo (Alfanumérico)" from Certificate
-            email: matchedCert.ownerEmail || (cleanInput.includes('@') ? rawTrim : `${cleanInput}@maison.com`),
-            role: 'customer',
-            customerId: matchedCert.ownerId,
-            cpf: matchedCert.ownerCpf,
-            createdAt: new Date().toISOString(),
-            isRoot: false
-          };
-        }
-      }
-    } catch (e) {}
-
-    // Fallback: Use raw email/input without deriving fake names from email handle
-    const isCustomerCandidate = cleanDigits.length >= 8 || cleanInput.includes('@') || cleanInput.startsWith('cli');
-    return {
-      id: isCustomerCandidate ? `user-dyn-cust-${Date.now()}` : `user-dyn-admin-${Date.now()}`,
-      name: rawTrim, // Keep raw input or email, formatUserGreeting will display email cleanly if no real name
-      email: cleanInput.includes('@') ? rawTrim : `${cleanInput}@maison.com`,
-      role: isCustomerCandidate ? 'customer' : 'admin',
-      createdAt: new Date().toISOString(),
-      isRoot: !isCustomerCandidate
-    };
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,28 +31,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
     setIsLoading(true);
     setErrorMsg('');
 
-    // Gather local stored users & customers to sync with backend
-    let localUsers: any[] = [];
-    let localCustomers: any[] = [];
     try {
-      const uRaw = localStorage.getItem('aureum_users_db');
-      if (uRaw) localUsers = JSON.parse(uRaw);
-    } catch (err) {}
-    try {
-      const cRaw = localStorage.getItem('aureum_customers');
-      if (cRaw) localCustomers = JSON.parse(cRaw);
-    } catch (err) {}
-
-    try {
-      // 1. Try Backend API login with local sync
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: inputToUse,
-          password: passToUse,
-          localUsers,
-          localCustomers
+          password: passToUse
         })
       });
 
@@ -208,15 +45,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
       if (data && data.success && data.user) {
         onLoginSuccess(data.user);
-        return;
+      } else {
+        setErrorMsg(data?.error || 'Falha ao fazer login');
       }
-
-      // 2. Fallback client-side auth
-      const fallbackUser = authenticateFallback(inputToUse, passToUse);
-      onLoginSuccess(fallbackUser);
-    } catch (err) {
-      const fallbackUser = authenticateFallback(inputToUse, passToUse);
-      onLoginSuccess(fallbackUser);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Erro ao conectar com servidor');
     } finally {
       setIsLoading(false);
     }
@@ -358,67 +191,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
             </button>
           </form>
 
-          {/* Quick Access Test Shortcuts */}
-          <div className="mt-6 pt-4 border-t border-amber-900/30 space-y-2.5">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-amber-300/80 block text-center">
-              Entrada Rápida em 1-Toque no Celular
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-              <button
-                type="button"
-                onClick={() => {
-                  setErrorMsg('');
-                  onLoginSuccess({
-                    id: 'user-root-001',
-                    name: 'André Luiz Colen (Administrador Raiz)',
-                    email: ROOT_USER_EMAIL,
-                    role: 'root',
-                    createdAt: new Date().toISOString(),
-                    isRoot: true
-                  });
-                }}
-                className="p-3 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/50 text-amber-200 font-medium text-left transition-all active:scale-95 cursor-pointer shadow-md flex items-center justify-between"
-                title="Entrar como Administrador Raiz"
-              >
-                <div>
-                  <div className="font-extrabold flex items-center gap-1.5 text-amber-300 text-xs">
-                    <Crown className="w-4 h-4 text-amber-400" />
-                    <span>Administrador Raiz</span>
-                  </div>
-                  <div className="text-[10px] text-zinc-300">Acesso Total de Gestor</div>
-                </div>
-                <span className="text-xs text-amber-400 font-bold">Toque aqui →</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setErrorMsg('');
-                  onLoginSuccess({
-                    id: 'user-customer-CLI-1001',
-                    name: 'Helena Cavalcanti de Albuquerque',
-                    email: 'helena.albuquerque@maisonlumiere.com.br',
-                    role: 'customer',
-                    customerId: 'CLI-1001',
-                    cpf: '123.456.789-01',
-                    createdAt: new Date().toISOString(),
-                    isRoot: false
-                  });
-                }}
-                className="p-3 rounded-2xl bg-zinc-800/90 hover:bg-zinc-800 border border-zinc-600 text-amber-200 font-medium text-left transition-all active:scale-95 cursor-pointer shadow-md flex items-center justify-between"
-                title="Entrar como Cliente Helena"
-              >
-                <div>
-                  <div className="font-extrabold flex items-center gap-1.5 text-amber-200 text-xs">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                    <span>Portal do Cliente</span>
-                  </div>
-                  <div className="text-[10px] text-zinc-300">Minhas Joias & Histórico</div>
-                </div>
-                <span className="text-xs text-amber-300 font-bold">Toque aqui →</span>
-              </button>
-            </div>
-          </div>
 
         </div>
 

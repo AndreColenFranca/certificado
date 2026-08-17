@@ -547,7 +547,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                                 id={`btn-print-mgmt-${cert.id}`}
                               >
                                 <Printer className="w-3.5 h-3.5 text-zinc-950 shrink-0" />
-                                <span className="truncate">Imprimir Certificado</span>
+                                <span className="truncate">Certificado</span>
                               </button>
                             )}
                             <button
@@ -748,6 +748,17 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
             </div>
 
             <div className="pt-2 flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  const certToView = qrCertModal;
+                  setQrCertModal(null);
+                  onSelectCertificate(certToView, 'specs');
+                }}
+                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-zinc-950 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+              >
+                <ExternalLink className="w-4 h-4 text-zinc-950" />
+                <span>Visualizar Certificado</span>
+              </button>
               {onOpenPrintModal && (
                 <button
                   onClick={() => {
@@ -755,9 +766,9 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                     setQrCertModal(null);
                     onOpenPrintModal(certToPrint);
                   }}
-                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-zinc-950 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+                  className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-amber-300 border border-amber-500/30 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Printer className="w-4 h-4 text-zinc-950" />
+                  <Printer className="w-4 h-4 text-amber-400" />
                   <span>Imprimir Certificado</span>
                 </button>
               )}

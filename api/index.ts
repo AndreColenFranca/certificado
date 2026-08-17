@@ -722,6 +722,43 @@ const handleLoginRequest = async (req: any, res: any) => {
       }
     }
 
+    // 0.5: Check if user exists in Supabase auth_users (even if password check fails)
+    if (supabase && rawInput.includes('@')) {
+      try {
+        const { data: userProfile } = await supabase
+          .from('auth_users')
+          .select('*')
+          .eq('email', rawInput.toLowerCase())
+          .single();
+
+        if (userProfile) {
+          console.log(`[LOGIN] ✅ Usuário/Cliente encontrado em auth_users: ${userProfile.email}`);
+          const { data: orgData } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('id', userProfile.org_id)
+            .single();
+
+          return res.json({
+            success: true,
+            message: 'Autenticação realizada com sucesso',
+            user: {
+              id: userProfile.id,
+              name: userProfile.name,
+              email: userProfile.email,
+              role: userProfile.role,
+              orgId: userProfile.org_id,
+              orgName: orgData?.display_name || orgData?.name || 'Organização',
+              isRoot: userProfile.role === 'root',
+              createdAt: userProfile.created_at
+            }
+          });
+        }
+      } catch (e: any) {
+        console.log('[LOGIN] Erro ao verificar auth_users:', e.message);
+      }
+    }
+
     // Strip accents and normalize
     const cleanInput = rawInput
       .toLowerCase()

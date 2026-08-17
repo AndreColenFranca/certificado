@@ -13,16 +13,16 @@ interface CertificateFormModalProps {
   selectedCustomerForNewCert?: Customer | null;
 }
 
-const DEFAULT_PURITIES = ['18K (750)', '14K (585)', '10K (417)', '22K (916)', '24K (999)', 'Platina 950', 'Prata 925'];
-const DEFAULT_COLORS = ['Ouro Amarelo', 'Ouro Branco', 'Ouro Rosa', 'Ouro Negro', 'Platina', 'Prata Prateada'];
-const DEFAULT_COLLECTIONS = ['Haute Joaillerie 2026', 'Solitaires Prestige', 'Classic Diamonds', 'Coleção Romântica', 'Edição Limitada', 'Acervo Exclusivo'];
-const DEFAULT_MANUFACTURERS = ['Maison Lumière Joias', 'Aureum Haute Joaillerie', 'Ateliê Orivesaria Fina', 'Ateliê & Fabricante', 'Lumière Joias Ateliê'];
-const DEFAULT_FINISHES = ['Polido Espelhado', 'Escovado Satinado', 'Diamantado', 'Rodinado Premium', 'Fosco Texturizado', 'Martelado Hand-crafted'];
-const DEFAULT_STONE_TYPES = ['Diamante Natural', 'Esmeralda Colombiana', 'Rubi Birmanês', 'Safira Ceylon', 'Diamante Lab-Grown', 'Pérola South Sea', 'Tanzanita', 'Ônix Natural', 'Turmalina Paraíba'];
-const DEFAULT_SETTING_TYPES = ['Garra (Prong)', 'Garra Dupla', 'Pavê (Pave)', 'Bisel / Inglês (Bezel)', 'Trilho (Channel)', 'Invisível (Invisible)', 'Crivo / Ilha', 'Tensão (Tension)'];
-const DEFAULT_CUT_SHAPES = ['Brilhante Redondo', 'Princesa (Quadrada)', 'Esmeralda', 'Oval', 'Gota / Pera', 'Marquise', 'Cushion', 'Coração', 'Radiante', 'Baguete'];
-const DEFAULT_COLOR_GRADES = ['D - Incolor (Excepcional)', 'E - Incolor', 'F - Incolor', 'G-H - Quase Incolor', 'I-J - Amarelado Suave', 'Fancy Yellow', 'Fancy Blue', 'Gema Colorida Intensa', 'Não Aplicável'];
-const DEFAULT_CLARITY_GRADES = ['FL (Flawless / Perfeito)', 'IF (Internally Flawless)', 'VVS1 (Muitíssimo Poucas Inclusões)', 'VVS2', 'VS1 (Poucas Inclusões)', 'VS2', 'SI1 (Pequenas Inclusões)', 'SI2', 'I1 (Inclusões Visíveis)', 'Não Aplicável'];
+const DEFAULT_PURITIES: string[] = [];
+const DEFAULT_COLORS: string[] = [];
+const DEFAULT_COLLECTIONS: string[] = [];
+const DEFAULT_MANUFACTURERS: string[] = [];
+const DEFAULT_FINISHES: string[] = [];
+const DEFAULT_STONE_TYPES: string[] = [];
+const DEFAULT_SETTING_TYPES: string[] = [];
+const DEFAULT_CUT_SHAPES: string[] = [];
+const DEFAULT_COLOR_GRADES: string[] = [];
+const DEFAULT_CLARITY_GRADES: string[] = [];
 
 // Helper to compress local uploaded image for high-definition rendering
 const compressAndResizeImage = (file: File): Promise<string> => {
@@ -183,7 +183,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
       setMetalColor(initialCert.metal_color || initialCert.metalColor || colorOptions[0] || 'Ouro Amarelo');
       setGrossWeightGrams(initialCert.gross_weight_grams ?? initialCert.grossWeightGrams ?? '');
       setWidthCm(initialCert.width_cm ?? initialCert.widthCm ?? '');
-      setFinish(initialCert.finish || finishOptions[0] || 'Polido Espelhado');
+      setFinish(initialCert.finish || '');
       setHasStones(initialCert.has_stones ?? initialCert.hasStones ?? true);
       if (initialCert.stones && initialCert.stones.length > 0) {
         setStones(initialCert.stones);
@@ -201,7 +201,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   const [metalColor, setMetalColor] = useState<string>(initialCert?.metal_color || initialCert?.metalColor || colorOptions[0] || 'Ouro Amarelo');
   const [grossWeightGrams, setGrossWeightGrams] = useState<number>(initialCert?.gross_weight_grams ?? initialCert?.grossWeightGrams ?? '');
   const [widthCm, setWidthCm] = useState<number>(initialCert?.width_cm ?? initialCert?.widthCm ?? '');
-  const [finish, setFinish] = useState<string>(initialCert?.finish || finishOptions[0] || 'Polido Espelhado');
+  const [finish, setFinish] = useState<string>(initialCert?.finish || '');
 
   const [hasStones, setHasStones] = useState<boolean>(initialCert?.has_stones ?? initialCert?.hasStones ?? true);
   const [stones, setStones] = useState<StoneDetail[]>(initialCert?.stones && initialCert.stones.length > 0 ? initialCert.stones : []);

@@ -373,8 +373,7 @@ export async function createCustomer(
 export async function updateCustomer(
   supabase: SupabaseClient,
   id: string,
-  updates: Partial<Customer>,
-  oldEmail?: string
+  updates: Partial<Customer>
 ) {
   try {
     const { data, error } = await supabase
@@ -388,22 +387,6 @@ export async function updateCustomer(
 
     if (error) {
       return { success: false, error: error.message, data: null };
-    }
-
-    // Se email mudou, atualizar auth_users também
-    if (updates.email && oldEmail && oldEmail.toLowerCase() !== updates.email.toLowerCase()) {
-      try {
-        await supabase
-          .from('auth_users')
-          .update({
-            email: updates.email.toLowerCase(),
-            name: updates.name || oldEmail
-          })
-          .eq('email', oldEmail.toLowerCase());
-      } catch (authErr: any) {
-        console.error('Erro ao atualizar auth_users:', authErr.message);
-        // Não retorna erro, já atualizou customers com sucesso
-      }
     }
 
     return { success: true, data: data?.[0] || null };
@@ -428,71 +411,6 @@ export async function deleteCustomer(
 
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err.message };
-  }
-}
-
-// ==================== AUTH USERS ====================
-
-export async function createOrUpdateAuthUser(
-  supabase: SupabaseClient,
-  customerId: string,
-  email: string,
-  name: string,
-  cpf?: string | number,
-  orgId?: string
-) {
-  try {
-    const cleanEmail = email.toLowerCase().trim();
-    const now = new Date().toISOString();
-
-    // Tentar encontrar usuário existente por email
-    const { data: existingUser } = await supabase
-      .from('auth_users')
-      .select('id')
-      .eq('email', cleanEmail)
-      .maybeSingle();
-
-    if (existingUser) {
-      // Atualizar usuário existente
-      const { error } = await supabase
-        .from('auth_users')
-        .update({
-          name,
-          cpf: cpf ? String(cpf) : undefined,
-          updated_at: now
-        })
-        .eq('email', cleanEmail);
-
-      if (error) {
-        console.error('Erro ao atualizar auth_user:', error.message);
-        return { success: false, error: error.message };
-      }
-
-      return { success: true, message: 'Auth user atualizado' };
-    } else {
-      // Criar novo usuário
-      const { error } = await supabase
-        .from('auth_users')
-        .insert([{
-          email: cleanEmail,
-          name,
-          cpf: cpf ? String(cpf) : undefined,
-          role: 'customer',
-          org_id: orgId || '550e8400-e29b-41d4-a716-446655440000',
-          created_at: now,
-          updated_at: now
-        }]);
-
-      if (error) {
-        console.error('Erro ao criar auth_user:', error.message);
-        return { success: false, error: error.message };
-      }
-
-      return { success: true, message: 'Auth user criado' };
-    }
-  } catch (err: any) {
-    console.error('Exceção em createOrUpdateAuthUser:', err.message);
     return { success: false, error: err.message };
   }
 }

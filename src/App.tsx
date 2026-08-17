@@ -837,6 +837,23 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(childCert)
         });
+
+        // Criar registro de manutenção
+        await fetchWithAuth('/api/maintenance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            certId: childCert.id,
+            maintenanceDate: issueDateStr,
+            maintenanceType: 'Emissão de Certificado',
+            performer: companyName || 'Maison Lumière',
+            notes: notes || `Emissão de passaporte digital (Joia Filha) para "${childCert.title}" adquirida por "${customer.name}".`,
+            customerName: customer.name,
+            customerCpf: String(customer.cpf),
+            customerEmail: customer.email
+          })
+        });
+
         // Invalidate cache and refetch
         setTimeout(() => fetchCertificates(true), 500);
       } catch (e) {
@@ -877,6 +894,23 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedCert)
         });
+
+        // Criar registro de manutenção
+        await fetchWithAuth('/api/maintenance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            certId: certId,
+            maintenanceDate: issueDateStr,
+            maintenanceType: 'Emissão de Certificado',
+            performer: companyName || 'Maison Lumière',
+            notes: notes || `Vínculo de aquisição/titularidade registrado com sucesso para o cliente "${customer.name}".`,
+            customerName: customer.name,
+            customerCpf: String(customer.cpf),
+            customerEmail: customer.email
+          })
+        });
+
         // Invalidate cache and refetch
         setTimeout(() => fetchCertificates(true), 500);
       } catch (e) {

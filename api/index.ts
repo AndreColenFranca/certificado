@@ -22,7 +22,8 @@ import {
   createCustomer,
   updateCustomer,
   deleteCustomer,
-  transformCertificateFromDb
+  transformCertificateFromDb,
+  createMaintenanceRecord
 } from '../server-helpers/supabaseHelpers.js';
 import {
   getAttributes,
@@ -1433,6 +1434,53 @@ app.delete('/api/customers/:id', async (req, res) => {
     res.json({ success: true, message: 'Cliente e todos os seus passaportes removidos com sucesso' });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message || 'Erro ao remover cliente' });
+  }
+});
+
+// --- Maintenance Records API ---
+
+// Create maintenance record
+app.post('/api/maintenance', async (req, res) => {
+  try {
+    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const {
+      certId,
+      maintenanceDate,
+      maintenanceType,
+      performer,
+      notes,
+      customerName,
+      customerCpf,
+      customerEmail
+    } = req.body;
+
+    if (!certId || !maintenanceDate || !maintenanceType || !performer) {
+      return res.status(400).json({
+        success: false,
+        message: 'Campos obrigatórios: certId, maintenanceDate, maintenanceType, performer'
+      });
+    }
+
+    const result = await createMaintenanceRecord(
+      supabase,
+      certId,
+      userOrgId,
+      maintenanceDate,
+      maintenanceType,
+      performer,
+      notes,
+      customerName,
+      customerCpf,
+      customerEmail
+    );
+
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.error });
+    }
+
+    res.json({ success: true, data: result.data, message: 'Registro de manutenção criado com sucesso' });
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message || 'Erro ao criar registro de manutenção' });
   }
 });
 

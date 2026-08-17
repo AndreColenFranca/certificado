@@ -414,3 +414,48 @@ export async function deleteCustomer(
     return { success: false, error: err.message };
   }
 }
+
+// ==================== MAINTENANCE RECORDS ====================
+
+export async function createMaintenanceRecord(
+  supabase: SupabaseClient,
+  certId: string,
+  orgId: string,
+  maintenanceDate: string,
+  maintenanceType: string,
+  performer: string,
+  notes?: string,
+  customerName?: string,
+  customerCpf?: string,
+  customerEmail?: string
+) {
+  try {
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('maintenance_records')
+      .insert([{
+        cert_id: certId,
+        org_id: orgId,
+        maintenance_date: maintenanceDate,
+        maintenance_type: maintenanceType,
+        performer,
+        notes: notes || null,
+        customer_name: customerName || null,
+        customer_cpf: customerCpf || null,
+        customer_email: customerEmail || null,
+        created_at: now,
+        updated_at: now
+      }])
+      .select();
+
+    if (error) {
+      console.error('Erro ao criar maintenance record:', error.message);
+      return { success: false, error: error.message, data: null };
+    }
+
+    return { success: true, data: data?.[0] || null };
+  } catch (err: any) {
+    console.error('Exceção em createMaintenanceRecord:', err.message);
+    return { success: false, error: err.message, data: null };
+  }
+}

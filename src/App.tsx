@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { JewelryCertificate, Customer, ViewMode, MaintenanceRecord, AppUser } from './types';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
@@ -24,10 +24,11 @@ import { UserManagementModal } from './components/UserManagementModal';
 import { CustomerPortalView } from './components/CustomerPortalView';
 import { OrganizationsView } from './components/OrganizationsView';
 import { AttributesView } from './components/AttributesView';
+import { supabaseAuth } from './utils/supabaseAuth';
 import { extractCertIdFromInput, findCertificateByQuery, findCertificatesByQuery } from './utils/certUtils';
-import { isRootCert, getChildCertificatesForParent } from './utils/certHierarchy';
+import { isRootCert } from './utils/certHierarchy';
 import { fetchWithAuth } from './utils/fetchWithAuth';
-import { ShieldAlert, Search, QrCode, LogIn } from 'lucide-react';
+import { ShieldAlert, Search, QrCode } from 'lucide-react';
 
 export const getCertIdFromUrl = (): string | null => {
   if (typeof window === 'undefined') return null;
@@ -101,7 +102,6 @@ export default function App() {
     return 'photo-inspector';
   });
 
-  const [forceLoginView, setForceLoginView] = useState<boolean>(false);
   const [viewHistory, setViewHistory] = useState<ViewMode[]>([]);
   const [searchResults, setSearchResults] = useState<JewelryCertificate[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -202,7 +202,6 @@ export default function App() {
       setCurrentUser(user);
     }
 
-    setForceLoginView(false);
     if (typeof window !== 'undefined') {
       try {
         window.history.replaceState(null, '', '/');
@@ -213,15 +212,29 @@ export default function App() {
     } else {
       setViewMode('jeweler-dashboard');
     }
+
+    // Forçar refresh dos dados do novo usuário (sem cache localStorage)
+    setTimeout(() => {
+      fetchCertificates();
+      fetchCustomers();
+    }, 100);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await supabaseAuth.signOut();
+    } catch (e) {
+      console.error('Erro ao fazer logout:', e);
+    }
+
     setCurrentUser(null);
     try {
       localStorage.removeItem('aureum_logged_user');
+      localStorage.removeItem('aureum_certificates');
+      localStorage.removeItem('aureum_customers');
+      localStorage.removeItem('aureum_users_db');
     } catch (e) {}
     setViewHistory([]);
-    setForceLoginView(true);
     if (typeof window !== 'undefined') {
       try {
         window.history.replaceState(null, '', '/');
@@ -373,75 +386,29 @@ export default function App() {
 
   const fetchCertificates = async (forceRefresh = false) => {
     try {
-      if (!forceRefresh) {
-        const cached = localStorage.getItem('aureum_certificates');
-        if (cached) {
-          try {
-            const cachedData = JSON.parse(cached);
-            if (Array.isArray(cachedData)) {
-              setCertificates(cachedData);
-            }
-          } catch (e) {
-          }
-        }
-      }
-
       const res = await fetchWithAuth('/api/certificates');
       if (res.ok) {
         const data = await res.json();
         if (data && data.success && Array.isArray(data.data)) {
           setCertificates(data.data);
-          // localStorage.setItem('aureum_certificates', JSON.stringify(data.data)); // Supabase only
         }
       }
     } catch (e) {
-      const cached = localStorage.getItem('aureum_certificates');
-      if (cached) {
-        try {
-          const cachedData = JSON.parse(cached);
-          if (Array.isArray(cachedData) && cachedData.length > 0) {
-            setCertificates(cachedData);
-          }
-        } catch (e) {
-        }
-      }
+      console.error('Erro ao buscar certificados:', e);
     }
   };
 
   const fetchCustomers = async (forceRefresh = false) => {
     try {
-      if (!forceRefresh) {
-        const cached = localStorage.getItem('aureum_customers');
-        if (cached) {
-          try {
-            const cachedData = JSON.parse(cached);
-            if (Array.isArray(cachedData)) {
-              setCustomers(cachedData);
-            }
-          } catch (e) {
-          }
-        }
-      }
-
       const res = await fetchWithAuth('/api/customers');
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.data)) {
           setCustomers(data.data);
-          // localStorage.setItem('aureum_customers', JSON.stringify(data.data)); // Supabase only
         }
       }
     } catch (e) {
-      const cached = localStorage.getItem('aureum_customers');
-      if (cached) {
-        try {
-          const cachedData = JSON.parse(cached);
-          if (Array.isArray(cachedData) && cachedData.length > 0) {
-            setCustomers(cachedData);
-          }
-        } catch (e) {
-        }
-      }
+      console.error('Erro ao buscar clientes:', e);
     }
   };
 

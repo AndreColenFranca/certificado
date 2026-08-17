@@ -243,7 +243,7 @@ export default function App() {
 
   // Company Brand State
   const [companyName, setCompanyName] = useState<string>('Estilo Raro Joias');
-  const [companyLogoUrl, setCompanyLogoUrl] = useState<string>('https://drive.google.com/file/d/1EzDvqFIdNjWtIU4KIxYQtZ3RYQI6BnrR/view?usp=sharing');
+  const [companyLogoUrl, setCompanyLogoUrl] = useState<string>('https://drive.google.com/uc?id=1EzDvqFIdNjWtIU4KIxYQtZ3RYQI6BnrR');
 
   // Certificate Modals state
   const [isCompanyLogoOpen, setIsCompanyLogoOpen] = useState(false);

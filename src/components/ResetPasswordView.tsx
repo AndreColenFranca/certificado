@@ -202,12 +202,6 @@ export const ResetPasswordView = ({
             </button>
           </form>
 
-          {/* Footer Info */}
-          <div className="mt-8 pt-6 border-t border-amber-900/20 flex items-center justify-center gap-2 text-xs opacity-50">
-            <Sparkles className="w-4 h-4" />
-            <span>Autenticado via Supabase</span>
-            <KeyRound className="w-4 h-4" />
-          </div>
         </div>
       </div>
     </div>

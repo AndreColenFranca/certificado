@@ -1493,12 +1493,13 @@ app.delete('/api/customers/:id', async (req, res) => {
       console.error(`[CUSTOMER-DELETE] Exceção ao processar Supabase Auth:`, authErr.message);
     }
 
-    // 3. Delete from customers table using UUID
+    // 3. Delete from customers table using UUID (double-check org_id for security)
     console.log(`[CUSTOMER-DELETE] Deletando cliente da tabela customers com UUID: ${targetCust.id}`);
     const { error: deleteError } = await supabase
       .from('customers')
       .delete()
-      .eq('id', targetCust.id);
+      .eq('id', targetCust.id)
+      .eq('org_id', userOrgId);
 
     if (deleteError) {
       console.error(`[CUSTOMER-DELETE] Erro ao deletar customer:`, deleteError.message);

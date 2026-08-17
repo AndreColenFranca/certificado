@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { JewelryCertificate, Customer, ViewMode, MaintenanceRecord, AppUser } from './types';
+import logoImage from '../assets/logo.jpg';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { CertificatePublicView } from './components/CertificatePublicView';
@@ -243,7 +244,7 @@ export default function App() {
 
   // Company Brand State
   const [companyName, setCompanyName] = useState<string>('Estilo Raro Joias');
-  const [companyLogoUrl, setCompanyLogoUrl] = useState<string>('https://drive.google.com/uc?id=1EzDvqFIdNjWtIU4KIxYQtZ3RYQI6BnrR');
+  const [companyLogoUrl, setCompanyLogoUrl] = useState<string>(logoImage);
 
   // Certificate Modals state
   const [isCompanyLogoOpen, setIsCompanyLogoOpen] = useState(false);

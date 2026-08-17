@@ -259,20 +259,6 @@ export const SupabaseLoginView = ({
                   Voltar ao login
                 </button>
               </>
-            ) : isSignUp ? (
-              <>
-                Já tem conta?{' '}
-                <button
-                  onClick={() => {
-                    setIsSignUp(false);
-                    setErrorMsg('');
-                    setName('');
-                  }}
-                  className="text-amber-400 hover:text-amber-300 font-semibold"
-                >
-                  Entre aqui
-                </button>
-              </>
             )}
           </div>
 

@@ -305,7 +305,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
           id="tab-history"
         >
           <Clock className={`w-4 h-4 shrink-0 ${activeTab === 'history' ? 'text-zinc-950' : 'text-amber-400'}`} />
-          <span>Garantia & Histórico</span>
+          <span>Garantia</span>
         </button>
 
         <button
@@ -494,9 +494,9 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
       {/* Tab 3: History & Warranty */}
       {activeTab === 'history' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+
           {/* Warranty Details */}
-          <div className="lg:col-span-5 space-y-4">
+          <div className="lg:col-span-6 space-y-4">
             <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
@@ -531,38 +531,6 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
             </div>
           </div>
 
-          {/* Maintenance & Ownership Timeline */}
-          <div className="lg:col-span-7 bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
-            <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-amber-400" />
-              Linha do Tempo e Histórico do Ateliê
-            </h3>
-
-            <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-amber-900/50">
-              {cert.maintenanceHistory.map((item, idx) => (
-                <div key={item.id || idx} className="relative group">
-                  {/* Timeline point */}
-                  <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-amber-500 border-2 border-zinc-950 ring-4 ring-amber-500/20" />
-
-                  <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-1 hover:border-amber-500/40 transition-colors">
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                      <span className="font-bold text-amber-300">{item.type}</span>
-                      <span className="text-zinc-500 font-mono">{new Date(item.date).toLocaleDateString('pt-BR')}</span>
-                    </div>
-
-                    <p className="text-xs text-zinc-400 font-light">{item.notes}</p>
-
-                    <div className="pt-2 flex flex-wrap items-center justify-between text-[11px] text-zinc-500 border-t border-zinc-900">
-                      <span>Local: <strong className="text-zinc-300">{item.performer}</strong></span>
-                      {item.verifiedByAppraiser && (
-                        <span className="text-amber-400/80">Resp: {item.verifiedByAppraiser}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
         </div>
       )}

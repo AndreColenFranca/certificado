@@ -10,6 +10,7 @@ export function transformCertificateFromDb(dbCert: any): JewelryCertificate {
   const cert: any = {
     // Try camelCase first (if frontend saved it), then snake_case (from Supabase)
     id: dbCert.id,
+    orgId: dbCert.orgId ?? dbCert.org_id,
     certCode: dbCert.certCode ?? dbCert.cert_code,
     isRoot: dbCert.isRoot ?? dbCert.is_root ?? false,
     parentCertId: dbCert.parentCertId ?? dbCert.parent_cert_id,

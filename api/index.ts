@@ -152,7 +152,7 @@ app.use(async (req: any, res, next) => {
             .maybeSingle();
 
           if (authUser) {
-            req.user.org_id = authUser.org_id || DEFAULT_ORG_ID;
+            req.user.org_id = authUser.org_id;
             req.user.role = authUser.role || 'user';
           }
         } catch (e) {
@@ -354,7 +354,13 @@ app.post('/api/auth/register-profile', async (req, res) => {
       });
     }
 
-    const userOrgId = orgId || DEFAULT_ORG_ID;
+    const userOrgId = orgId;
+    if (!userOrgId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ERRO CRÍTICO: org_id não foi fornecido. Faça login novamente.'
+      });
+    }
 
     // Create auth_users record
     const { error } = await supabase
@@ -728,7 +734,7 @@ app.post('/api/login', async (req: any, res: any) => {
         id: foundAuthUser.id, email: foundAuthUser.email,
         name: foundAuthUser.user_metadata?.display_name || foundAuthUser.email.split('@')[0],
         role: foundAuthUser.user_metadata?.role || 'customer',
-        org_id: foundAuthUser.user_metadata?.org_id || DEFAULT_ORG_ID,
+        org_id: foundAuthUser.user_metadata?.org_id,
         created_at: new Date().toISOString(), updated_at: new Date().toISOString()
       }).select().single();
       if (!newProfile) return res.status(500).json({ success: false, error: 'Falha ao criar perfil' });
@@ -768,7 +774,7 @@ app.post('/api/auth/login', async (req: any, res: any) => {
         id: foundAuthUser.id, email: foundAuthUser.email,
         name: foundAuthUser.user_metadata?.display_name || foundAuthUser.email.split('@')[0],
         role: foundAuthUser.user_metadata?.role || 'customer',
-        org_id: foundAuthUser.user_metadata?.org_id || DEFAULT_ORG_ID,
+        org_id: foundAuthUser.user_metadata?.org_id,
         created_at: new Date().toISOString(), updated_at: new Date().toISOString()
       }).select().single();
       if (!newProfile) return res.status(500).json({ success: false, error: 'Falha ao criar perfil' });
@@ -798,7 +804,13 @@ app.get('/api/users', async (req, res) => {
       return res.status(500).json({ success: false, message: 'Supabase não disponível' });
     }
 
-    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const userOrgId = (req as any).user?.org_id;
+    if (!userOrgId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+      });
+    }
     const userRole = (req as any).user?.role || 'user';
 
     let query = supabase
@@ -1183,7 +1195,13 @@ app.get('/api/customers', async (req, res) => {
     }
 
     // Get org_id from JWT or use default
-    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const userOrgId = (req as any).user?.org_id;
+    if (!userOrgId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+      });
+    }
 
     // ALWAYS load from Supabase - no local data, filter by org_id
     const result = await getCustomers(supabase, userOrgId);
@@ -1221,7 +1239,13 @@ app.post('/api/customers', async (req, res) => {
     const now = new Date().toISOString();
     newCust.createdAt = now;
     newCust.updatedAt = now;
-    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const userOrgId = (req as any).user?.org_id;
+    if (!userOrgId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+      });
+    }
 
     // 1. Create in Supabase customers table
     const supabaseCreateResult = await createCustomer(supabase, {
@@ -1567,7 +1591,13 @@ app.post('/api/certificates/sync', (req, res) => {
 app.get('/api/certificates', async (req, res) => {
   try {
     // Get org_id from JWT or use default
-    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const userOrgId = (req as any).user?.org_id;
+    if (!userOrgId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+      });
+    }
 
     if (!supabase) {
       return res.status(500).json({ success: false, error: 'Supabase not initialized' });
@@ -1596,7 +1626,13 @@ app.get('/api/certificates', async (req, res) => {
 app.get('/api/certificates/:id', async (req, res) => {
   try {
     const query = req.params.id.trim().toUpperCase();
-    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const userOrgId = (req as any).user?.org_id;
+    if (!userOrgId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+      });
+    }
 
     // Try Supabase first - search by cert_code, serial_number, or id
     const result = await getCertificateByQuery(supabase, query, userOrgId);
@@ -1719,7 +1755,14 @@ app.post('/api/certificates', async (req, res) => {
 app.put('/api/certificates/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const userOrgId = (req as any).user?.org_id;
+
+    if (!userOrgId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+      });
+    }
 
     // Get existing certificate from Supabase
     const getCertResult = await getCertificateById(supabase, id, userOrgId);
@@ -1751,7 +1794,13 @@ app.put('/api/certificates/:id', async (req, res) => {
 app.delete('/api/certificates/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const userOrgId = (req as any).user?.org_id;
+    if (!userOrgId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+      });
+    }
 
     // Get certificate from Supabase
     const getCertResult = await getCertificateById(supabase, id, userOrgId);
@@ -2155,7 +2204,13 @@ const createAttributeEndpoints = (tableName: string, apiPath: string) => {
   // POST
   app.post(`/api/${apiPath}`, async (req, res) => {
     try {
-      const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+      const userOrgId = (req as any).user?.org_id;
+    if (!userOrgId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+      });
+    }
       console.log(`[DEBUG POST ${apiPath}] userOrgId=${userOrgId}, DEFAULT_ORG_ID=${DEFAULT_ORG_ID}`);
 
       if (!userOrgId) {
@@ -2232,7 +2287,13 @@ createAttributeEndpoints('color_grades', 'color-grades');
 // --- Audit Logs API ---
 app.get('/api/audit-logs', async (req, res) => {
   try {
-    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const userOrgId = (req as any).user?.org_id;
+    if (!userOrgId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+      });
+    }
     const limit = parseInt(req.query.limit as string) || 100;
     const offset = parseInt(req.query.offset as string) || 0;
 
@@ -2262,7 +2323,13 @@ app.get('/api/audit-logs', async (req, res) => {
 // GET audit log de uma tabela específica
 app.get('/api/audit-logs/:table', async (req, res) => {
   try {
-    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const userOrgId = (req as any).user?.org_id;
+    if (!userOrgId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+      });
+    }
     const tableName = req.params.table;
     const limit = parseInt(req.query.limit as string) || 50;
 

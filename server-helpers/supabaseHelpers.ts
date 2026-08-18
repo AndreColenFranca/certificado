@@ -280,13 +280,21 @@ export async function updateCertificate(
 
 export async function deleteCertificate(
   supabase: SupabaseClient,
-  id: string
+  id: string,
+  orgId?: string
 ) {
   try {
-    const { error } = await supabase
+    let query = supabase
       .from('jewelry_certificates')
       .delete()
       .eq('id', id);
+
+    // Validate org_id if provided (important for RLS compliance)
+    if (orgId) {
+      query = query.eq('org_id', orgId);
+    }
+
+    const { error } = await query;
 
     if (error) {
       return { success: false, error: error.message };

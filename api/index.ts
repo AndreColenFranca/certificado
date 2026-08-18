@@ -1830,7 +1830,7 @@ app.delete('/api/certificates/:id', async (req, res) => {
 
     // Child certificates can always be deleted
     if (isChild) {
-      const deleteResult = await deleteCertificate(supabase, id);
+      const deleteResult = await deleteCertificate(supabase, id, userOrgId);
       if (!deleteResult.success) {
         return res.status(400).json({ success: false, message: deleteResult.error });
       }
@@ -1858,7 +1858,7 @@ app.delete('/api/certificates/:id', async (req, res) => {
     }
 
     // Delete from Supabase
-    const deleteResult = await deleteCertificate(supabase, id);
+    const deleteResult = await deleteCertificate(supabase, id, userOrgId);
     if (!deleteResult.success) {
       return res.status(400).json({ success: false, message: deleteResult.error });
     }

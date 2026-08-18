@@ -246,7 +246,7 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-amber-900/40 text-amber-400 font-semibold uppercase tracking-wider bg-zinc-950/80">
+              <tr className="text-amber-400 font-semibold uppercase tracking-wider bg-zinc-950/80">
                 <th
                   className="p-4 cursor-pointer hover:bg-amber-900/20 transition-colors"
                   onClick={() => handleColumnSort('title')}

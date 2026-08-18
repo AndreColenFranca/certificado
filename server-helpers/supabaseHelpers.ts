@@ -59,6 +59,7 @@ export async function getCertificates(
   }
 
   try {
+    // Use SELECT * - performance is acceptable with WHERE org_id filter
     const query = supabase.from('jewelry_certificates').select('*').eq('org_id', orgId);
 
     const { data, error } = await query;

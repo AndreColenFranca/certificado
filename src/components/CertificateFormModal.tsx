@@ -196,7 +196,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
         setImages(initialCert.images.map(formatImageUrl));
       }
       setWarrantyMonths(initialCert.warranty_months ?? initialCert.warrantyMonths ?? -1);
-      setWarrantyTerms(initialCert.warranty_terms || initialCert.warrantyTerms || '[icon:verified] **A gente sabe que escolher uma aliança não é só sobre o material**
+      setWarrantyTerms(initialCert.warranty_terms || initialCert.warrantyTerms || `[icon:verified] **A gente sabe que escolher uma aliança não é só sobre o material**
 
 É sobre o que ela representa. Por isso, a Estilo Raro Joias garante a qualidade e autenticidade de cada peça, desde o primeiro dia.
 
@@ -230,7 +230,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
 - Troca de tamanho sem complicação
 - Manutenção pra sempre
 
-Porque a gente acredita que uma aliança de verdade não é só bonita no dia da compra. É um compromisso duradouro.');
+Porque a gente acredita que uma aliança de verdade não é só bonita no dia da compra. É um compromisso duradouro.`);
       setEstimatedValueBRL(initialCert.estimated_value_brl ?? initialCert.estimatedValueBRL ?? '');
     }
   }, [initialCert]);
@@ -255,7 +255,7 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
   const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
 
   const [warrantyMonths, setWarrantyMonths] = useState<number>(initialCert?.warranty_months ?? initialCert?.warrantyMonths ?? -1);
-  const [warrantyTerms, setWarrantyTerms] = useState(initialCert?.warranty_terms || initialCert?.warrantyTerms || '[icon:verified] **A gente sabe que escolher uma aliança não é só sobre o material**
+  const [warrantyTerms, setWarrantyTerms] = useState(initialCert?.warranty_terms || initialCert?.warrantyTerms || `[icon:verified] **A gente sabe que escolher uma aliança não é só sobre o material**
 
 É sobre o que ela representa. Por isso, a Estilo Raro Joias garante a qualidade e autenticidade de cada peça, desde o primeiro dia.
 
@@ -289,7 +289,7 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
 - Troca de tamanho sem complicação
 - Manutenção pra sempre
 
-Porque a gente acredita que uma aliança de verdade não é só bonita no dia da compra. É um compromisso duradouro.');
+Porque a gente acredita que uma aliança de verdade não é só bonita no dia da compra. É um compromisso duradouro.`);
   const [estimatedValueBRL, setEstimatedValueBRL] = useState<number>(initialCert?.estimated_value_brl ?? initialCert?.estimatedValueBRL ?? '');
 
   // Sync state if options change or initialCert changes

@@ -39,15 +39,15 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
   // Filter certificates that belong to this customer
   const myCertificates = certificates.filter(cert => {
     if (!currentUser) return false;
-    const userEmail = currentUser.email?.toLowerCase().trim();
-    const userCpf = currentUser.cpf?.replace(/\D/g, '');
+    const userEmail = typeof currentUser.email === 'string' ? currentUser.email.toLowerCase().trim() : '';
+    const userCpf = typeof currentUser.cpf === 'string' ? currentUser.cpf.replace(/\D/g, '') : '';
     const custId = currentUser.customerId;
-    const userName = currentUser.name?.toLowerCase().trim();
+    const userName = typeof currentUser.name === 'string' ? currentUser.name.toLowerCase().trim() : '';
 
-    const certOwnerEmail = cert.ownerEmail?.toLowerCase().trim();
-    const certOwnerCpf = cert.ownerCpf?.replace(/\D/g, '');
+    const certOwnerEmail = typeof cert.ownerEmail === 'string' ? cert.ownerEmail.toLowerCase().trim() : '';
+    const certOwnerCpf = typeof cert.ownerCpf === 'string' ? cert.ownerCpf.replace(/\D/g, '') : '';
     const certOwnerId = cert.ownerId;
-    const certOwnerName = cert.currentOwnerName?.toLowerCase().trim();
+    const certOwnerName = typeof cert.currentOwnerName === 'string' ? cert.currentOwnerName.toLowerCase().trim() : '';
 
     // Direct match
     if (
@@ -62,10 +62,10 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
     // Maintenance history match
     if (cert.maintenanceHistory && cert.maintenanceHistory.length > 0) {
       return cert.maintenanceHistory.some(m => {
-        const mEmail = m.customerEmail?.toLowerCase().trim();
-        const mCpf = m.customerCpf?.replace(/\D/g, '');
+        const mEmail = typeof m.customerEmail === 'string' ? m.customerEmail.toLowerCase().trim() : '';
+        const mCpf = typeof m.customerCpf === 'string' ? m.customerCpf.replace(/\D/g, '') : '';
         const mId = m.customerId;
-        const mName = m.customerName?.toLowerCase().trim();
+        const mName = typeof m.customerName === 'string' ? m.customerName.toLowerCase().trim() : '';
         return (
           (custId && mId === custId) ||
           (userEmail && mEmail === userEmail) ||

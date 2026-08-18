@@ -17,10 +17,10 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
 }) => {
   if (!isOpen || !certToDelete) return null;
 
-  const linkedCustomerName = certToDelete.currentOwnerName?.trim();
-  const linkedCpf = certToDelete.ownerCpf?.trim();
-  const linkedOwnerId = certToDelete.ownerId?.trim();
-  const linkedEmail = certToDelete.ownerEmail?.trim();
+  const linkedCustomerName = typeof certToDelete.currentOwnerName === 'string' ? certToDelete.currentOwnerName.trim() : '';
+  const linkedCpf = typeof certToDelete.ownerCpf === 'string' ? certToDelete.ownerCpf.trim() : '';
+  const linkedOwnerId = typeof certToDelete.ownerId === 'string' ? certToDelete.ownerId.trim() : '';
+  const linkedEmail = typeof certToDelete.ownerEmail === 'string' ? certToDelete.ownerEmail.trim() : '';
 
   const isCustomerLinked = Boolean(
     (linkedCustomerName && linkedCustomerName.length > 0 && linkedCustomerName.toLowerCase() !== 'sem proprietário') ||

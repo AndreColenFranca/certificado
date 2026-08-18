@@ -6,10 +6,10 @@ import { JewelryCertificate } from '../types';
 export const isCustomerLinkedToCertificate = (cert: JewelryCertificate | null | undefined): boolean => {
   if (!cert) return false;
 
-  const ownerId = cert.ownerId?.trim();
-  const ownerCpf = cert.ownerCpf?.trim();
-  const ownerEmail = cert.ownerEmail?.trim();
-  const ownerName = cert.currentOwnerName?.trim().toLowerCase();
+  const ownerId = typeof cert.ownerId === 'string' ? cert.ownerId.trim() : '';
+  const ownerCpf = typeof cert.ownerCpf === 'string' ? cert.ownerCpf.trim() : '';
+  const ownerEmail = typeof cert.ownerEmail === 'string' ? cert.ownerEmail.trim() : '';
+  const ownerName = typeof cert.currentOwnerName === 'string' ? cert.currentOwnerName.trim().toLowerCase() : '';
 
   // If customer ID, CPF, or Email is present, a customer is linked
   if ((ownerId && ownerId.length > 0) || (ownerCpf && ownerCpf.length > 0) || (ownerEmail && ownerEmail.length > 0)) {

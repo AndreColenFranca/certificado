@@ -467,8 +467,8 @@ export default function App() {
       certificates
         .filter(c =>
           (c.ownerId && c.ownerId === id) ||
-          (custCpf && c.ownerCpf && c.ownerCpf.trim() === custCpf) ||
-          (custName && c.currentOwnerName && c.currentOwnerName.trim() === custName)
+          (custCpf && typeof c.ownerCpf === 'string' && c.ownerCpf.trim() === custCpf) ||
+          (custName && typeof c.currentOwnerName === 'string' && c.currentOwnerName.trim() === custName)
         )
         .map(c => c.id.toUpperCase())
     );

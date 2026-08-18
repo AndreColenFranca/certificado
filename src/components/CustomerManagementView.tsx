@@ -131,14 +131,14 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
   // Helper to find all pieces belonging to a customer (where customer is current owner)
   const getCustomerPieces = (customer: Customer | null): JewelryCertificate[] => {
     if (!customer) return [];
-    const custNameLower = customer.name.trim().toLowerCase();
-    const custEmailLower = customer.email ? customer.email.trim().toLowerCase() : '';
+    const custNameLower = typeof customer.name === 'string' ? customer.name.trim().toLowerCase() : '';
+    const custEmailLower = typeof customer.email === 'string' ? customer.email.trim().toLowerCase() : '';
 
     return certificates.filter(cert => {
       if (cert.ownerId && cert.ownerId === customer.id) return true;
       if (customer.cpf && cert.ownerCpf && cert.ownerCpf === customer.cpf) return true;
-      if (custEmailLower && cert.ownerEmail && cert.ownerEmail.trim().toLowerCase() === custEmailLower) return true;
-      if (cert.currentOwnerName && cert.currentOwnerName.trim().toLowerCase() === custNameLower) return true;
+      if (custEmailLower && cert.ownerEmail && typeof cert.ownerEmail === 'string' && cert.ownerEmail.trim().toLowerCase() === custEmailLower) return true;
+      if (cert.currentOwnerName && typeof cert.currentOwnerName === 'string' && cert.currentOwnerName.trim().toLowerCase() === custNameLower) return true;
       return false;
     });
   };

@@ -1723,6 +1723,7 @@ app.post('/api/certificates', async (req, res) => {
       warranty_terms: newCert.warrantyTerms,
       warranty_status: newCert.warrantyStatus,
       estimated_value_brl: newCert.estimatedValueBRL || 0,
+      internal_notes: newCert.internalNotes || '',
       current_owner_name: newCert.currentOwnerName,
       owner_cpf: newCert.ownerCpf,
       owner_email: newCert.ownerEmail,

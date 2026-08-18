@@ -375,7 +375,7 @@ export default function App() {
     }
   }, [selectedCert]);
 
-  // Fetch organization display name
+  // Fetch organization display name and logo
   useEffect(() => {
     if (currentUser) {
       const orgId = currentUser.orgId || '550e8400-e29b-41d4-a716-446655440000';
@@ -384,6 +384,10 @@ export default function App() {
         .then(data => {
           if (data.success && data.data) {
             setOrgDisplayName(data.data.display_name || data.data.name);
+            // Carregar logo da organização
+            if (data.data.logo_url) {
+              setCompanyLogoUrl(data.data.logo_url);
+            }
           }
         })
         .catch(err => {});
@@ -935,10 +939,25 @@ export default function App() {
       });
     }
 
-    // Persist updates to API
+    // Save logo to organization in Supabase
+    if (currentUser?.orgId) {
+      try {
+        await fetchWithAuth(`/api/organizations/${currentUser.orgId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            logoUrl: newLogoUrl
+          })
+        });
+      } catch (e) {
+        console.error('Erro ao salvar logo da organização:', e);
+      }
+    }
+
+    // Persist updates to certificates API
     for (const cert of updatedCertificates) {
       try {
-        await fetch(`/api/certificates/${cert.id}`, {
+        await fetchWithAuth(`/api/certificates/${cert.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(cert)

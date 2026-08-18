@@ -2091,7 +2091,7 @@ app.post('/api/organizations', async (req, res) => {
 app.put('/api/organizations/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, displayName, website, country, internalNotes, responsibleName, phone, email } = req.body;
+    const { name, displayName, website, country, internalNotes, responsibleName, phone, email, logoUrl } = req.body;
 
     if (displayName && displayName.length > 18) {
       return res.status(400).json({
@@ -2135,6 +2135,7 @@ app.put('/api/organizations/:id', async (req, res) => {
     if (phone) updateData.phone = phone;
     if (email) updateData.email = email;
     if (internalNotes) updateData.internal_notes = internalNotes;
+    if (logoUrl) updateData.logo_url = logoUrl;
 
     const { data, error } = await supabase
       .from('organizations')

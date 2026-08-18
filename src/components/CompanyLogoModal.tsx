@@ -10,24 +10,6 @@ interface CompanyLogoModalProps {
   onSaveCompanyConfig: (name: string, logoUrl: string) => void;
 }
 
-const LUXURY_LOGO_PRESETS = [
-  {
-    name: 'Monograma M - Dourado Imperial',
-    url: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=300&auto=format&fit=crop&q=80'
-  },
-  {
-    name: 'Brasão Solitário - Haute Joaillerie',
-    url: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300&auto=format&fit=crop&q=80'
-  },
-  {
-    name: 'Selo Diamante - Ateliê de Luxo',
-    url: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=300&auto=format&fit=crop&q=80'
-  },
-  {
-    name: 'Emblema Coroa de Ouro 18K',
-    url: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=300&auto=format&fit=crop&q=80'
-  }
-];
 
 // Canvas Image Optimizer for high-definition rendering (preserves sharp vector details, transparency, and prevents quality degradation)
 const compressAndResizeImage = (file: File): Promise<string> => {
@@ -89,7 +71,7 @@ export const CompanyLogoModal: React.FC<CompanyLogoModalProps> = ({
   if (!isOpen) return null;
 
   const [name, setName] = useState(companyName || 'Estilo Raro Joias');
-  const [logoUrl, setLogoUrl] = useState(companyLogoUrl || LUXURY_LOGO_PRESETS[0].url);
+  const [logoUrl, setLogoUrl] = useState(companyLogoUrl || '');
   const [inputUrl, setInputUrl] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [imgLoadError, setImgLoadError] = useState(false);
@@ -278,30 +260,6 @@ export const CompanyLogoModal: React.FC<CompanyLogoModalProps> = ({
               </div>
             </div>
 
-            {/* Option C: Presets */}
-            <div className="space-y-2">
-              <label className="block text-zinc-300 font-medium">3. Ou Escolha um Emblema Luxuoso Modelo</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {LUXURY_LOGO_PRESETS.map((preset, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      setImgLoadError(false);
-                      setLogoUrl(preset.url);
-                    }}
-                    className={`p-2 rounded-xl border flex flex-col items-center gap-2 bg-zinc-900 text-left transition-all ${
-                      logoUrl === preset.url
-                        ? 'border-amber-400 ring-2 ring-amber-500/50 bg-amber-500/10'
-                        : 'border-zinc-800 hover:border-zinc-700'
-                    }`}
-                  >
-                    <img src={preset.url} alt={preset.name} className="w-10 h-10 object-cover rounded-lg" />
-                    <span className="text-[10px] text-zinc-400 text-center line-clamp-1">{preset.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
 
             {/* Save Button */}
             <button

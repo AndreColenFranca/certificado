@@ -47,6 +47,8 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMetalFilter, setSelectedMetalFilter] = useState<string>('todos');
   const [selectedCollectionFilter, setSelectedCollectionFilter] = useState<string>('todas');
+  const [sortColumn, setSortColumn] = useState<'title' | 'id' | 'metalPurity' | 'collection' | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Strictly separate Root/Parent catalog items from Child certificates
   const rootCertificates = certificates.filter(isRootCert);
@@ -60,8 +62,8 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
   const collectionsList = Array.from(new Set(rootCertificates.map(c => c.collection)));
 
   // Filtered list of Root/Parent certificates for "Cadastro de Joias"
-  const filteredCertificates = rootCertificates.filter(c => {
-    const matchesSearch = 
+  let filteredCertificates = rootCertificates.filter(c => {
+    const matchesSearch =
       c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -72,6 +74,45 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
 
     return matchesSearch && matchesMetal && matchesCollection;
   });
+
+  // Apply sorting
+  if (sortColumn) {
+    filteredCertificates = [...filteredCertificates].sort((a, b) => {
+      let aVal: any = '';
+      let bVal: any = '';
+
+      if (sortColumn === 'title') {
+        aVal = a.title.toLowerCase();
+        bVal = b.title.toLowerCase();
+      } else if (sortColumn === 'id') {
+        aVal = a.serialNumber.toLowerCase();
+        bVal = b.serialNumber.toLowerCase();
+      } else if (sortColumn === 'metalPurity') {
+        aVal = a.metalPurity.toLowerCase();
+        bVal = b.metalPurity.toLowerCase();
+      } else if (sortColumn === 'collection') {
+        aVal = a.collection.toLowerCase();
+        bVal = b.collection.toLowerCase();
+      }
+
+      if (sortOrder === 'asc') {
+        return aVal.localeCompare(bVal);
+      } else {
+        return bVal.localeCompare(aVal);
+      }
+    });
+  }
+
+  const handleColumnSort = (column: 'title' | 'id' | 'metalPurity' | 'collection') => {
+    if (sortColumn === column) {
+      // Toggle sort order
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new column and default to asc
+      setSortColumn(column);
+      setSortOrder('asc');
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8" id="jeweler-dashboard-view">
@@ -198,11 +239,35 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-amber-900/40 text-amber-400 font-semibold uppercase tracking-wider bg-zinc-950/80">
-                <th className="p-4">Peça</th>
-                <th className="p-4">Certificado / SN</th>
-                <th className="p-4">Metal</th>
+                <th
+                  className="p-4 cursor-pointer hover:bg-amber-900/20 transition-colors"
+                  onClick={() => handleColumnSort('title')}
+                  title="Clique para ordenar"
+                >
+                  Peça {sortColumn === 'title' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
+                <th
+                  className="p-4 cursor-pointer hover:bg-amber-900/20 transition-colors"
+                  onClick={() => handleColumnSort('id')}
+                  title="Clique para ordenar"
+                >
+                  Certificado / SN {sortColumn === 'id' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
+                <th
+                  className="p-4 cursor-pointer hover:bg-amber-900/20 transition-colors"
+                  onClick={() => handleColumnSort('metalPurity')}
+                  title="Clique para ordenar"
+                >
+                  Metal {sortColumn === 'metalPurity' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
                 <th className="p-4">Certificados Emitidos</th>
-                <th className="p-4">Coleção / Marca</th>
+                <th
+                  className="p-4 cursor-pointer hover:bg-amber-900/20 transition-colors"
+                  onClick={() => handleColumnSort('collection')}
+                  title="Clique para ordenar"
+                >
+                  Coleção / Marca {sortColumn === 'collection' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
                 <th className="p-4 text-right">Ações</th>
               </tr>
             </thead>

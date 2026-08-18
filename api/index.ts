@@ -1727,6 +1727,8 @@ app.post('/api/certificates', async (req, res) => {
       owner_cpf: newCert.ownerCpf,
       owner_email: newCert.ownerEmail,
       owner_id: newCert.ownerId,
+      issue_date: newCert.issueDate,
+      manufacturing_date: newCert.manufacturingDate,
       authenticity_hash: authHash,
       is_root: newCert.isRoot !== undefined ? newCert.isRoot : true,
       parent_cert_id: newCert.parentCertId || null,

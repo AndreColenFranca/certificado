@@ -569,184 +569,171 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
       {/* Tab 4: Care Guide */}
       {activeTab === 'care' && (
-        <div className="space-y-8">
-          {/* Intro Card */}
-          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
-            <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-amber-400" />
-              Cuidados com as suas joias
+        <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-8 shadow-xl space-y-6">
+          <div className="space-y-2">
+            <h3 className="font-serif text-2xl font-bold text-amber-200 flex items-center gap-2">
+              <BookOpen className="w-6 h-6 text-amber-400" />
+              Manual do Proprietário e Dicas de Conservação
             </h3>
-
-            <p className="text-sm text-zinc-300 leading-relaxed">
-              As joias da Estilo Raro são feitas para durar a vida toda — e ainda passar adiante. Mas, como tudo o que é valioso, elas pedem alguns cuidados simples para continuar lindas como no primeiro dia.
+            <p className="text-sm text-zinc-400">
+              Recomendações técnicas customizadas para manter o brilho original do metal <strong className="text-amber-300">{cert.metalPurity}</strong> e proteger as gemas preciosas encravadas.
             </p>
           </div>
 
-          {/* Warning Card - Destaque Garantia */}
-          <div className="bg-zinc-900/90 border border-red-900/40 rounded-2xl p-6 shadow-xl space-y-4">
-            <h3 className="font-serif text-lg font-bold text-red-400 flex items-center gap-2">
-              <Info className="w-5 h-5 text-red-500" />
-              ⚠️ Importante sobre a Garantia
-            </h3>
-
-            <div className="space-y-3 text-sm text-zinc-300 leading-relaxed">
+          <div className="space-y-6 text-sm text-zinc-300 leading-relaxed">
+            {/* Intro */}
+            <div className="p-4 bg-zinc-950 rounded-xl border border-zinc-800">
               <p>
-                <strong className="text-red-400">A garantia não cobre:</strong>
+                As joias da Estilo Raro são feitas para durar a vida toda — e ainda passar adiante. Mas, como tudo o que é valioso, elas pedem alguns cuidados simples para continuar lindas como no primeiro dia.
               </p>
-              <ul className="space-y-2 ml-4">
+            </div>
+
+            {/* Warning - Garantia */}
+            <div className="p-4 bg-red-950/30 rounded-xl border border-red-900/40">
+              <p className="font-bold text-red-400 mb-2">⚠️ Importante: A garantia não cobre:</p>
+              <ul className="space-y-1 ml-4">
                 <li className="flex gap-2">
                   <span className="text-red-400 shrink-0">•</span>
-                  <span>Danos por acidentes, batidas ou mau uso</span>
+                  <span>Danos decorrentes de quedas</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-red-400 shrink-0">•</span>
-                  <span>Situações que causem dano à peça</span>
+                  <span>Uso inadequado</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-red-400 shrink-0">•</span>
-                  <span>Gemas, pedras e pérolas</span>
+                  <span>Acidentes de qualquer natureza</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-red-400 shrink-0">•</span>
+                  <span>Contato com agentes químicos que possam danificar os materiais da peça</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-red-400 shrink-0">•</span>
+                  <span>Gemas, pedras e pérolas não são cobertas pela garantia</span>
                 </li>
               </ul>
-
-              <p className="pt-2 border-t border-zinc-700">
+              <p className="mt-3 pt-3 border-t border-red-900/30">
                 Na entrega, confira sua joia com calma. Se algo não estiver certo, resolveremos na hora. Precisou de reparo fora da garantia? Fazemos um orçamento justo e transparente. Para trocas, basta enviar a peça sem uso, no estojo original, com nota fiscal e certificado de garantia, em até 90 dias após a compra.
               </p>
             </div>
-          </div>
 
-          {/* Ouro 18K */}
-          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
-            <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
-              <Sparkle className="w-5 h-5 text-amber-400" />
-              ✨ Ouro 18K
-            </h3>
-            <p className="text-sm text-zinc-300 leading-relaxed">
-              O ouro é um metal nobre e maleável e por isso é lindo, mas também delicado. No Brasil, o padrão é o ouro 18 quilates (18K ou teor 750): 75% de ouro puro e 25% de ligas (geralmente prata e cobre). Essa combinação garante durabilidade sem perder a beleza. Sua joia pode ter acabamento polido (brilhante) ou fosco (texturizado). O uso diário vai marcando a superfície com o tempo que é natural. Uma dica importante: não exagere no polimento, pois a peça perde um pouquinho do peso em ouro a cada vez.
-            </p>
-          </div>
+            {/* Ouro 18K */}
+            <div>
+              <h4 className="font-bold text-amber-300 mb-2">✨ Ouro 18K</h4>
+              <p>
+                O ouro é um metal nobre e maleável e por isso é lindo, mas também delicado. No Brasil, o padrão é o ouro 18 quilates (18K ou teor 750): 75% de ouro puro e 25% de ligas (geralmente prata e cobre). Essa combinação garante durabilidade sem perder a beleza. Sua joia pode ter acabamento polido (brilhante) ou fosco (texturizado). O uso diário vai marcando a superfície com o tempo que é natural. Uma dica importante: não exagere no polimento, pois a peça perde um pouquinho do peso em ouro a cada vez.
+              </p>
+            </div>
 
-          {/* Ouro Branco */}
-          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
-            <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
-              <Sparkle className="w-5 h-5 text-amber-400" />
-              💎 Ouro Branco
-            </h3>
-            <p className="text-sm text-zinc-300 leading-relaxed">
-              A joia em ouro branco, no estado natural, é levemente amarelada. Aquele brilho prateado que você ama vem do banho de ródio. Com o uso diário, esse banho vai se desgastando e a peça pode voltar ao tom amarelado original. É completamente normal. Na Estilo Raro você tem um <strong className="text-amber-300">Banho de Ródio gratuito</strong> para manter suas joias sempre renovadas e brilhantes.
-            </p>
-          </div>
+            {/* Ouro Branco */}
+            <div>
+              <h4 className="font-bold text-amber-300 mb-2">💎 Ouro Branco</h4>
+              <p>
+                A joia em ouro branco, no estado natural, é levemente amarelada. Aquele brilho prateado que você ama vem do banho de ródio. Com o uso diário, esse banho vai se desgastando e a peça pode voltar ao tom amarelado original. É completamente normal. Na Estilo Raro você tem um <strong>Banho de Ródio gratuito</strong> para manter suas joias sempre renovadas e brilhantes.
+              </p>
+            </div>
 
-          {/* Pérolas */}
-          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
-            <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
-              <Sparkle className="w-5 h-5 text-amber-400" />
-              🐚 Joias com Pérolas
-            </h3>
-            <p className="text-sm text-zinc-300 leading-relaxed mb-3">
-              Pérolas são gemas orgânicas — vivas, sensíveis e únicas. Por isso, mantenha-as longe de:
-            </p>
-            <ul className="space-y-2 text-sm text-zinc-300 ml-4">
-              <li className="flex gap-2">
-                <span className="text-amber-400 shrink-0">•</span>
-                <span>Detergentes e produtos químicos</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-400 shrink-0">•</span>
-                <span>Sprays e produtos para cabelo</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-400 shrink-0">•</span>
-                <span>Secador de cabelo</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-400 shrink-0">•</span>
-                <span>Piscina, água quente, água salgada e areia</span>
-              </li>
-            </ul>
-            <p className="text-sm text-zinc-300 leading-relaxed pt-3 border-t border-zinc-700">
-              Depois de usar: limpe com uma flanela macia levemente úmida para tirar suor, cremes e maquiagem. Guarde envolta em flanela, separada das outras joias.
-            </p>
-          </div>
+            {/* Pérolas */}
+            <div>
+              <h4 className="font-bold text-amber-300 mb-2">🐚 Joias com Pérolas</h4>
+              <p className="mb-2">
+                Pérolas são gemas orgânicas — vivas, sensíveis e únicas. Por isso, mantenha-as longe de:
+              </p>
+              <ul className="space-y-1 ml-4 mb-2">
+                <li className="flex gap-2">
+                  <span className="text-amber-400 shrink-0">•</span>
+                  <span>Detergentes e produtos químicos</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-400 shrink-0">•</span>
+                  <span>Sprays e produtos para cabelo</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-400 shrink-0">•</span>
+                  <span>Secador de cabelo</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-400 shrink-0">•</span>
+                  <span>Piscina, água quente, água salgada e areia</span>
+                </li>
+              </ul>
+              <p>
+                Depois de usar: limpe com uma flanela macia levemente úmida para tirar suor, cremes e maquiagem. Guarde envolta em flanela, separada das outras joias.
+              </p>
+            </div>
 
-          {/* Diamantes */}
-          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
-            <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
-              <Sparkle className="w-5 h-5 text-amber-400" />
-              💎 Diamantes
-            </h3>
-            <p className="text-sm text-zinc-300 leading-relaxed">
-              O diamante é o material mais duro da natureza mas nem por isso é indestrutível. Guarde separado das outras joias para evitar arranhões. Mantenha sempre limpo, principalmente após usar hidratantes, cremes e protetor solar. Nunca use produtos químicos para limpar. Para limpar em casa: escova de cerdas macias, água e sabão neutro, friccionando com delicadeza. Simples assim.
-            </p>
-          </div>
+            {/* Diamantes */}
+            <div>
+              <h4 className="font-bold text-amber-300 mb-2">💎 Diamantes</h4>
+              <p>
+                O diamante é o material mais duro da natureza mas nem por isso é indestrutível. Guarde separado das outras joias para evitar arranhões. Mantenha sempre limpo, principalmente após usar hidratantes, cremes e protetor solar. Nunca use produtos químicos para limpar. Para limpar em casa: escova de cerdas macias, água e sabão neutro, friccionando com delicadeza. Simples assim.
+              </p>
+            </div>
 
-          {/* Gemas */}
-          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
-            <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
-              <Sparkle className="w-5 h-5 text-amber-400" />
-              💜 Joias com Gemas
-            </h3>
-            <p className="text-sm text-zinc-300 leading-relaxed mb-3">
-              Gemas são delicadas e pedem atenção redobrada. Impactos podem afetar as garras e a estrutura da peça, causando quebras ou arranhões e isso faz você perder a garantia de fábrica. Alguns pontos de atenção:
-            </p>
-            <ul className="space-y-2 text-sm text-zinc-300 ml-4">
-              <li className="flex gap-2">
-                <span className="text-amber-400 shrink-0">•</span>
-                <span>Calor excessivo e choques térmicos podem manchar certas pedras</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-400 shrink-0">•</span>
-                <span>Pedras como ametista, citrino, água-marinha e berilo são sensíveis ao sol. Evite exposição prolongada, pois a cor pode alterar</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-400 shrink-0">•</span>
-                <span>Esmeralda é uma das mais sensíveis a impactos: não use em situações de risco</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-400 shrink-0">•</span>
-                <span>Anéis com pedras merecem cuidado extra durante trabalhos manuais — uma batida pode soltar a gema</span>
-              </li>
-            </ul>
-          </div>
+            {/* Gemas */}
+            <div>
+              <h4 className="font-bold text-amber-300 mb-2">💜 Joias com Gemas</h4>
+              <p className="mb-2">
+                Gemas são delicadas e pedem atenção redobrada. Impactos podem afetar as garras e a estrutura da peça, causando quebras ou arranhões e isso faz você perder a garantia de fábrica. Alguns pontos de atenção:
+              </p>
+              <ul className="space-y-1 ml-4">
+                <li className="flex gap-2">
+                  <span className="text-amber-400 shrink-0">•</span>
+                  <span>Calor excessivo e choques térmicos podem manchar certas pedras</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-400 shrink-0">•</span>
+                  <span>Pedras como ametista, citrino, água-marinha e berilo são sensíveis ao sol. Evite exposição prolongada</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-400 shrink-0">•</span>
+                  <span>Esmeralda é uma das mais sensíveis a impactos: não use em situações de risco</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-400 shrink-0">•</span>
+                  <span>Anéis com pedras merecem cuidado extra — uma batida pode soltar a gema</span>
+                </li>
+              </ul>
+            </div>
 
-          {/* Cuidados Especiais - Resumo Prático */}
-          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
-            <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
-              <Sparkle className="w-5 h-5 text-amber-400" />
-              🧡 Cuidados Especiais — Resumo Prático
-            </h3>
-            <ul className="space-y-2 text-sm text-zinc-300 ml-4">
-              <li className="flex gap-2">
-                <span className="text-amber-400 shrink-0">•</span>
-                <span>Limpe suas joias periodicamente com flanela macia</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-400 shrink-0">•</span>
-                <span>Para limpeza mais profunda: água, sabão neutro e escova de cerdas macias. Seque com papel macio</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-400 shrink-0">•</span>
-                <span>Evite contato com perfume, cremes, laquê, cloro, enxofre, xampu, detergentes, sabonete e bronzeadores</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-400 shrink-0">•</span>
-                <span>Tire as joias para banho de mar ou piscina, tarefas domésticas e atividades esportivas</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-400 shrink-0">•</span>
-                <span>Não passe perfume ou cremes com as joias no corpo. Coloque-as só depois que a pele estiver seca</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-400 shrink-0">•</span>
-                <span>Mantenha sua joia longe de mercúrio (como o de termômetros), pois o dano pode ser irreversível</span>
-              </li>
-            </ul>
-          </div>
+            {/* Cuidados Especiais */}
+            <div>
+              <h4 className="font-bold text-amber-300 mb-2">🧡 Cuidados Especiais — Resumo Prático</h4>
+              <ul className="space-y-1 ml-4">
+                <li className="flex gap-2">
+                  <span className="text-amber-400 shrink-0">•</span>
+                  <span>Limpe suas joias periodicamente com flanela macia</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-400 shrink-0">•</span>
+                  <span>Para limpeza mais profunda: água, sabão neutro e escova de cerdas macias. Seque com papel macio</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-400 shrink-0">•</span>
+                  <span>Evite contato com perfume, cremes, laquê, cloro, enxofre, xampu, detergentes, sabonete e bronzeadores</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-400 shrink-0">•</span>
+                  <span>Tire as joias para banho de mar ou piscina, tarefas domésticas e atividades esportivas</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-400 shrink-0">•</span>
+                  <span>Não passe perfume ou cremes com as joias no corpo. Coloque-as só depois que a pele estiver seca</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-400 shrink-0">•</span>
+                  <span>Mantenha sua joia longe de mercúrio (como o de termômetros), pois o dano pode ser irreversível</span>
+                </li>
+              </ul>
+            </div>
 
-          {/* Closing Message */}
-          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl">
-            <p className="text-sm text-zinc-300 leading-relaxed text-center">
-              Sua joia conta uma história. Vamos cuidar dela juntos. 🤍 Se tiver qualquer dúvida sobre cuidados, manutenção ou garantia, fale com a gente. A Estilo Raro está aqui não só na hora da compra. Estamos com você sempre que precisar.
-            </p>
+            {/* Fechamento */}
+            <div className="p-4 bg-zinc-950 rounded-xl border border-zinc-800 italic">
+              <p>
+                Sua joia conta uma história. Vamos cuidar dela juntos. 🤍 Se tiver qualquer dúvida sobre cuidados, manutenção ou garantia, fale com a gente. A Estilo Raro está aqui não só na hora da compra. Estamos com você sempre que precisar.
+              </p>
+            </div>
           </div>
         </div>
       )}

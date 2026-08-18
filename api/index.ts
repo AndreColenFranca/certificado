@@ -2100,7 +2100,16 @@ const createAttributeEndpoints = (tableName: string, apiPath: string) => {
   // GET all
   app.get(`/api/${apiPath}`, async (req, res) => {
     try {
-      const data = await getAttributes(supabase, tableName);
+      const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+
+      if (!userOrgId) {
+        return res.status(401).json({
+          success: false,
+          error: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+        });
+      }
+
+      const data = await getAttributes(supabase, tableName, userOrgId);
       res.json({ success: true, data, count: data?.length || 0 });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });
@@ -2110,22 +2119,42 @@ const createAttributeEndpoints = (tableName: string, apiPath: string) => {
   // GET one
   app.get(`/api/${apiPath}/:id`, async (req, res) => {
     try {
-      const data = await getAttribute(supabase, tableName, req.params.id);
+      const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+
+      if (!userOrgId) {
+        return res.status(401).json({
+          success: false,
+          error: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+        });
+      }
+
+      const data = await getAttribute(supabase, tableName, req.params.id, userOrgId);
       res.json({ success: true, data });
     } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+      res.status(404).json({ success: false, error: err.message });
     }
   });
 
   // POST
   app.post(`/api/${apiPath}`, async (req, res) => {
     try {
+      const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+      console.log(`[DEBUG POST ${apiPath}] userOrgId=${userOrgId}, DEFAULT_ORG_ID=${DEFAULT_ORG_ID}`);
+
+      if (!userOrgId) {
+        return res.status(401).json({
+          success: false,
+          error: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+        });
+      }
+
       const { name, description, order } = req.body;
       if (!name) return res.status(400).json({ success: false, error: 'Nome é obrigatório' });
 
-      const data = await createAttribute(supabase, tableName, { name, description, order });
+      const data = await createAttribute(supabase, tableName, userOrgId, { name, description, order });
       res.status(201).json({ success: true, data });
     } catch (err: any) {
+      console.error(`[ERROR POST ${apiPath}]`, err.message);
       res.status(500).json({ success: false, error: err.message });
     }
   });
@@ -2133,10 +2162,19 @@ const createAttributeEndpoints = (tableName: string, apiPath: string) => {
   // PUT
   app.put(`/api/${apiPath}/:id`, async (req, res) => {
     try {
+      const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+
+      if (!userOrgId) {
+        return res.status(401).json({
+          success: false,
+          error: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+        });
+      }
+
       const { name, description, order } = req.body;
       if (!name) return res.status(400).json({ success: false, error: 'Nome é obrigatório' });
 
-      const data = await updateAttribute(supabase, tableName, req.params.id, { name, description, order });
+      const data = await updateAttribute(supabase, tableName, req.params.id, userOrgId, { name, description, order });
       res.json({ success: true, data });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });
@@ -2146,7 +2184,16 @@ const createAttributeEndpoints = (tableName: string, apiPath: string) => {
   // DELETE
   app.delete(`/api/${apiPath}/:id`, async (req, res) => {
     try {
-      await deleteAttribute(supabase, tableName, req.params.id);
+      const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+
+      if (!userOrgId) {
+        return res.status(401).json({
+          success: false,
+          error: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+        });
+      }
+
+      await deleteAttribute(supabase, tableName, req.params.id, userOrgId);
       res.json({ success: true, message: 'Atributo deletado com sucesso' });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });

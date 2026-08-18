@@ -37,7 +37,7 @@ export const getCertIdFromUrl = (): string | null => {
 export default function App() {
   // Authentication State
   const [currentUser, setCurrentUser] = useState<AppUser | null>(() => {
-    const stored = localStorage.getItem('aureum_logged_user');
+    const stored = sessionStorage.getItem('aureum_logged_user');
     if (stored) {
       try { return JSON.parse(stored); } catch (e) { return null; }
     }
@@ -82,11 +82,11 @@ export default function App() {
       return 'public-passport';
     }
     // Tenta recuperar o viewMode salvo
-    const storedViewMode = localStorage.getItem('aureum_view_mode');
+    const storedViewMode = sessionStorage.getItem('aureum_view_mode');
     if (storedViewMode && ['jeweler-dashboard', 'customers', 'customer-portal', 'attributes', 'public-passport', 'public-certificate', 'create-new'].includes(storedViewMode)) {
       return storedViewMode as ViewMode;
     }
-    const storedUser = localStorage.getItem('aureum_logged_user');
+    const storedUser = sessionStorage.getItem('aureum_logged_user');
     if (storedUser) {
       try {
         const parsed = JSON.parse(storedUser);
@@ -225,10 +225,10 @@ export default function App() {
 
     setCurrentUser(null);
     try {
-      localStorage.removeItem('aureum_logged_user');
-      localStorage.removeItem('aureum_certificates');
-      localStorage.removeItem('aureum_customers');
-      localStorage.removeItem('aureum_users_db');
+      sessionStorage.removeItem('aureum_logged_user');
+      sessionStorage.removeItem('aureum_certificates');
+      sessionStorage.removeItem('aureum_customers');
+      sessionStorage.removeItem('aureum_users_db');
     } catch (e) {}
     setViewHistory([]);
     if (typeof window !== 'undefined') {
@@ -283,13 +283,13 @@ export default function App() {
 
   // Theme Switcher State
   const [theme, setTheme] = useState<'luxury-dark' | 'classic-light'>(() => {
-    return (localStorage.getItem('aureum_theme') as 'luxury-dark' | 'classic-light') || 'classic-light';
+    return (sessionStorage.getItem('aureum_theme') as 'luxury-dark' | 'classic-light') || 'classic-light';
   });
 
   const handleToggleTheme = () => {
     const nextTheme = theme === 'luxury-dark' ? 'classic-light' : 'luxury-dark';
     setTheme(nextTheme);
-    // localStorage.setItem('aureum_theme', nextTheme); // Supabase only
+    // sessionStorage.setItem('aureum_theme', nextTheme); // Supabase only
   };
 
   // Load certificates and customers from backend API on mount
@@ -300,7 +300,7 @@ export default function App() {
 
   // Salvar viewMode no localStorage
   useEffect(() => {
-    localStorage.setItem('aureum_view_mode', viewMode);
+    sessionStorage.setItem('aureum_view_mode', viewMode);
   }, [viewMode]);
 
 

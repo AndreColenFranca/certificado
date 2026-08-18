@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Search, GripVertical } from 'lucide-react';
+import { fetchWithAuth } from '../utils/fetchWithAuth';
 
 export interface Attribute {
   id: string;
@@ -37,7 +38,7 @@ export const AttributeManager: React.FC<AttributeManagerProps> = ({
 
   const fetchAttributes = async () => {
     try {
-      const res = await fetch(endpoint);
+      const res = await fetchWithAuth(endpoint);
       const data = await res.json();
       if (data.success) {
         const sorted = [...data.data].sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -69,7 +70,7 @@ export const AttributeManager: React.FC<AttributeManagerProps> = ({
       const url = editingId ? `${endpoint}/${editingId}` : endpoint;
       const method = editingId ? 'PUT' : 'POST';
 
-      const res = await fetch(url, {
+      const res = await fetchWithAuth(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -95,7 +96,7 @@ export const AttributeManager: React.FC<AttributeManagerProps> = ({
     if (!confirm('Tem certeza que quer deletar?')) return;
 
     try {
-      const res = await fetch(`${endpoint}/${id}`, { method: 'DELETE' });
+      const res = await fetchWithAuth(`${endpoint}/${id}`, { method: 'DELETE' });
       const data = await res.json();
 
       if (data.success) {
@@ -129,7 +130,7 @@ export const AttributeManager: React.FC<AttributeManagerProps> = ({
         order: newOrder
       };
       console.log('Payload:', payload);
-      const res = await fetch(`${endpoint}/${id}`, {
+      const res = await fetchWithAuth(`${endpoint}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

@@ -53,10 +53,10 @@ export const ResetPasswordView = ({
       setSuccessMsg('✅ Senha redefinida com sucesso! Redirecionando...');
       // Clear app state to force login
       try {
-        localStorage.removeItem('aureum_logged_user');
-        localStorage.removeItem('aureum_certificates');
-        localStorage.removeItem('aureum_customers');
-        localStorage.removeItem('aureum_theme');
+        sessionStorage.removeItem('aureum_logged_user');
+        sessionStorage.removeItem('aureum_certificates');
+        sessionStorage.removeItem('aureum_customers');
+        sessionStorage.removeItem('aureum_theme');
       } catch (e) {
       }
       setTimeout(() => {

@@ -1790,6 +1790,8 @@ app.put('/api/certificates/:id', async (req, res) => {
     const updatedCert = {
       ...getCertResult.data,
       ...req.body,
+      orgId: getCertResult.data.orgId || getCertResult.data.org_id || userOrgId,
+      org_id: getCertResult.data.org_id || userOrgId,
       updatedAt: new Date().toISOString()
     };
 

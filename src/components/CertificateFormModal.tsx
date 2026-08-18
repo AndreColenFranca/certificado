@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { JewelryCertificate, StoneDetail, Customer } from '../types';
 import { X, Sparkles, Plus, Trash2, Edit3, Check, Upload, Loader2, Image as ImageIcon, Link as LinkIcon, GripVertical, ChevronLeft, ChevronRight, Star, Move, Users, CreditCard, Mail } from 'lucide-react';
 import { formatImageUrl, DEFAULT_BRAND_LOGO_DRIVE_URL } from '../utils/imageUtils';
+import { fetchWithAuth } from '../utils/fetchWithAuth';
 
 interface CertificateFormModalProps {
   isOpen: boolean;
@@ -117,7 +118,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
         for (const endpoint of endpoints) {
           try {
             const url = `/api/${endpoint.key.replace(/_/g, '-')}`;
-            const res = await fetch(url);
+            const res = await fetchWithAuth(url);
             const data = await res.json();
             if (data.success && Array.isArray(data.data)) {
               const sorted = [...data.data].sort((a: any, b: any) => (a.order || 0) - (b.order || 0));

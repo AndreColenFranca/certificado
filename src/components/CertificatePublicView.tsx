@@ -585,6 +585,31 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
               </p>
             </div>
 
+            {/* Prata */}
+            <div>
+              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><Sparkles className="w-5 h-5" /> Prata</h4>
+              <p className="mb-3">
+                A prata 950 é composta por 95% de prata pura. Um metal nobre, porém maleável e sensível. Com o tempo, é natural que ela escureça. Isso acontece porque a prata reage com o enxofre presente no ar, formando uma camada escura na superfície. O suor, cosméticos e umidade também aceleram esse processo. Não é defeito é a natureza do metal.
+              </p>
+              <p className="mb-3">
+                Limpe com flanela própria após cada uso, antes de guardar. Isso remove o suor e resíduos que aceleram o escurecimento.
+              </p>
+              <p className="mb-3">
+                Para limpeza mais profunda: água morna, sabão neutro e escova de cerdas macias. Seque bem com pano macio.
+              </p>
+              <p className="mb-3">
+                Guarde separada de outras joias e metais, em local seco, pois o contato com outros metais pode acelerar a oxidação. Evite contato com perfume, cremes, cloro, produtos de limpeza e água do mar.
+              </p>
+              <div className="p-3 bg-red-950/20 border-l-4 border-red-500 rounded mb-3 italic">
+                <p className="text-sm text-zinc-300">
+                  Não use líquidos para polir prata. Eles podem estragar os detalhes e o acabamento da peça.
+                </p>
+              </div>
+              <p className="text-sm text-zinc-300 italic">
+                Dica extra: se for guardar por um tempo sem usar, envolva a peça em flanela. Quanto menos contato com o ar, mais tempo ela mantém o brilho.
+              </p>
+            </div>
+
             {/* Garantia - Citação */}
             <div className="pl-4 border-l-4 border-red-500 bg-red-950/10 py-4 pr-4 italic">
               <p className="mb-2">A garantia não cobre:</p>

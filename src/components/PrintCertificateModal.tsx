@@ -316,7 +316,7 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
             <div className="text-center space-y-1 min-w-[160px] shrink-0">
               <div className="h-12 flex items-center justify-center">
                 <img
-                  src="/assets/assinatura.png"
+                  src="/assinatura.png"
                   alt="Assinatura"
                   className="h-12 w-auto object-contain"
                 />

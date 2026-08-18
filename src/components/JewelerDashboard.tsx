@@ -47,7 +47,7 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMetalFilter, setSelectedMetalFilter] = useState<string>('todos');
   const [selectedCollectionFilter, setSelectedCollectionFilter] = useState<string>('todas');
-  const [sortColumn, setSortColumn] = useState<'title' | 'id' | 'metalPurity' | 'collection' | null>(null);
+  const [sortColumn, setSortColumn] = useState<'title' | 'id' | 'metalPurity' | 'collection' | null>('title');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Strictly separate Root/Parent catalog items from Child certificates

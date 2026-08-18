@@ -23,7 +23,6 @@ export const OwnershipTransferModal: React.FC<OwnershipTransferModalProps> = ({
   const [newOwnerName, setNewOwnerName] = useState('');
   const [newOwnerCpf, setNewOwnerCpf] = useState('');
   const [newOwnerEmail, setNewOwnerEmail] = useState('');
-  const [transferCode, setTransferCode] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
   const handleCustomerSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -154,19 +153,6 @@ export const OwnershipTransferModal: React.FC<OwnershipTransferModalProps> = ({
                   className="w-full p-2.5 bg-zinc-800/50 border border-zinc-700 rounded-xl text-zinc-400 cursor-not-allowed opacity-60"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-zinc-400 mb-1">Código de Segurança do Certificado</label>
-              <input
-                type="text"
-                disabled
-                value={transferCode}
-                className="w-full p-2.5 bg-zinc-800/50 border border-zinc-700 rounded-xl text-zinc-400 cursor-not-allowed opacity-60"
-              />
-              <span className="text-[10px] text-zinc-500 mt-1 block">
-                Gerado automaticamente no servidor.
-              </span>
             </div>
 
             <button

@@ -327,11 +327,11 @@ export async function getCustomers(
       return { success: false, error: error.message, data: null };
     }
 
-    // Transform: map customer_code to id for frontend compatibility, keep UUID internal
+    // Transform: use UUID as id for proper database operations (e.g., owner_id in transfers)
     const transformed = (data || []).map((cust: any) => ({
       ...cust,
-      id: cust.customer_code || cust.id,
-      _uuid: cust.id // Store UUID for backend operations
+      id: cust.id, // Use UUID as id (required for owner_id in certificate transfers)
+      customerCode: cust.customer_code // Store customer code for display
     }));
 
     return { success: true, data: transformed };

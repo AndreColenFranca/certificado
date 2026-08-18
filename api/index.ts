@@ -1488,7 +1488,15 @@ app.delete('/api/customers/:id', async (req, res) => {
 // Create maintenance record
 app.post('/api/maintenance', async (req, res) => {
   try {
-    const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+    const userOrgId = (req as any).user?.org_id;
+
+    if (!userOrgId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+      });
+    }
+
     const {
       certId,
       maintenanceDate,
@@ -1629,6 +1637,15 @@ app.get('/api/certificates/:id', async (req, res) => {
 // Create new certificate
 app.post('/api/certificates', async (req, res) => {
   try {
+    const userOrgId = (req as any).user?.org_id;
+
+    if (!userOrgId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
+      });
+    }
+
     const newCert: JewelryCertificate = req.body;
 
     // Ensure unique ID and timestamps
@@ -1673,7 +1690,7 @@ app.post('/api/certificates', async (req, res) => {
       owner_id: newCert.ownerId,
       authenticity_hash: authHash,
       is_root: newCert.isRoot !== undefined ? newCert.isRoot : true,
-      org_id: (req as any).user?.org_id || DEFAULT_ORG_ID
+      org_id: userOrgId
     };
 
     const result = await createCertificate(supabase, certToSave);

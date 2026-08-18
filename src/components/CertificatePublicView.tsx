@@ -493,23 +493,22 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
       {/* Tab 3: History & Warranty */}
       {activeTab === 'history' && (
-        <div className="space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column - Termos e Cobertura */}
+          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
+            <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-amber-400" />
+              Termos e Cobertura
+            </h3>
 
-          {/* Two Column Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            {/* Termos e Cobertura - Left Side */}
-            <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
-              <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-amber-400" />
-                Termos e Cobertura
-              </h3>
-
-              <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 text-zinc-400 leading-relaxed text-sm">
-                <WarrantyRenderer text={cert.warrantyTerms} />
-              </div>
+            <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 text-zinc-400 leading-relaxed text-sm">
+              <WarrantyRenderer text={cert.warrantyTerms} />
             </div>
+          </div>
 
-            {/* Status da Garantia - Right Side */}
+          {/* Right Column */}
+          <div className="flex flex-col gap-8">
+            {/* Status da Garantia */}
             <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
@@ -534,34 +533,34 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* O que não é coberto */}
-          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
-            <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
-              <Info className="w-5 h-5 text-amber-400" />
-              O que não é coberto pela Garantia da Estilo Raro?
-            </h3>
+            {/* O que não é coberto */}
+            <div className="bg-zinc-900/90 border border-red-900/40 rounded-2xl p-6 shadow-xl space-y-4">
+              <h3 className="font-serif text-lg font-bold text-red-400 flex items-center gap-2">
+                <Info className="w-5 h-5 text-red-500" />
+                O que não é coberto pela Garantia da Estilo Raro?
+              </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="flex gap-2 items-start p-3 bg-zinc-950 rounded-lg border border-zinc-800">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-                <span className="text-xs text-zinc-300">Danos decorrentes de quedas</span>
-              </div>
+              <div className="space-y-2">
+                <div className="flex gap-2 items-start p-3 bg-zinc-950 rounded-lg border border-red-900/30">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0" />
+                  <span className="text-xs text-zinc-300">Danos decorrentes de quedas</span>
+                </div>
 
-              <div className="flex gap-2 items-start p-3 bg-zinc-950 rounded-lg border border-zinc-800">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-                <span className="text-xs text-zinc-300">Uso inadequado</span>
-              </div>
+                <div className="flex gap-2 items-start p-3 bg-zinc-950 rounded-lg border border-red-900/30">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0" />
+                  <span className="text-xs text-zinc-300">Uso inadequado</span>
+                </div>
 
-              <div className="flex gap-2 items-start p-3 bg-zinc-950 rounded-lg border border-zinc-800">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-                <span className="text-xs text-zinc-300">Acidentes de qualquer natureza</span>
-              </div>
+                <div className="flex gap-2 items-start p-3 bg-zinc-950 rounded-lg border border-red-900/30">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0" />
+                  <span className="text-xs text-zinc-300">Acidentes de qualquer natureza</span>
+                </div>
 
-              <div className="flex gap-2 items-start p-3 bg-zinc-950 rounded-lg border border-zinc-800">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-                <span className="text-xs text-zinc-300">Contato com agentes químicos que possam danificar os materiais da peça</span>
+                <div className="flex gap-2 items-start p-3 bg-zinc-950 rounded-lg border border-red-900/30">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0" />
+                  <span className="text-xs text-zinc-300">Contato com agentes químicos que possam danificar os materiais da peça</span>
+                </div>
               </div>
             </div>
           </div>

@@ -1203,10 +1203,6 @@ export default function App() {
               setPrintTargetCert(c);
               setIsPrintModalOpen(true);
             }}
-            onOpenMaintenanceModal={(c) => {
-              setMaintenanceTargetCert(c);
-              setIsMaintenanceModalOpen(true);
-            }}
             onOpenTransferModal={(c) => {
               setTransferTargetCert(c);
               setIsTransferModalOpen(true);

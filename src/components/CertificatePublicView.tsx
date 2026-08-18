@@ -12,7 +12,6 @@ import {
   Printer,
   Download,
   Sparkles,
-  Wrench,
   ArrowRightLeft,
   FileText,
   CheckCircle2,
@@ -33,9 +32,7 @@ interface CertificatePublicViewProps {
   cert: JewelryCertificate;
   initialTab?: 'photo-inspector' | 'specs' | 'history' | 'care';
   onOpenPrintModal: (cert: JewelryCertificate) => void;
-  onOpenMaintenanceModal: (cert: JewelryCertificate) => void;
   onOpenTransferModal: (cert: JewelryCertificate) => void;
-  onOpenAIGemologist: (cert: JewelryCertificate) => void;
   onDeleteCertificate?: (cert: JewelryCertificate) => void;
   onEditCertificate?: (cert: JewelryCertificate) => void;
   currentUser?: AppUser | null;
@@ -46,11 +43,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
   cert,
   initialTab,
   onOpenPrintModal,
-  onOpenMaintenanceModal,
   onOpenTransferModal,
-  onOpenAIGemologist,
-  onDeleteCertificate,
-  onEditCertificate,
   currentUser,
   onBackToCustomerPortal
 }) => {
@@ -106,8 +99,6 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
 
   const primaryStone = cert.stones && cert.stones.length > 0 ? cert.stones[0] : null;
-
-  const isCustomer = currentUser?.role === 'customer';
 
   const isScannedFromQr = typeof window !== 'undefined' && (
     window.location.pathname.startsWith('/cert/') ||
@@ -536,14 +527,6 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
                 </p>
               </div>
 
-              <button
-                onClick={() => onOpenMaintenanceModal(cert)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 text-xs font-bold rounded-xl shadow-lg transition-all"
-                id="btn-request-maintenance"
-              >
-                <Wrench className="w-4 h-4" />
-                <span>Solicitar Manutenção ou Polimento sob Garantia</span>
-              </button>
             </div>
           </div>
 

@@ -253,6 +253,10 @@ export async function updateCertificate(
         if (['gross_weight_grams', 'width_cm', 'estimated_value_brl', 'warranty_months'].includes(key)) {
           snakeCaseUpdates[key] = 0;
         }
+        // For UUID fields, convert empty strings to null
+        else if (['owner_id', 'parent_cert_id'].includes(key)) {
+          snakeCaseUpdates[key] = null;
+        }
         // For finish and other text fields, keep empty strings as-is (don't convert to null)
         // This ensures they are explicitly updated to empty if the user clears them
       }

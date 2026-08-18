@@ -1766,7 +1766,7 @@ app.delete('/api/certificates/:id', async (req, res) => {
     const isRoot = !cert.parentCertId && !cert.ownerId && !cert.currentOwnerName;
     if (isRoot) {
       // Get all certificates to check for children
-      const allCertsResult = await getCertificates(supabase);
+      const allCertsResult = await getCertificates(supabase, userOrgId);
       if (allCertsResult.success && allCertsResult.data) {
         const allCerts = allCertsResult.data;
         const childCerts = allCerts.filter(c => {

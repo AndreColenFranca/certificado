@@ -51,14 +51,14 @@ export function transformCertificateFromDb(dbCert: any): JewelryCertificate {
 
 export async function getCertificates(
   supabase: SupabaseClient,
-  orgId?: string
+  orgId: string
 ) {
-  try {
-    let query = supabase.from('jewelry_certificates').select('*');
+  if (!orgId) {
+    throw new Error('ERRO CRÍTICO: org_id é obrigatório para getCertificates()');
+  }
 
-    if (orgId) {
-      query = query.eq('org_id', orgId);
-    }
+  try {
+    const query = supabase.from('jewelry_certificates').select('*').eq('org_id', orgId);
 
     const { data, error } = await query;
 
@@ -301,14 +301,14 @@ export async function deleteCertificate(
 
 export async function getCustomers(
   supabase: SupabaseClient,
-  orgId?: string
+  orgId: string
 ) {
-  try {
-    let query = supabase.from('customers').select('*');
+  if (!orgId) {
+    throw new Error('ERRO CRÍTICO: org_id é obrigatório para getCustomers()');
+  }
 
-    if (orgId) {
-      query = query.eq('org_id', orgId);
-    }
+  try {
+    const query = supabase.from('customers').select('*').eq('org_id', orgId);
 
     const { data, error } = await query;
 

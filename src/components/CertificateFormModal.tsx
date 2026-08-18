@@ -123,6 +123,9 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
             if (data.success && Array.isArray(data.data)) {
               const sorted = [...data.data].sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
               const names = sorted.map((item: any) => item.name);
+              if (endpoint.key === 'finishes') {
+                console.log('[FORM DEBUG] Loaded finishes:', names);
+              }
               endpoint.setState(names);
 
               // Se carregou coleções, atualiza o estado se estiver vazio
@@ -398,6 +401,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
       updatedAt: new Date().toISOString()
     };
 
+    console.log('[FORM DEBUG] Saving certificate with finish:', certToSave.finish);
     onSave(certToSave);
     onClose();
   };

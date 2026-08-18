@@ -251,13 +251,13 @@ export async function updateCertificate(
         // For numeric fields, use 0 instead of null
         if (['gross_weight_grams', 'width_cm', 'estimated_value_brl', 'warranty_months'].includes(key)) {
           snakeCaseUpdates[key] = 0;
-        } else {
-          snakeCaseUpdates[key] = null;
         }
+        // For finish and other text fields, keep empty strings as-is (don't convert to null)
+        // This ensures they are explicitly updated to empty if the user clears them
       }
     });
 
-    console.log(`[UNLINK DEBUG] Updating cert ${id} with:`, snakeCaseUpdates);
+    console.log(`[UPDATE DEBUG] Updating cert ${id} with finish='${snakeCaseUpdates.finish}' (type: ${typeof snakeCaseUpdates.finish}):`, snakeCaseUpdates);
 
     const { data, error } = await supabase
       .from('jewelry_certificates')
@@ -266,14 +266,14 @@ export async function updateCertificate(
       .select();
 
     if (error) {
-      console.log(`[UNLINK ERROR] Update failed for ${id}:`, error.message);
+      console.log(`[UPDATE ERROR] Update failed for ${id}:`, error.message);
       return { success: false, error: error.message, data: null };
     }
 
-    console.log(`[UNLINK SUCCESS] Updated cert ${id}, returned:`, data?.[0]);
+    console.log(`[UPDATE SUCCESS] Updated cert ${id}, returned:`, data?.[0]);
     return { success: true, data: data?.[0] || null };
   } catch (err: any) {
-    console.log(`[UNLINK EXCEPTION] Error updating ${id}:`, err.message);
+    console.log(`[UPDATE EXCEPTION] Error updating ${id}:`, err.message);
     return { success: false, error: err.message, data: null };
   }
 }

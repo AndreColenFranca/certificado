@@ -109,7 +109,6 @@ export async function getCertificateByQuery(
 ) {
   try {
     const normalizedQuery = query.trim().toUpperCase();
-    console.log(`[CERT SEARCH] Searching for: "${normalizedQuery}" in org: ${orgId}`);
 
     // Try to find by cert_code first (human-readable) - case-insensitive
     let searchQuery = supabase
@@ -123,10 +122,8 @@ export async function getCertificateByQuery(
 
     let { data, error } = await searchQuery;
 
-    console.log(`[CERT SEARCH] cert_code query result:`, { error: error?.message, dataLength: data?.length });
 
     if (!error && data && data.length > 0) {
-      console.log(`[CERT SEARCH] Found by cert_code:`, data[0].id, data[0].cert_code);
       // Get full record with org_id filter
       let fullQuery = supabase
         .from('jewelry_certificates')
@@ -141,7 +138,6 @@ export async function getCertificateByQuery(
       return { success: true, data: fullData };
     }
 
-    console.log(`[CERT SEARCH] cert_code exact match failed, trying serial_number...`);
 
     // Try by serial_number - exact match
     let serialQuery = supabase
@@ -156,7 +152,6 @@ export async function getCertificateByQuery(
     const { data: data2, error: error2 } = await serialQuery;
 
     if (!error2 && data2 && data2.length > 0) {
-      console.log(`[CERT SEARCH] Found by serial_number:`, data2[0].id, data2[0].serial_number);
       return { success: true, data: data2[0] };
     }
 
@@ -173,14 +168,11 @@ export async function getCertificateByQuery(
     const { data: data3, error: error3 } = await idQuery;
 
     if (!error3 && data3 && data3.length > 0) {
-      console.log(`[CERT SEARCH] Found by id:`, data3[0].id);
       return { success: true, data: data3[0] };
     }
 
-    console.log(`[CERT SEARCH] Not found: "${normalizedQuery}"`);
     return { success: false, error: 'Certificado não encontrado', data: null };
   } catch (err: any) {
-    console.log(`[CERT SEARCH] Exception:`, err.message);
     return { success: false, error: err.message, data: null };
   }
 }
@@ -266,8 +258,6 @@ export async function updateCertificate(
       }
     });
 
-    console.log(`[UPDATE DEBUG] Updating cert ${id} with finish='${snakeCaseUpdates.finish}' (type: ${typeof snakeCaseUpdates.finish}):`, snakeCaseUpdates);
-
     let query = supabase
       .from('jewelry_certificates')
       .update(snakeCaseUpdates)
@@ -281,14 +271,11 @@ export async function updateCertificate(
     const { data, error } = await query.select();
 
     if (error) {
-      console.log(`[UPDATE ERROR] Update failed for ${id}:`, error.message);
       return { success: false, error: error.message, data: null };
     }
 
-    console.log(`[UPDATE SUCCESS] Updated cert ${id}, returned:`, data?.[0]);
     return { success: true, data: data?.[0] || null };
   } catch (err: any) {
-    console.log(`[UPDATE EXCEPTION] Error updating ${id}:`, err.message);
     return { success: false, error: err.message, data: null };
   }
 }

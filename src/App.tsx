@@ -562,7 +562,6 @@ export default function App() {
       let apiResponse: any;
 
       if (existing) {
-        console.log('[APP DEBUG] Updating certificate with finish:', certToSave.finish);
         // Update API
         const res = await fetchWithAuth(`/api/certificates/${certToSave.id}`, {
           method: 'PUT',

@@ -247,6 +247,7 @@ export default function App() {
   const [isCompanyLogoOpen, setIsCompanyLogoOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingCert, setEditingCert] = useState<JewelryCertificate | null>(null);
+  const [editingCertFrom, setEditingCertFrom] = useState<ViewMode>('jeweler-dashboard');
   const [selectedCustomerForNewCert, setSelectedCustomerForNewCert] = useState<Customer | null>(null);
 
   // Customer Modals state
@@ -592,7 +593,7 @@ export default function App() {
       setNotFoundQuery(null);
       setIsFormModalOpen(false);
       setSelectedCustomerForNewCert(null);
-      setViewMode('jeweler-dashboard');
+      setViewMode(editingCertFrom);
     } catch (e) {
       alert('Erro ao salvar certificado: ' + e);
     }
@@ -1212,6 +1213,7 @@ export default function App() {
             onDeleteCertificate={onRequestDeleteCertificate}
             onEditCertificate={(c) => {
               setEditingCert(c);
+              setEditingCertFrom(viewMode);
               setIsFormModalOpen(true);
             }}
           />
@@ -1247,6 +1249,7 @@ export default function App() {
             onDeleteCertificate={onRequestDeleteCertificate}
             onEditCertificate={(c) => {
               setEditingCert(c);
+              setEditingCertFrom(viewMode);
               setIsFormModalOpen(true);
             }}
             onOpenCompanyLogoModal={() => setIsCompanyLogoOpen(true)}
@@ -1283,6 +1286,7 @@ export default function App() {
             onSelectCertificate={handleSelectCert}
             onEditCertificate={(c) => {
               setEditingCert(c);
+              setEditingCertFrom(viewMode);
               setIsFormModalOpen(true);
             }}
             onTransferCertificate={(c) => {

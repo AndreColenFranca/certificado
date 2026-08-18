@@ -835,18 +835,21 @@ export default function App() {
       setCertificates(prev => [childCert, ...prev]);
 
       try {
-        await fetchWithAuth('/api/certificates', {
+        const postRes = await fetchWithAuth('/api/certificates', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(childCert)
         });
 
-        // Criar registro de manutenção
+        const postData = await postRes.json();
+        const actualCertId = postData.data?.id || childCert.id;
+
+        // Criar registro de manutenção com o UUID correto retornado pelo servidor
         await fetchWithAuth('/api/maintenance', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            certId: childCert.id,
+            certId: actualCertId,
             maintenanceDate: issueDateStr,
             maintenanceType: 'Emissão de Certificado',
             performer: companyName || 'Estilo Raro',

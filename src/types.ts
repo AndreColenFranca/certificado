@@ -102,6 +102,7 @@ export interface JewelryCertificate {
 
   // Extra details
   estimatedValueBRL?: number;
+  internalNotes?: string;
   careGuide: CareGuideItem[];
   maintenanceHistory: MaintenanceRecord[];
 

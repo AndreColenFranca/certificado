@@ -196,6 +196,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
         setImages(initialCert.images.map(formatImageUrl));
       }
       setWarrantyMonths(initialCert.warranty_months ?? initialCert.warrantyMonths ?? -1);
+      setInternalNotes(initialCert.internal_notes || initialCert.internalNotes || '');
       setWarrantyTerms(initialCert.warranty_terms || initialCert.warrantyTerms || `[icon:verified] **A gente sabe que escolher uma aliança não é só sobre o material**
 
 É sobre o que ela representa. Por isso, a Estilo Raro Joias garante a qualidade e autenticidade de cada peça, desde o primeiro dia.
@@ -255,6 +256,7 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
   const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
 
   const [warrantyMonths, setWarrantyMonths] = useState<number>(initialCert?.warranty_months ?? initialCert?.warrantyMonths ?? -1);
+  const [internalNotes, setInternalNotes] = useState(initialCert?.internal_notes || initialCert?.internalNotes || '');
   const [warrantyTerms, setWarrantyTerms] = useState(initialCert?.warranty_terms || initialCert?.warrantyTerms || `[icon:verified] **A gente sabe que escolher uma aliança não é só sobre o material**
 
 É sobre o que ela representa. Por isso, a Estilo Raro Joias garante a qualidade e autenticidade de cada peça, desde o primeiro dia.
@@ -452,6 +454,7 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
       warrantyStatus: 'Ativa',
       authenticityHash: initialCert?.authenticityHash || '', // Gerado apenas ao vincular cliente
       estimatedValueBRL,
+      internalNotes,
       careGuide: initialCert?.careGuide || [
         {
           category: 'Limpeza',
@@ -607,6 +610,18 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
                     className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500"
                   />
                 </div>
+              </div>
+
+              {/* Notas Internas */}
+              <div className="col-span-full">
+                <label className="block text-zinc-400 text-xs font-medium mb-0.5">Notas Internas (Uso Interno)</label>
+                <textarea
+                  placeholder="Anotações internas sobre a joia..."
+                  value={internalNotes}
+                  onChange={(e) => setInternalNotes(e.target.value)}
+                  rows={3}
+                  className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500 resize-none"
+                />
               </div>
             </div>
           </div>

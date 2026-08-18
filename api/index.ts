@@ -1608,6 +1608,9 @@ app.get('/api/certificates', async (req, res) => {
 
     if (result.success && result.data) {
       const transformedData = result.data.map(transformCertificateFromDb);
+      console.log(`[GET /api/certificates] Retrieved ${transformedData.length} certs for org:`, userOrgId, {
+        certIds: transformedData.map(c => ({ id: c.id, title: c.title, isRoot: c.isRoot, orgId: c.orgId }))
+      });
       return res.json({ success: true, count: transformedData.length, data: transformedData });
     }
 
@@ -1731,8 +1734,18 @@ app.post('/api/certificates', async (req, res) => {
 
     const result = await createCertificate(supabase, certToSave);
 
+    console.log(`[POST /api/certificates] Created cert:`, {
+      id: uuidId,
+      title: newCert.title,
+      org_id: userOrgId,
+      is_root: certToSave.is_root,
+      success: result.success,
+      error: result.error
+    });
+
     if (!result.success) {
       const errMsg = result.error || 'Erro ao salvar certificado';
+      console.error(`[POST /api/certificates] ERROR:`, errMsg);
       return res.status(400).json({ success: false, message: errMsg });
     }
 

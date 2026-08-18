@@ -825,7 +825,7 @@ export default function App() {
         currentOwnerName: customer.name,
         ownerCpf: customer.cpf,
         ownerEmail: customer.email,
-        ownerId: customer.id,
+        ownerId: (customer as any)._uuid || customer.id,
         authenticityHash: `0x${Math.random().toString(36).substring(2, 10)}${Math.random().toString(36).substring(2, 10)}`,
         maintenanceHistory: [linkRecord],
         createdAt: new Date().toISOString(),
@@ -881,7 +881,7 @@ export default function App() {
         currentOwnerName: customer.name,
         ownerCpf: customer.cpf,
         ownerEmail: customer.email,
-        ownerId: customer.id,
+        ownerId: (customer as any)._uuid || customer.id,
         maintenanceHistory: [linkRecord, ...target.maintenanceHistory],
         updatedAt: new Date().toISOString()
       };

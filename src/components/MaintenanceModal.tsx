@@ -29,8 +29,7 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
       date: preferredDate,
       type: serviceType,
       performer: cert.manufacturer,
-      notes: notes || `Solicitação de ${serviceType} agendada pelo cliente.`,
-      verifiedByAppraiser: 'Atelier de Assistência Técnica'
+      notes: notes || `Solicitação de ${serviceType} agendada pelo cliente.`
     };
 
     onAddMaintenance(cert.id, newRecord);

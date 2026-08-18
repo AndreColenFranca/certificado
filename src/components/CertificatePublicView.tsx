@@ -588,32 +588,32 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
               </p>
             </div>
 
-            {/* Warning - Garantia */}
-            <div className="pl-4 border-l-4 border-red-500 bg-red-950/20 py-3 pr-4">
-              <p className="font-bold text-red-400 mb-2">⚠️ Importante: A garantia não cobre:</p>
-              <ul className="space-y-1 ml-4">
+            {/* Garantia - Citação */}
+            <div className="pl-4 border-l-4 border-red-500 bg-red-950/10 py-4 pr-4 italic">
+              <p className="mb-2">A garantia não cobre:</p>
+              <ul className="space-y-1 ml-4 mb-3">
                 <li className="flex gap-2">
-                  <span className="text-red-400 shrink-0">•</span>
+                  <span className="shrink-0">•</span>
                   <span>Danos decorrentes de quedas</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-red-400 shrink-0">•</span>
+                  <span className="shrink-0">•</span>
                   <span>Uso inadequado</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-red-400 shrink-0">•</span>
+                  <span className="shrink-0">•</span>
                   <span>Acidentes de qualquer natureza</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-red-400 shrink-0">•</span>
+                  <span className="shrink-0">•</span>
                   <span>Contato com agentes químicos que possam danificar os materiais da peça</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-red-400 shrink-0">•</span>
+                  <span className="shrink-0">•</span>
                   <span>Gemas, pedras e pérolas não são cobertas pela garantia</span>
                 </li>
               </ul>
-              <p className="mt-3 pt-3 border-t border-red-900/30">
+              <p>
                 Na entrega, confira sua joia com calma. Se algo não estiver certo, resolveremos na hora. Precisou de reparo fora da garantia? Fazemos um orçamento justo e transparente. Para trocas, basta enviar a peça sem uso, no estojo original, com nota fiscal e certificado de garantia, em até 90 dias após a compra.
               </p>
             </div>

@@ -2292,6 +2292,7 @@ createAttributeEndpoints('stone_types', 'stone-types');
 createAttributeEndpoints('setting_types', 'setting-types');
 createAttributeEndpoints('cut_shapes', 'cut-shapes');
 createAttributeEndpoints('color_grades', 'color-grades');
+createAttributeEndpoints('clarity_grades', 'clarity-grades');
 
 // --- Audit Logs API ---
 app.get('/api/audit-logs', async (req, res) => {

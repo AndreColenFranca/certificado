@@ -1787,6 +1787,9 @@ app.put('/api/certificates/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Certificado não encontrado' });
     }
 
+    // Detectar se é uma transferência (mudança de proprietário)
+    const isTransfer = req.body.currentOwnerName && req.body.currentOwnerName !== getCertResult.data.currentOwnerName;
+
     const updatedCert = {
       ...getCertResult.data,
       ...req.body,
@@ -1794,6 +1797,14 @@ app.put('/api/certificates/:id', async (req, res) => {
       org_id: getCertResult.data.org_id || userOrgId,
       updatedAt: new Date().toISOString()
     };
+
+    // Gerar código de segurança automaticamente se for transferência
+    if (isTransfer && req.body.maintenanceHistory && req.body.maintenanceHistory.length > 0) {
+      const transferRecord = req.body.maintenanceHistory[0];
+      if (transferRecord.type === 'Transferência de Posse' && !transferRecord.verifiedByAppraiser) {
+        transferRecord.verifiedByAppraiser = `TRANSFER-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      }
+    }
 
     // Update in Supabase
     const updateResult = await updateCertificate(supabase, id, updatedCert, userOrgId);

@@ -1793,7 +1793,7 @@ app.put('/api/certificates/:id', async (req, res) => {
     };
 
     // Update in Supabase
-    const updateResult = await updateCertificate(supabase, id, updatedCert);
+    const updateResult = await updateCertificate(supabase, id, updatedCert, userOrgId);
 
     if (!updateResult.success) {
       return res.status(400).json({ success: false, message: updateResult.error });

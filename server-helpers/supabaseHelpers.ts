@@ -213,7 +213,8 @@ export async function createCertificate(
 export async function updateCertificate(
   supabase: SupabaseClient,
   id: string,
-  updates: Partial<JewelryCertificate>
+  updates: Partial<JewelryCertificate>,
+  orgId?: string
 ) {
   try {
     // Convert camelCase to snake_case for Supabase
@@ -259,11 +260,17 @@ export async function updateCertificate(
 
     console.log(`[UPDATE DEBUG] Updating cert ${id} with finish='${snakeCaseUpdates.finish}' (type: ${typeof snakeCaseUpdates.finish}):`, snakeCaseUpdates);
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('jewelry_certificates')
       .update(snakeCaseUpdates)
-      .eq('id', id)
-      .select();
+      .eq('id', id);
+
+    // Validate org_id if provided (important for RLS compliance)
+    if (orgId) {
+      query = query.eq('org_id', orgId);
+    }
+
+    const { data, error } = await query.select();
 
     if (error) {
       console.log(`[UPDATE ERROR] Update failed for ${id}:`, error.message);

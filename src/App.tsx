@@ -390,11 +390,15 @@ export default function App() {
             } else {
               setCompanyLogoUrl(logoImage);
             }
+          } else {
+            setCompanyLogoUrl(logoImage);
           }
         })
-        .catch(err => {});
+        .catch(err => {
+          setCompanyLogoUrl(logoImage);
+        });
     }
-  }, [currentUser?.orgId]);
+  }, [currentUser, currentUser?.orgId]);
 
   const fetchCertificates = async (forceRefresh = false) => {
     try {

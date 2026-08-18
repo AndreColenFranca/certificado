@@ -573,7 +573,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
           <div className="space-y-2">
             <h3 className="font-serif text-2xl font-bold text-amber-200 flex items-center gap-2">
               <BookOpen className="w-6 h-6 text-amber-400" />
-              Manual do Proprietário e Dicas de Conservação
+              Manual de Cuidados
             </h3>
             <p className="text-sm text-zinc-400">
               Recomendações técnicas customizadas para manter o brilho original do metal <strong className="text-amber-300">{cert.metalPurity}</strong> e proteger as gemas preciosas encravadas.
@@ -620,7 +620,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
             {/* Ouro 18K */}
             <div>
-              <h4 className="font-bold text-amber-300 mb-2">✨ Ouro 18K</h4>
+              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><Sparkles className="w-5 h-5" /> Ouro 18K</h4>
               <p>
                 O ouro é um metal nobre e maleável e por isso é lindo, mas também delicado. No Brasil, o padrão é o ouro 18 quilates (18K ou teor 750): 75% de ouro puro e 25% de ligas (geralmente prata e cobre). Essa combinação garante durabilidade sem perder a beleza. Sua joia pode ter acabamento polido (brilhante) ou fosco (texturizado). O uso diário vai marcando a superfície com o tempo que é natural. Uma dica importante: não exagere no polimento, pois a peça perde um pouquinho do peso em ouro a cada vez.
               </p>
@@ -628,7 +628,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
             {/* Ouro Branco */}
             <div>
-              <h4 className="font-bold text-amber-300 mb-2">💎 Ouro Branco</h4>
+              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><Gem className="w-5 h-5" /> Ouro Branco</h4>
               <p>
                 A joia em ouro branco, no estado natural, é levemente amarelada. Aquele brilho prateado que você ama vem do banho de ródio. Com o uso diário, esse banho vai se desgastando e a peça pode voltar ao tom amarelado original. É completamente normal. Na Estilo Raro você tem um <strong>Banho de Ródio gratuito</strong> para manter suas joias sempre renovadas e brilhantes.
               </p>
@@ -636,7 +636,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
             {/* Pérolas */}
             <div>
-              <h4 className="font-bold text-amber-300 mb-2">🐚 Joias com Pérolas</h4>
+              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><Sparkles className="w-5 h-5" /> Joias com Pérolas</h4>
               <p className="mb-2">
                 Pérolas são gemas orgânicas — vivas, sensíveis e únicas. Por isso, mantenha-as longe de:
               </p>
@@ -665,7 +665,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
             {/* Diamantes */}
             <div>
-              <h4 className="font-bold text-amber-300 mb-2">💎 Diamantes</h4>
+              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><Gem className="w-5 h-5" /> Diamantes</h4>
               <p>
                 O diamante é o material mais duro da natureza mas nem por isso é indestrutível. Guarde separado das outras joias para evitar arranhões. Mantenha sempre limpo, principalmente após usar hidratantes, cremes e protetor solar. Nunca use produtos químicos para limpar. Para limpar em casa: escova de cerdas macias, água e sabão neutro, friccionando com delicadeza. Simples assim.
               </p>
@@ -673,7 +673,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
             {/* Gemas */}
             <div>
-              <h4 className="font-bold text-amber-300 mb-2">💜 Joias com Gemas</h4>
+              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><Gem className="w-5 h-5" /> Joias com Gemas</h4>
               <p className="mb-2">
                 Gemas são delicadas e pedem atenção redobrada. Impactos podem afetar as garras e a estrutura da peça, causando quebras ou arranhões e isso faz você perder a garantia de fábrica. Alguns pontos de atenção:
               </p>
@@ -699,7 +699,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
             {/* Cuidados Especiais */}
             <div>
-              <h4 className="font-bold text-amber-300 mb-2">🧡 Cuidados Especiais — Resumo Prático</h4>
+              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><CheckCircle2 className="w-5 h-5" /> Cuidados Especiais — Resumo Prático</h4>
               <ul className="space-y-1 ml-4">
                 <li className="flex gap-2">
                   <span className="text-amber-400 shrink-0">•</span>

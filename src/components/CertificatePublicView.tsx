@@ -493,46 +493,78 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
       {/* Tab 3: History & Warranty */}
       {activeTab === 'history' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div className="space-y-8">
 
-          {/* Termos e Cobertura - Left Side */}
-          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
-            <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-amber-400" />
-              Termos e Cobertura
+          {/* O que não é coberto */}
+          <div className="bg-zinc-900/90 border border-red-900/40 rounded-2xl p-6 shadow-xl space-y-4">
+            <h3 className="font-serif text-lg font-bold text-red-200 flex items-center gap-2">
+              <Info className="w-5 h-5 text-red-400" />
+              O que não é coberto pela Garantia da Estilo Raro?
             </h3>
 
-            <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 text-zinc-400 leading-relaxed text-sm">
-              <WarrantyRenderer text={cert.warrantyTerms} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex gap-3 items-start p-3 bg-zinc-950 rounded-xl border border-red-900/30">
+                <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 shrink-0" />
+                <span className="text-sm text-zinc-300">Danos decorrentes de quedas</span>
+              </div>
+
+              <div className="flex gap-3 items-start p-3 bg-zinc-950 rounded-xl border border-red-900/30">
+                <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 shrink-0" />
+                <span className="text-sm text-zinc-300">Uso inadequado</span>
+              </div>
+
+              <div className="flex gap-3 items-start p-3 bg-zinc-950 rounded-xl border border-red-900/30">
+                <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 shrink-0" />
+                <span className="text-sm text-zinc-300">Acidentes de qualquer natureza</span>
+              </div>
+
+              <div className="flex gap-3 items-start p-3 bg-zinc-950 rounded-xl border border-red-900/30">
+                <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 shrink-0" />
+                <span className="text-sm text-zinc-300">Contato com agentes químicos que possam danificar os materiais da peça</span>
+              </div>
             </div>
           </div>
 
-          {/* Status da Garantia - Right Side */}
-          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
+          {/* Two Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            {/* Termos e Cobertura - Left Side */}
+            <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
               <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
-                <Award className="w-5 h-5 text-amber-400" />
-                Status da Garantia
+                <FileText className="w-5 h-5 text-amber-400" />
+                Termos e Cobertura
               </h3>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                {cert.warrantyStatus}
-              </span>
+
+              <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 text-zinc-400 leading-relaxed text-sm">
+                <WarrantyRenderer text={cert.warrantyTerms} />
+              </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-xs space-y-3">
-              <div className="flex justify-between text-zinc-400">
-                <span>Validade da Garantia:</span>
-                <span className="font-semibold text-amber-300">
-                  {cert.warrantyMonths === -1 ? 'Vitalícia Definitiva' : `${cert.warrantyMonths} meses`}
+            {/* Status da Garantia - Right Side */}
+            <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
+                  <Award className="w-5 h-5 text-amber-400" />
+                  Status da Garantia
+                </h3>
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  {cert.warrantyStatus}
                 </span>
               </div>
-              <div className="flex justify-between text-zinc-400">
-                <span>Data de Fabricação:</span>
-                <span className="text-zinc-200">{new Date(cert.manufacturingDate).toLocaleDateString('pt-BR')}</span>
+
+              <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-xs space-y-3">
+                <div className="flex justify-between text-zinc-400">
+                  <span>Validade da Garantia:</span>
+                  <span className="font-semibold text-amber-300">
+                    {cert.warrantyMonths === -1 ? 'Vitalícia Definitiva' : `${cert.warrantyMonths} meses`}
+                  </span>
+                </div>
+                <div className="flex justify-between text-zinc-400">
+                  <span>Data de Fabricação:</span>
+                  <span className="text-zinc-200">{new Date(cert.manufacturingDate).toLocaleDateString('pt-BR')}</span>
+                </div>
               </div>
             </div>
           </div>
-
         </div>
       )}
 

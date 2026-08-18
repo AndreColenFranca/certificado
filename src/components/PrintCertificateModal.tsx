@@ -314,11 +314,11 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
 
             {/* Signature Line */}
             <div className="text-center space-y-1 min-w-[160px] shrink-0">
-              <div className="h-12 flex items-center justify-center">
+              <div className="h-24 flex items-center justify-center">
                 <img
                   src="/assinatura2.png"
                   alt="Assinatura"
-                  className="h-12 w-auto object-contain"
+                  className="h-24 w-auto object-contain"
                 />
               </div>
               <div className="border-b border-zinc-900 w-36 mx-auto" />

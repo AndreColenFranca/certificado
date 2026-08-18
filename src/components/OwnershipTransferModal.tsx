@@ -126,12 +126,14 @@ export const OwnershipTransferModal: React.FC<OwnershipTransferModalProps> = ({
             )}
 
             <div>
-              <label className="block text-zinc-400 font-semibold mb-1">Nome Completo do Novo Proprietário</label>
+              <label className="block text-zinc-300 font-semibold mb-1">Nome Completo do Novo Proprietário *</label>
               <input
                 type="text"
-                disabled
+                required
+                placeholder="Ex: Dra. Beatriz Montebello"
                 value={newOwnerName}
-                className="w-full p-2.5 bg-zinc-800/50 border border-zinc-700 rounded-xl text-zinc-400 cursor-not-allowed text-sm opacity-60"
+                onChange={(e) => setNewOwnerName(e.target.value)}
+                className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 focus:outline-none focus:border-amber-500 text-sm"
               />
             </div>
 
@@ -140,32 +142,35 @@ export const OwnershipTransferModal: React.FC<OwnershipTransferModalProps> = ({
                 <label className="block text-zinc-400 mb-1">CPF do Novo Proprietário</label>
                 <input
                   type="text"
-                  disabled
+                  placeholder="999.999.999-99"
                   value={newOwnerCpf}
-                  className="w-full p-2.5 bg-zinc-800/50 border border-zinc-700 rounded-xl text-zinc-400 font-mono cursor-not-allowed opacity-60"
+                  onChange={(e) => setNewOwnerCpf(e.target.value)}
+                  className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 font-mono focus:outline-none focus:border-amber-500"
                 />
               </div>
               <div>
                 <label className="block text-zinc-400 mb-1">E-mail de Contato</label>
                 <input
                   type="email"
-                  disabled
+                  placeholder="cliente@exemplo.com"
                   value={newOwnerEmail}
-                  className="w-full p-2.5 bg-zinc-800/50 border border-zinc-700 rounded-xl text-zinc-400 cursor-not-allowed opacity-60"
+                  onChange={(e) => setNewOwnerEmail(e.target.value)}
+                  className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 focus:outline-none focus:border-amber-500"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-zinc-400 mb-1">Código de Segurança do Certificado</label>
+              <label className="block text-zinc-400 mb-1">Código de Segurança do Certificado (Opcional)</label>
               <input
                 type="text"
-                disabled
+                placeholder="Ex: AUTH-8890-SEC"
                 value={transferCode}
-                className="w-full p-2.5 bg-zinc-800/50 border border-zinc-700 rounded-xl text-zinc-400 cursor-not-allowed opacity-60"
+                onChange={(e) => setTransferCode(e.target.value)}
+                className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 focus:outline-none focus:border-amber-500"
               />
               <span className="text-[10px] text-zinc-500 mt-1 block">
-                Gerado automaticamente no servidor.
+                Garante que a transferência seja assinada e validada no histórico do servidor.
               </span>
             </div>
 

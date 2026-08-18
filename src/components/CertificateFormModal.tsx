@@ -111,8 +111,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
           { key: 'stone_types', setState: setStoneTypeOptions },
           { key: 'setting_types', setState: setSettingTypeOptions },
           { key: 'cut_shapes', setState: setCutShapeOptions },
-          { key: 'color_grades', setState: setColorGradeOptions },
-          { key: 'clarity_grades', setState: setClarityGradeOptions }
+          { key: 'color_grades', setState: setColorGradeOptions }
         ];
 
         for (const endpoint of endpoints) {

@@ -832,6 +832,7 @@ export default function App() {
         parentCertId: parentRootId,
         serialNumber: newSerialNumber,
         issueDate: issueDateStr,
+        manufacturingDate: issueDateStr,
         currentOwnerName: customer.name,
         ownerCpf: customer.cpf,
         ownerEmail: customer.email,

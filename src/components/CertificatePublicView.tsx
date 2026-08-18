@@ -589,7 +589,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
             </div>
 
             {/* Warning - Garantia */}
-            <div className="p-4 bg-red-950/30 rounded-xl border border-red-900/40">
+            <div className="pl-4 border-l-4 border-red-500 bg-red-950/20 py-3 pr-4">
               <p className="font-bold text-red-400 mb-2">⚠️ Importante: A garantia não cobre:</p>
               <ul className="space-y-1 ml-4">
                 <li className="flex gap-2">
@@ -620,7 +620,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
             {/* Ouro 18K */}
             <div>
-              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><Sparkles className="w-5 h-5" /> Ouro 18K</h4>
+              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><Layers className="w-5 h-5" /> Ouro 18K</h4>
               <p>
                 O ouro é um metal nobre e maleável e por isso é lindo, mas também delicado. No Brasil, o padrão é o ouro 18 quilates (18K ou teor 750): 75% de ouro puro e 25% de ligas (geralmente prata e cobre). Essa combinação garante durabilidade sem perder a beleza. Sua joia pode ter acabamento polido (brilhante) ou fosco (texturizado). O uso diário vai marcando a superfície com o tempo que é natural. Uma dica importante: não exagere no polimento, pois a peça perde um pouquinho do peso em ouro a cada vez.
               </p>
@@ -636,7 +636,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
             {/* Pérolas */}
             <div>
-              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><Sparkles className="w-5 h-5" /> Joias com Pérolas</h4>
+              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><Sparkle className="w-5 h-5" /> Joias com Pérolas</h4>
               <p className="mb-2">
                 Pérolas são gemas orgânicas — vivas, sensíveis e únicas. Por isso, mantenha-as longe de:
               </p>
@@ -665,7 +665,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
             {/* Diamantes */}
             <div>
-              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><Gem className="w-5 h-5" /> Diamantes</h4>
+              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><Scale className="w-5 h-5" /> Diamantes</h4>
               <p>
                 O diamante é o material mais duro da natureza mas nem por isso é indestrutível. Guarde separado das outras joias para evitar arranhões. Mantenha sempre limpo, principalmente após usar hidratantes, cremes e protetor solar. Nunca use produtos químicos para limpar. Para limpar em casa: escova de cerdas macias, água e sabão neutro, friccionando com delicadeza. Simples assim.
               </p>
@@ -699,7 +699,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
             {/* Cuidados Especiais */}
             <div>
-              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><CheckCircle2 className="w-5 h-5" /> Cuidados Especiais — Resumo Prático</h4>
+              <h4 className="font-bold text-amber-300 mb-2 flex items-center gap-2"><ShieldCheck className="w-5 h-5" /> Cuidados Especiais — Resumo Prático</h4>
               <ul className="space-y-1 ml-4">
                 <li className="flex gap-2">
                   <span className="text-amber-400 shrink-0">•</span>

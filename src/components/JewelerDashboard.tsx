@@ -47,7 +47,7 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMetalFilter, setSelectedMetalFilter] = useState<string>('todos');
   const [selectedCollectionFilter, setSelectedCollectionFilter] = useState<string>('todas');
-  const [sortColumn, setSortColumn] = useState<'title' | 'id' | 'metalPurity' | 'collection' | null>('title');
+  const [sortColumn, setSortColumn] = useState<'title' | 'id' | 'metalPurity' | 'childCount' | 'collection' | null>('title');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Strictly separate Root/Parent catalog items from Child certificates
@@ -90,6 +90,14 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
       } else if (sortColumn === 'metalPurity') {
         aVal = a.metalPurity.toLowerCase();
         bVal = b.metalPurity.toLowerCase();
+      } else if (sortColumn === 'childCount') {
+        aVal = getChildCertificatesForParent(a, certificates).length;
+        bVal = getChildCertificatesForParent(b, certificates).length;
+        if (sortOrder === 'asc') {
+          return aVal - bVal;
+        } else {
+          return bVal - aVal;
+        }
       } else if (sortColumn === 'collection') {
         aVal = a.collection.toLowerCase();
         bVal = b.collection.toLowerCase();
@@ -103,7 +111,7 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
     });
   }
 
-  const handleColumnSort = (column: 'title' | 'id' | 'metalPurity' | 'collection') => {
+  const handleColumnSort = (column: 'title' | 'id' | 'metalPurity' | 'childCount' | 'collection') => {
     if (sortColumn === column) {
       // Toggle sort order
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -260,7 +268,13 @@ export const JewelerDashboard: React.FC<JewelerDashboardProps> = ({
                 >
                   Metal {sortColumn === 'metalPurity' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
-                <th className="p-4">Certificados Emitidos</th>
+                <th
+                  className="p-4 cursor-pointer hover:bg-amber-900/20 transition-colors"
+                  onClick={() => handleColumnSort('childCount')}
+                  title="Clique para ordenar"
+                >
+                  Certificados Emitidos {sortColumn === 'childCount' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
                 <th
                   className="p-4 cursor-pointer hover:bg-amber-900/20 transition-colors"
                   onClick={() => handleColumnSort('collection')}

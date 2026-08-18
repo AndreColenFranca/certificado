@@ -521,6 +521,12 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                                 <span className="font-bold text-emerald-400">{cert.warrantyStatus}</span>
                               </div>
                               <div>
+                                <span className="text-zinc-500 block text-[11px] font-medium">Emissão:</span>
+                                <span className="font-semibold text-amber-200">
+                                  {cert.issueDate ? new Date(cert.issueDate).toLocaleDateString('pt-BR') : 'Data não informada'}
+                                </span>
+                              </div>
+                              <div>
                                 <span className="text-zinc-500 block text-[11px] font-medium">Valor Estimado:</span>
                                 <span className="font-mono font-bold text-amber-300">
                                   {cert.estimatedValueBRL ? `R$ ${cert.estimatedValueBRL.toLocaleString('pt-BR')}` : 'Sob Consulta'}

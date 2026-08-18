@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
 import { JewelryCertificate, AppUser } from '../types';
 import { HighResPhotoInspector } from './HighResPhotoInspector';
+import { WarrantyRenderer } from './WarrantyRenderer';
 import { formatImageUrl } from '../utils/imageUtils';
 import { isCustomerLinkedToCertificate } from '../utils/customerUtils';
 import {
@@ -522,9 +523,9 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
               <div className="space-y-1.5 text-xs text-zinc-300">
                 <span className="font-semibold text-amber-300 block">Termos e Cobertura:</span>
-                <p className="bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-zinc-400 leading-relaxed">
-                  {cert.warrantyTerms}
-                </p>
+                <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-zinc-400 leading-relaxed">
+                  <WarrantyRenderer text={cert.warrantyTerms} />
+                </div>
               </div>
 
             </div>

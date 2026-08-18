@@ -196,7 +196,41 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
         setImages(initialCert.images.map(formatImageUrl));
       }
       setWarrantyMonths(initialCert.warranty_months ?? initialCert.warrantyMonths ?? -1);
-      setWarrantyTerms(initialCert.warranty_terms || initialCert.warrantyTerms || 'Garantia Vitalícia cobrindo autenticidade do ouro e gemas naturais.');
+      setWarrantyTerms(initialCert.warranty_terms || initialCert.warrantyTerms || '[icon:verified] **A gente sabe que escolher uma aliança não é só sobre o material**
+
+É sobre o que ela representa. Por isso, a Estilo Raro Joias garante a qualidade e autenticidade de cada peça, desde o primeiro dia.
+
+**O que a gente usa:**
+
+- Ouro 18k e prata 950
+- Técnicas apuradas de cravação, polimento e acabamento
+- Qualidade garantida em cada detalhe
+
+**Garantia Legal (seu direito):**
+
+[icon:schedule] **90 dias** a partir da data em que você recebe a peça, conforme o Código de Defesa do Consumidor
+
+- Cobrimos qualquer defeito de fabricação
+- Você escolhe como resolver:
+
+[icon:autorenew] Receber uma peça nova igualzinha
+[icon:rings] Trocar por outro modelo de mesmo valor
+[icon:card_giftcard] Usar o valor como crédito em uma nova compra
+
+**E a gente vai além do que a lei pede:**
+
+[icon:check_circle] **Troca tranquila de tamanho** - Errou na numeração? Sem pânico. A gente troca pra você acertar certinho
+
+[icon:build] **Manutenção pra vida toda** - Sua aliança foi feita pra acompanhar cada capítulo. Oferecemos manutenção por tempo indeterminado. Cobrimos apenas frete e custos de reparo, sempre transparente
+
+**Resumindo:**
+
+- Peça autêntica garantida
+- Garantia legal de 90 dias
+- Troca de tamanho sem complicação
+- Manutenção pra sempre
+
+Porque a gente acredita que uma aliança de verdade não é só bonita no dia da compra. É um compromisso duradouro.');
       setEstimatedValueBRL(initialCert.estimated_value_brl ?? initialCert.estimatedValueBRL ?? '');
     }
   }, [initialCert]);
@@ -221,7 +255,41 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
 
   const [warrantyMonths, setWarrantyMonths] = useState<number>(initialCert?.warranty_months ?? initialCert?.warrantyMonths ?? -1);
-  const [warrantyTerms, setWarrantyTerms] = useState(initialCert?.warranty_terms || initialCert?.warrantyTerms || 'Garantia Vitalícia cobrindo autenticidade do ouro e gemas naturais.');
+  const [warrantyTerms, setWarrantyTerms] = useState(initialCert?.warranty_terms || initialCert?.warrantyTerms || '[icon:verified] **A gente sabe que escolher uma aliança não é só sobre o material**
+
+É sobre o que ela representa. Por isso, a Estilo Raro Joias garante a qualidade e autenticidade de cada peça, desde o primeiro dia.
+
+**O que a gente usa:**
+
+- Ouro 18k e prata 950
+- Técnicas apuradas de cravação, polimento e acabamento
+- Qualidade garantida em cada detalhe
+
+**Garantia Legal (seu direito):**
+
+[icon:schedule] **90 dias** a partir da data em que você recebe a peça, conforme o Código de Defesa do Consumidor
+
+- Cobrimos qualquer defeito de fabricação
+- Você escolhe como resolver:
+
+[icon:autorenew] Receber uma peça nova igualzinha
+[icon:rings] Trocar por outro modelo de mesmo valor
+[icon:card_giftcard] Usar o valor como crédito em uma nova compra
+
+**E a gente vai além do que a lei pede:**
+
+[icon:check_circle] **Troca tranquila de tamanho** - Errou na numeração? Sem pânico. A gente troca pra você acertar certinho
+
+[icon:build] **Manutenção pra vida toda** - Sua aliança foi feita pra acompanhar cada capítulo. Oferecemos manutenção por tempo indeterminado. Cobrimos apenas frete e custos de reparo, sempre transparente
+
+**Resumindo:**
+
+- Peça autêntica garantida
+- Garantia legal de 90 dias
+- Troca de tamanho sem complicação
+- Manutenção pra sempre
+
+Porque a gente acredita que uma aliança de verdade não é só bonita no dia da compra. É um compromisso duradouro.');
   const [estimatedValueBRL, setEstimatedValueBRL] = useState<number>(initialCert?.estimated_value_brl ?? initialCert?.estimatedValueBRL ?? '');
 
   // Sync state if options change or initialCert changes

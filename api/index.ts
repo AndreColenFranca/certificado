@@ -1792,6 +1792,8 @@ app.put('/api/certificates/:id', async (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
+    console.log('[PUT DEBUG] manufacturer:', updatedCert.manufacturer, 'finish:', updatedCert.finish);
+
     // Update in Supabase
     const updateResult = await updateCertificate(supabase, id, updatedCert, userOrgId);
 

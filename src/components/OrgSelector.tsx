@@ -62,7 +62,7 @@ export const OrgSelector: React.FC<OrgSelectorProps> = ({
         className={`w-full px-4 py-2 border rounded-lg transition-colors ${
           isDisabledForUser
             ? 'bg-gray-100 text-gray-500 cursor-not-allowed dark:bg-gray-800 dark:text-gray-400'
-            : 'bg-white text-gray-900 border-gray-300 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white dark:border-gray-700'
+            : 'bg-white text-gray-900 border-gray-300 hover:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-900 dark:text-white dark:border-gray-700'
         }`}
       >
         {organizations.map((org) => (

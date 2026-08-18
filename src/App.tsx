@@ -1188,8 +1188,23 @@ export default function App() {
               setIsTransferModalOpen(true);
             }}
             onDeleteCertificate={onRequestDeleteCertificate}
-            onEditCertificate={(c) => {
-              setEditingCert(c);
+            onEditCertificate={async (c) => {
+              try {
+                const res = await fetchWithAuth(`/api/certificates/${c.id}`);
+                if (res.ok) {
+                  const data = await res.json();
+                  if (data.success) {
+                    setEditingCert(data.data);
+                  } else {
+                    setEditingCert(c);
+                  }
+                } else {
+                  setEditingCert(c);
+                }
+              } catch (e) {
+                console.error('Error fetching certificate for edit:', e);
+                setEditingCert(c);
+              }
               setEditingCertFrom(viewMode);
               setIsFormModalOpen(true);
             }}
@@ -1224,8 +1239,24 @@ export default function App() {
               setIsPrintModalOpen(true);
             }}
             onDeleteCertificate={onRequestDeleteCertificate}
-            onEditCertificate={(c) => {
-              setEditingCert(c);
+            onEditCertificate={async (c) => {
+              // Fetch complete certificate data (with images, stones, etc) using WHERE id
+              try {
+                const res = await fetchWithAuth(`/api/certificates/${c.id}`);
+                if (res.ok) {
+                  const data = await res.json();
+                  if (data.success) {
+                    setEditingCert(data.data);
+                  } else {
+                    setEditingCert(c);
+                  }
+                } else {
+                  setEditingCert(c);
+                }
+              } catch (e) {
+                console.error('Error fetching certificate for edit:', e);
+                setEditingCert(c);
+              }
               setEditingCertFrom(viewMode);
               setIsFormModalOpen(true);
             }}
@@ -1261,8 +1292,23 @@ export default function App() {
               setIsCustomerDeleteOpen(true);
             }}
             onSelectCertificate={handleSelectCert}
-            onEditCertificate={(c) => {
-              setEditingCert(c);
+            onEditCertificate={async (c) => {
+              try {
+                const res = await fetchWithAuth(`/api/certificates/${c.id}`);
+                if (res.ok) {
+                  const data = await res.json();
+                  if (data.success) {
+                    setEditingCert(data.data);
+                  } else {
+                    setEditingCert(c);
+                  }
+                } else {
+                  setEditingCert(c);
+                }
+              } catch (e) {
+                console.error('Error fetching certificate for edit:', e);
+                setEditingCert(c);
+              }
               setEditingCertFrom(viewMode);
               setIsFormModalOpen(true);
             }}

@@ -441,7 +441,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                                     usr.role === 'admin'
                                       ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
                                       : usr.role === 'customer'
-                                      ? 'bg-blue-500/10 text-blue-300 border-blue-500/30'
+                                      ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
                                       : 'bg-zinc-800 text-zinc-300 border-zinc-700'
                                   }`}>
                                     {usr.role === 'admin' ? 'Administrador' : usr.role === 'customer' ? 'Cliente' : 'Operador'}

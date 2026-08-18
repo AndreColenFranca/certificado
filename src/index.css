@@ -569,29 +569,4 @@
   }
 }
 
-/* CYAN THEME OVERRIDE (#1ddce3) */
-:root {
-  --color-cyan: #1ddce3;
-  --color-cyan-dark: #15a8b8;
-  --color-cyan-light: #4ae5ed;
-}
-
-/* Replace all amber colors with cyan */
-.bg-amber-500, .bg-amber-400, .bg-amber-600 { background-color: #1ddce3 !important; }
-.text-amber-500, .text-amber-400, .text-amber-300 { color: #1ddce3 !important; }
-.border-amber-500, .border-amber-400 { border-color: #1ddce3 !important; }
-.hover\:bg-amber-500:hover, .hover\:bg-amber-400:hover, .hover\:bg-amber-600:hover { background-color: #15a8b8 !important; }
-.hover\:text-amber-300:hover, .hover\:text-amber-400:hover, .hover\:text-amber-500:hover { color: #1ddce3 !important; }
-
-/* Light theme amber overrides */
-.theme-classic-light .bg-amber-500, .theme-classic-light .bg-gradient-to-r { background-color: #1ddce3 !important; }
-.theme-classic-light .text-amber-500 { color: #1ddce3 !important; }
-.theme-classic-light button.bg-amber-500:hover, .theme-classic-light .hover\:bg-amber-500:hover { background-color: #15a8b8 !important; }
-.theme-classic-light #btn-add-new-customer, .theme-classic-light #header-search-submit { background-color: #1ddce3 !important; }
-.theme-classic-light #btn-add-new-customer:hover, .theme-classic-light #header-search-submit:hover { background-color: #15a8b8 !important; }
-
-/* Replace hardcoded hex values */
-.bg-\[\#d97706\], [style*="background-color: #d97706"] { background-color: #1ddce3 !important; }
-.text-\[\#d97706\], [style*="color: #d97706"] { color: #1ddce3 !important; }
-.border-\[\#d97706\], [style*="border-color: #d97706"] { border-color: #1ddce3 !important; }
 

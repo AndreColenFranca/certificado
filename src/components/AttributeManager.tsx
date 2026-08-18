@@ -339,7 +339,7 @@ export const AttributeManager: React.FC<AttributeManagerProps> = ({
                 <div className="flex gap-2 ml-4">
                   <button
                     onClick={() => handleEdit(attr)}
-                    className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition"
+                    className="p-2 bg-amber-600 hover:bg-amber-700 text-white rounded transition"
                     title="Editar"
                   >
                     <Edit2 className="w-4 h-4" />

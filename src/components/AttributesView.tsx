@@ -157,9 +157,9 @@ export const AttributesView: React.FC<AttributesViewProps> = ({ onSelectAttribut
         </div>
 
         {/* Info Box */}
-        <div className="mt-8 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg flex gap-3">
-          <Settings className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-200">
+        <div className="mt-8 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg flex gap-3">
+          <Settings className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="text-sm text-amber-200">
             <p className="font-semibold">Dica:</p>
             <p className="text-xs mt-1">
               Selecione um atributo para gerenciar (adicionar, editar ou remover) seus valores.

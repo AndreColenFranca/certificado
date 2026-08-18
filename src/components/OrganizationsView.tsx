@@ -406,7 +406,7 @@ export const OrganizationsView = ({
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => handleEdit(org)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded transition text-sm"
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded transition text-sm"
                   >
                     <Edit2 className="w-4 h-4" />
                     Editar

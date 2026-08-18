@@ -2100,7 +2100,7 @@ const createAttributeEndpoints = (tableName: string, apiPath: string) => {
   // GET all
   app.get(`/api/${apiPath}`, async (req, res) => {
     try {
-      const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+      const userOrgId = (req as any).user?.org_id;
 
       if (!userOrgId) {
         return res.status(401).json({
@@ -2119,7 +2119,7 @@ const createAttributeEndpoints = (tableName: string, apiPath: string) => {
   // GET one
   app.get(`/api/${apiPath}/:id`, async (req, res) => {
     try {
-      const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+      const userOrgId = (req as any).user?.org_id;
 
       if (!userOrgId) {
         return res.status(401).json({
@@ -2162,7 +2162,7 @@ const createAttributeEndpoints = (tableName: string, apiPath: string) => {
   // PUT
   app.put(`/api/${apiPath}/:id`, async (req, res) => {
     try {
-      const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+      const userOrgId = (req as any).user?.org_id;
 
       if (!userOrgId) {
         return res.status(401).json({
@@ -2184,7 +2184,7 @@ const createAttributeEndpoints = (tableName: string, apiPath: string) => {
   // DELETE
   app.delete(`/api/${apiPath}/:id`, async (req, res) => {
     try {
-      const userOrgId = (req as any).user?.org_id || DEFAULT_ORG_ID;
+      const userOrgId = (req as any).user?.org_id;
 
       if (!userOrgId) {
         return res.status(401).json({

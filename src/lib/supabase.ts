@@ -7,7 +7,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Warning: VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create Supabase client with sessionStorage to isolate by tab
+// Each tab gets its own session storage, preventing data mixing between users
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: typeof window !== 'undefined' ? window.sessionStorage : undefined,
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce',
+  }
+});
 
 export type Database = {
   public: {

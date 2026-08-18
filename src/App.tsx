@@ -751,37 +751,16 @@ export default function App() {
     }
     setViewMode('customers');
 
-    const previousOwner = target.currentOwnerName || 'Titular';
-
-    const unlinkRecord: MaintenanceRecord = {
-      id: `m-un-${Date.now()}`,
-      date: new Date().toISOString().split('T')[0],
-      type: 'Transferência de Posse' as const,
-      performer: companyName || 'Estilo Raro',
-      notes: `Desvinculação de posse registrada: a joia "${target.title}" foi desvinculada do cliente "${previousOwner}" e retornou ao acervo da joalheria.`,
-    };
-
-    const updatedCert: JewelryCertificate = {
-      ...target,
-      currentOwnerName: '',
-      ownerCpf: '',
-      ownerEmail: '',
-      ownerId: '',
-      maintenanceHistory: [unlinkRecord, ...(target.maintenanceHistory || [])]
-    };
-
-    setCertificates(prev => prev.map(c => c.id === certId ? updatedCert : c));
+    setCertificates(prev => prev.filter(c => c.id !== certId));
     if (selectedCert?.id === certId) {
-      setSelectedCert(updatedCert);
+      setSelectedCert(null);
     }
 
     try {
       await fetchWithAuth(`/api/certificates/${certId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedCert)
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
       });
-      // Invalidate cache and refetch
       setTimeout(() => fetchCertificates(true), 500);
     } catch (e) {
     }

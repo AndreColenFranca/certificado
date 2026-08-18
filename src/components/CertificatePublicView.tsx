@@ -575,9 +575,6 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
               <BookOpen className="w-6 h-6 text-amber-400" />
               Manual de Cuidados
             </h3>
-            <p className="text-sm text-zinc-400">
-              Recomendações técnicas customizadas para manter o brilho original do metal <strong className="text-amber-300">{cert.metalPurity}</strong> e proteger as gemas preciosas encravadas.
-            </p>
           </div>
 
           <div className="space-y-6 text-sm text-zinc-300 leading-relaxed">

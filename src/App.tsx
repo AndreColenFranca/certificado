@@ -607,21 +607,30 @@ export default function App() {
   const handleConfirmDelete = async (id: string) => {
     const target = certificates.find(c => c.id.toUpperCase() === id.toUpperCase());
     if (target) {
-      const ownerName = target.currentOwnerName?.trim();
-      const ownerCpf = target.ownerCpf?.trim();
-      const ownerId = target.ownerId?.trim();
-      const ownerEmail = target.ownerEmail?.trim();
+      const isRoot = target.isRoot === true;
+      const isChild = target.isRoot === false;
 
-      const isLinked = Boolean(
-        (ownerName && ownerName.length > 0 && ownerName.toLowerCase() !== 'sem proprietário') ||
-        (ownerCpf && ownerCpf.length > 0) ||
-        (ownerId && ownerId.length > 0) ||
-        (ownerEmail && ownerEmail.length > 0)
-      );
+      // Child certificates can always be deleted
+      if (isChild) {
+        // Proceed to delete
+      } else if (isRoot) {
+        // Root certificates can't have linked customers
+        const ownerName = target.currentOwnerName?.trim();
+        const ownerCpf = target.ownerCpf?.trim();
+        const ownerId = target.ownerId?.trim();
+        const ownerEmail = target.ownerEmail?.trim();
 
-      if (isLinked) {
-        alert(`A exclusão foi bloqueada: A joia "${target.title}" possui um cliente vinculado (${ownerName || 'Cliente Cadastrado'}).`);
-        return;
+        const isLinked = Boolean(
+          (ownerName && ownerName.length > 0 && ownerName.toLowerCase() !== 'sem proprietário') ||
+          (ownerCpf && ownerCpf.length > 0) ||
+          (ownerId && ownerId.length > 0) ||
+          (ownerEmail && ownerEmail.length > 0)
+        );
+
+        if (isLinked) {
+          alert(`A exclusão foi bloqueada: A joia "${target.title}" possui um cliente vinculado (${ownerName || 'Cliente Cadastrado'}).`);
+          return;
+        }
       }
     }
 

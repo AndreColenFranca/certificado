@@ -1822,27 +1822,19 @@ app.delete('/api/certificates/:id', async (req, res) => {
     }
 
     const cert = getCertResult.data;
-    const ownerName = cert.current_owner_name?.trim();
-    const ownerCpf = String(cert.owner_cpf || '').trim();
-    const ownerId = cert.owner_id?.trim();
-    const ownerEmail = cert.owner_email?.trim();
+    const isRoot = cert.is_root === true;
+    const isChild = cert.is_root === false;
 
-    const isCustomerLinked = Boolean(
-      (ownerName && ownerName.length > 0 && ownerName.toLowerCase() !== 'sem proprietário') ||
-      (ownerCpf && ownerCpf.length > 0) ||
-      (ownerId && ownerId.length > 0) ||
-      (ownerEmail && ownerEmail.length > 0)
-    );
-
-    if (isCustomerLinked) {
-      return res.status(400).json({
-        success: false,
-        message: `Exclusão Proibida: A joia "${cert.title}" possui um cliente vinculado (${ownerName || 'Cliente Cadastrado'}).`
-      });
+    // Child certificates can always be deleted
+    if (isChild) {
+      const deleteResult = await deleteCertificate(supabase, id);
+      if (!deleteResult.success) {
+        return res.status(400).json({ success: false, message: deleteResult.error });
+      }
+      return res.json({ success: true, message: 'Certificado removido com sucesso' });
     }
 
     // Check if this is a Root certificate with child certificates
-    const isRoot = !cert.parentCertId && !cert.ownerId && !cert.currentOwnerName;
     if (isRoot) {
       // Get all certificates to check for children
       const allCertsResult = await getCertificates(supabase, userOrgId);

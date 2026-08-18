@@ -387,12 +387,14 @@ export default function App() {
             // Carregar logo da organização
             if (data.data.logo_url) {
               setCompanyLogoUrl(data.data.logo_url);
+            } else {
+              setCompanyLogoUrl(logoImage);
             }
           }
         })
         .catch(err => {});
     }
-  }, [currentUser]);
+  }, [currentUser?.orgId]);
 
   const fetchCertificates = async (forceRefresh = false) => {
     try {

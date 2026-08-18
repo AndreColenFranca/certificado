@@ -493,44 +493,45 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
       {/* Tab 3: History & Warranty */}
       {activeTab === 'history' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
 
-          {/* Warranty Details */}
-          <div className="lg:col-span-6 space-y-4">
-            <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
-                  <Award className="w-5 h-5 text-amber-400" />
-                  Status da Garantia
-                </h3>
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                  {cert.warrantyStatus}
-                </span>
-              </div>
+          {/* Termos e Cobertura - Left Side */}
+          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
+            <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-amber-400" />
+              Termos e Cobertura
+            </h3>
 
-              <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-xs space-y-2">
-                <div className="flex justify-between text-zinc-400">
-                  <span>Validade da Garantia:</span>
-                  <span className="font-semibold text-amber-300">
-                    {cert.warrantyMonths === -1 ? 'Vitalícia Definitiva' : `${cert.warrantyMonths} meses`}
-                  </span>
-                </div>
-                <div className="flex justify-between text-zinc-400">
-                  <span>Data de Fabricação:</span>
-                  <span className="text-zinc-200">{new Date(cert.manufacturingDate).toLocaleDateString('pt-BR')}</span>
-                </div>
-              </div>
-
-              <div className="space-y-1.5 text-xs text-zinc-300">
-                <span className="font-semibold text-amber-300 block">Termos e Cobertura:</span>
-                <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-zinc-400 leading-relaxed">
-                  <WarrantyRenderer text={cert.warrantyTerms} />
-                </div>
-              </div>
-
+            <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 text-zinc-400 leading-relaxed text-sm">
+              <WarrantyRenderer text={cert.warrantyTerms} />
             </div>
           </div>
 
+          {/* Status da Garantia - Right Side */}
+          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-400" />
+                Status da Garantia
+              </h3>
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                {cert.warrantyStatus}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-xs space-y-3">
+              <div className="flex justify-between text-zinc-400">
+                <span>Validade da Garantia:</span>
+                <span className="font-semibold text-amber-300">
+                  {cert.warrantyMonths === -1 ? 'Vitalícia Definitiva' : `${cert.warrantyMonths} meses`}
+                </span>
+              </div>
+              <div className="flex justify-between text-zinc-400">
+                <span>Data de Fabricação:</span>
+                <span className="text-zinc-200">{new Date(cert.manufacturingDate).toLocaleDateString('pt-BR')}</span>
+              </div>
+            </div>
+          </div>
 
         </div>
       )}

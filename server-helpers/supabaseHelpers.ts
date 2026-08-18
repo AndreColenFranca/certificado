@@ -59,10 +59,11 @@ export async function getCertificates(
   }
 
   try {
-    // Optimize query by selecting essential fields only (avoid large arrays)
+    // Optimize query by selecting essential fields only (avoid large image arrays)
+    // Note: Include warranty_terms and maintenanceHistory for detail views
     const query = supabase
       .from('jewelry_certificates')
-      .select('id,cert_code,serial_number,title,collection,model,manufacturer,manufacturer_logo_url,metal_purity,metal_color,gross_weight_grams,width_cm,finish,has_stones,warranty_months,warranty_status,estimated_value_brl,current_owner_name,owner_cpf,owner_email,owner_id,issue_date,manufacturing_date,authenticity_hash,is_root,parent_cert_id,org_id,created_at,updated_at')
+      .select('id,cert_code,serial_number,title,collection,model,manufacturer,manufacturer_logo_url,metal_purity,metal_color,gross_weight_grams,width_cm,finish,has_stones,warranty_months,warranty_terms,warranty_status,estimated_value_brl,current_owner_name,owner_cpf,owner_email,owner_id,issue_date,manufacturing_date,authenticity_hash,is_root,parent_cert_id,org_id,created_at,updated_at,maintenance_history')
       .eq('org_id', orgId);
 
     const { data, error } = await query;

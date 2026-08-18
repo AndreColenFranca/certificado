@@ -393,16 +393,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
           description: 'Guarde em estojo individual aveludado para evitar atritos.'
         }
       ],
-      maintenanceHistory: initialCert?.maintenanceHistory || [
-        {
-          id: `maint-${Date.now()}`,
-          date: new Date().toISOString().split('T')[0],
-          type: 'Certificação Inicial',
-          performer: manufacturer || 'Atelier Oficial',
-          notes: 'Certificado e selo digital NFT gerados e homologados.',
-          verifiedByAppraiser: 'Mestre Gemólogo Responsável'
-        }
-      ],
+      maintenanceHistory: initialCert?.maintenanceHistory || [],
       createdAt: initialCert?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };

@@ -322,8 +322,8 @@ export const PrintCertificateModal: React.FC<PrintCertificateModalProps> = ({
                 />
               </div>
               <div className="flex flex-col items-center gap-0 -mt-6 relative z-10">
-                <div className="border-b border-zinc-900 w-36" />
-                <span className="text-xs font-serif font-bold text-zinc-950">Estilo Raro Joias</span>
+                <div className="border-b-2 border-black w-36" />
+                <span className="text-xs font-serif font-bold text-black">Estilo Raro Joias</span>
               </div>
               <span className="text-[9px] text-zinc-500 block">Ateliê Central {cert.manufacturer}</span>
             </div>

@@ -616,10 +616,10 @@ export default function App() {
         // Proceed to delete
       } else if (isRoot) {
         // Root certificates can't have linked customers
-        const ownerName = target.currentOwnerName?.trim();
-        const ownerCpf = target.ownerCpf?.trim();
-        const ownerId = target.ownerId?.trim();
-        const ownerEmail = target.ownerEmail?.trim();
+        const ownerName = typeof target.currentOwnerName === 'string' ? target.currentOwnerName.trim() : '';
+        const ownerCpf = typeof target.ownerCpf === 'string' ? target.ownerCpf.trim() : '';
+        const ownerId = typeof target.ownerId === 'string' ? target.ownerId.trim() : '';
+        const ownerEmail = typeof target.ownerEmail === 'string' ? target.ownerEmail.trim() : '';
 
         const isLinked = Boolean(
           (ownerName && ownerName.length > 0 && ownerName.toLowerCase() !== 'sem proprietário') ||

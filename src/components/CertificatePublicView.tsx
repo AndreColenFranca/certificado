@@ -569,43 +569,85 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
       {/* Tab 4: Care Guide */}
       {activeTab === 'care' && (
-        <div className="space-y-6">
+        <div className="space-y-8">
+          {/* Intro Card */}
           <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl space-y-4">
             <h3 className="font-serif text-lg font-bold text-amber-200 flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-amber-400" />
-              Manual do Proprietário e Dicas de Conservação
+              Cuidados com as suas joias
             </h3>
-            <p className="text-xs text-zinc-400">
-              Recomendações técnicas customizadas para manter o brilho original do metal <strong className="text-amber-300">{cert.metalPurity}</strong> e proteger as gemas preciosas encravadas.
+
+            <p className="text-sm text-zinc-300 leading-relaxed">
+              As joias da Estilo Raro são feitas para durar a vida toda — e ainda passar adiante. Mas, como tudo o que é valioso, elas pedem alguns cuidados simples para continuar lindas como no primeiro dia.
             </p>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-              {cert.careGuide.map((item, idx) => (
-                <div key={idx} className="bg-zinc-950 p-5 rounded-xl border border-zinc-800 space-y-2 hover:border-amber-500/30 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                      {item.category}
-                    </span>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  </div>
+          {/* Warning Card - Destaque Garantia */}
+          <div className="bg-zinc-900/90 border border-red-900/40 rounded-2xl p-6 shadow-xl space-y-4">
+            <h3 className="font-serif text-lg font-bold text-red-400 flex items-center gap-2">
+              <Info className="w-5 h-5 text-red-500" />
+              ⚠️ Importante sobre a Garantia
+            </h3>
 
-                  <h4 className="font-semibold text-amber-100 text-sm">
-                    {item.title}
-                  </h4>
+            <div className="space-y-3 text-sm text-zinc-300 leading-relaxed">
+              <p>
+                <strong className="text-red-400">A garantia não cobre:</strong>
+              </p>
+              <ul className="space-y-2 ml-4">
+                <li className="flex gap-2">
+                  <span className="text-red-400 shrink-0">•</span>
+                  <span>Danos por acidentes, batidas ou mau uso</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-red-400 shrink-0">•</span>
+                  <span>Situações que causem dano à peça</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-red-400 shrink-0">•</span>
+                  <span>Gemas, pedras e pérolas</span>
+                </li>
+              </ul>
 
-                  <p className="text-xs text-zinc-400 leading-relaxed">
-                    {item.description}
-                  </p>
-
-                  {item.warning && (
-                    <div className="p-2.5 rounded bg-red-950/40 border border-red-500/30 text-red-300 text-[11px] flex items-start gap-2 mt-2">
-                      <Info className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                      <span>{item.warning}</span>
-                    </div>
-                  )}
-                </div>
-              ))}
+              <p className="pt-2 border-t border-zinc-700">
+                Na entrega, confira sua joia com calma. Se algo não estiver certo, resolveremos na hora. Precisou de reparo fora da garantia? Fazemos um orçamento justo e transparente. Para trocas, basta enviar a peça sem uso, no estojo original, com nota fiscal e certificado de garantia, em até 90 dias após a compra.
+              </p>
             </div>
+          </div>
+
+          {/* Care Guide Items Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {cert.careGuide.map((item, idx) => (
+              <div key={idx} className="bg-zinc-950 p-5 rounded-xl border border-zinc-800 space-y-2 hover:border-amber-500/30 transition-colors">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                    {item.category}
+                  </span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                </div>
+
+                <h4 className="font-semibold text-amber-100 text-sm">
+                  {item.title}
+                </h4>
+
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  {item.description}
+                </p>
+
+                {item.warning && (
+                  <div className="p-2.5 rounded bg-red-950/40 border border-red-500/30 text-red-300 text-[11px] flex items-start gap-2 mt-2">
+                    <Info className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                    <span>{item.warning}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Closing Message */}
+          <div className="bg-zinc-900/90 border border-amber-900/40 rounded-2xl p-6 shadow-xl">
+            <p className="text-sm text-zinc-300 leading-relaxed text-center">
+              Sua joia conta uma história. Vamos cuidar dela juntos. 🤍 Se tiver qualquer dúvida sobre cuidados, manutenção ou garantia, fale com a gente. A Estilo Raro está aqui não só na hora da compra. Estamos com você sempre que precisar.
+            </p>
           </div>
         </div>
       )}

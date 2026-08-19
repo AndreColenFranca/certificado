@@ -23,7 +23,6 @@ const DEFAULT_STONE_TYPES: string[] = [];
 const DEFAULT_SETTING_TYPES: string[] = [];
 const DEFAULT_CUT_SHAPES: string[] = [];
 const DEFAULT_COLOR_GRADES: string[] = [];
-const DEFAULT_CLARITY_GRADES: string[] = [];
 
 // Helper to compress local uploaded image for high-definition rendering
 const compressAndResizeImage = (file: File): Promise<string> => {
@@ -96,7 +95,6 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   const [settingTypeOptions, setSettingTypeOptions] = useState<string[]>(DEFAULT_SETTING_TYPES);
   const [cutShapeOptions, setCutShapeOptions] = useState<string[]>(DEFAULT_CUT_SHAPES);
   const [colorGradeOptions, setColorGradeOptions] = useState<string[]>(DEFAULT_COLOR_GRADES);
-  const [clarityGradeOptions, setClarityGradeOptions] = useState<string[]>(DEFAULT_CLARITY_GRADES);
 
   // Load attributes from Supabase
   useEffect(() => {
@@ -132,11 +130,18 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
               if (endpoint.key === 'manufacturers' && !initialCert?.manufacturer && names.length > 0) {
                 setManufacturer(names[0]);
               }
-              // Se carregou acabamentos, preenche apenas se ainda estiver vazio.
-              // Forma funcional para não sobrescrever uma escolha feita pelo
-              // usuário enquanto os atributos ainda estavam carregando.
+              // Preenche apenas se ainda estiver vazio. Forma funcional para não
+              // sobrescrever uma escolha feita pelo usuário enquanto os atributos
+              // ainda estavam carregando. O valor sempre vem da tabela de
+              // atributos da organização, nunca de um nome fixo no código.
               if (endpoint.key === 'finishes' && names.length > 0) {
                 setFinish(prev => prev || names[0]);
+              }
+              if (endpoint.key === 'metal_purities' && names.length > 0) {
+                setMetalPurity(prev => prev || names[0]);
+              }
+              if (endpoint.key === 'metal_colors' && names.length > 0) {
+                setMetalColor(prev => prev || names[0]);
               }
             }
           } catch (err: any) {
@@ -185,8 +190,8 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
       setOwnerCpf(initialCert.owner_cpf || initialCert.ownerCpf || '');
       setOwnerEmail(initialCert.owner_email || initialCert.ownerEmail || '');
       setOwnerId(initialCert.owner_id || initialCert.ownerId || '');
-      setMetalPurity(initialCert.metal_purity || initialCert.metalPurity || purityOptions[0] || '18K (750)');
-      setMetalColor(initialCert.metal_color || initialCert.metalColor || colorOptions[0] || 'Ouro Amarelo');
+      setMetalPurity(initialCert.metal_purity || initialCert.metalPurity || '');
+      setMetalColor(initialCert.metal_color || initialCert.metalColor || '');
       setGrossWeightGrams(initialCert.gross_weight_grams ?? initialCert.grossWeightGrams ?? '');
       setWidthCm(initialCert.width_cm ?? initialCert.widthCm ?? '');
       setFinish(initialCert.finish || '');
@@ -238,8 +243,8 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
     }
   }, [initialCert]);
   
-  const [metalPurity, setMetalPurity] = useState<string>(initialCert?.metal_purity || initialCert?.metalPurity || purityOptions[0] || '18K (750)');
-  const [metalColor, setMetalColor] = useState<string>(initialCert?.metal_color || initialCert?.metalColor || colorOptions[0] || 'Ouro Amarelo');
+  const [metalPurity, setMetalPurity] = useState<string>(initialCert?.metal_purity || initialCert?.metalPurity || '');
+  const [metalColor, setMetalColor] = useState<string>(initialCert?.metal_color || initialCert?.metalColor || '');
   const [grossWeightGrams, setGrossWeightGrams] = useState<number>(initialCert?.gross_weight_grams ?? initialCert?.grossWeightGrams ?? '');
   const [widthCm, setWidthCm] = useState<number>(initialCert?.width_cm ?? initialCert?.widthCm ?? '');
   const [finish, setFinish] = useState<string>(initialCert?.finish || '');
@@ -322,17 +327,35 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
     }
   }, [initialCert]);
 
+  // Preenche os campos de pedra que ainda estão vazios assim que as listas de
+  // atributos chegam. Sem isso o select exibiria a primeira opção enquanto o
+  // state seguiria vazio, e a pedra seria salva sem o campo.
+  useEffect(() => {
+    if (stones.length === 0) return;
+    setStones(prev => {
+      let changed = false;
+      const next = prev.map(stone => {
+        const filled = { ...stone };
+        if (!filled.type && stoneTypeOptions[0]) { filled.type = stoneTypeOptions[0]; changed = true; }
+        if (!filled.settingType && settingTypeOptions[0]) { filled.settingType = settingTypeOptions[0]; changed = true; }
+        if (!filled.cutShape && cutShapeOptions[0]) { filled.cutShape = cutShapeOptions[0]; changed = true; }
+        if (!filled.colorGrade && colorGradeOptions[0]) { filled.colorGrade = colorGradeOptions[0]; changed = true; }
+        return filled;
+      });
+      return changed ? next : prev;
+    });
+  }, [stoneTypeOptions, settingTypeOptions, cutShapeOptions, colorGradeOptions, stones.length]);
+
   // Add Stone row
   const handleAddStone = () => {
     const newStone: StoneDetail = {
       id: `st-${Date.now()}`,
-      type: stoneTypeOptions[0] || 'Diamante Natural',
+      type: stoneTypeOptions[0] || '',
       quantity: 1,
       caratWeight: 0.5,
-      settingType: settingTypeOptions[0] || 'Garra (Prong)',
-      cutShape: cutShapeOptions[0] || 'Brilhante Redondo',
-      colorGrade: colorGradeOptions[0] || 'D - Incolor (Excepcional)',
-      clarityGrade: clarityGradeOptions[0] || 'VVS1 (Muitíssimo Poucas Inclusões)'
+      settingType: settingTypeOptions[0] || '',
+      cutShape: cutShapeOptions[0] || '',
+      colorGrade: colorGradeOptions[0] || ''
     };
     setStones([...stones, newStone]);
   };
@@ -820,7 +843,7 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
                       <div className="flex flex-col justify-between h-full space-y-1">
                         <label className="block text-zinc-400 text-xs font-medium mb-0.5">Tipo de Cravação</label>
                         <select
-                          value={st.settingType || settingTypeOptions[0] || 'Garra (Prong)'}
+                          value={st.settingType || ''}
                           onChange={(e) => {
                             const updated = [...stones];
                             updated[index].settingType = e.target.value;
@@ -838,7 +861,7 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
                       <div className="flex flex-col justify-between h-full space-y-1">
                         <label className="block text-zinc-400 text-xs font-medium mb-0.5">Lapidação / Formato</label>
                         <select
-                          value={st.cutShape || cutShapeOptions[0] || 'Brilhante Redondo'}
+                          value={st.cutShape || ''}
                           onChange={(e) => {
                             const updated = [...stones];
                             updated[index].cutShape = e.target.value;
@@ -856,7 +879,7 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
                       <div className="flex flex-col justify-between h-full space-y-1">
                         <label className="block text-zinc-400 text-xs font-medium mb-0.5">Cor / Graduação</label>
                         <select
-                          value={st.colorGrade || colorGradeOptions[0] || 'D - Incolor (Excepcional)'}
+                          value={st.colorGrade || ''}
                           onChange={(e) => {
                             const updated = [...stones];
                             updated[index].colorGrade = e.target.value;

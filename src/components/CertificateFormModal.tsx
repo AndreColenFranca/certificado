@@ -132,6 +132,12 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
               if (endpoint.key === 'manufacturers' && !initialCert?.manufacturer && names.length > 0) {
                 setManufacturer(names[0]);
               }
+              // Se carregou acabamentos, preenche apenas se ainda estiver vazio.
+              // Forma funcional para não sobrescrever uma escolha feita pelo
+              // usuário enquanto os atributos ainda estavam carregando.
+              if (endpoint.key === 'finishes' && names.length > 0) {
+                setFinish(prev => prev || names[0]);
+              }
             }
           } catch (err: any) {
             console.error(`Erro ao carregar ${endpoint.key}:`, err);
@@ -700,6 +706,7 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
                   onChange={(e) => setFinish(e.target.value)}
                   className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500 mt-auto"
                 >
+                  {!finish && <option value="">Selecione o acabamento...</option>}
                   {finishOptions.map(opt => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}

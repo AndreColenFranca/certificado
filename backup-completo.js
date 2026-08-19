@@ -10,8 +10,9 @@
  *
  * Uso:  node backup-completo.js       (ou: npm run backup)
  */
+import 'dotenv/config';
 import { spawnSync } from 'child_process';
-import { existsSync, statSync } from 'fs';
+import { existsSync, statSync, rmSync } from 'fs';
 
 const stamp = new Date().toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-');
 
@@ -24,17 +25,30 @@ const run = (cmd, args) =>
 
 console.log('\n=== 1/2  ESTRUTURA DO BANCO ===\n');
 
-const schemaOk =
-  run('npx', ['supabase', 'db', 'dump', '--schema', 'public', '-f', `"${schemaFile}"`]) &&
-  existsSync(schemaFile) &&
-  statSync(schemaFile).size > 0;
+// Sem a senha do banco a CLI tenta provisionar um papel de acesso pela API de
+// gerenciamento, e isso responde 401. Passando -p ela conecta direto.
+const dbPassword = process.env.SUPABASE_DB_PASSWORD;
+
+let schemaOk = false;
+
+if (!dbPassword) {
+  console.error('!!  SUPABASE_DB_PASSWORD nao esta no .env - a estrutura sera pulada.');
+  console.error('    Pegue em: Supabase > Project Settings > Database > Database password');
+  console.error('    (se nao lembrar, de Reset database password) e acrescente ao .env:');
+  console.error('    SUPABASE_DB_PASSWORD=sua-senha');
+} else {
+  const args = ['supabase', 'db', 'dump', '--schema', 'public',
+                '-p', `"${dbPassword}"`, '-f', `"${schemaFile}"`];
+  schemaOk = run('npx', args) && existsSync(schemaFile) && statSync(schemaFile).size > 0;
+}
 
 if (schemaOk) {
   console.log(`\nEstrutura salva em: ${schemaFile} (${(statSync(schemaFile).size / 1024).toFixed(1)} KB)`);
 } else {
+  // Nao deixa para tras o arquivo de 0 byte que o pg_dump cria antes de falhar.
+  if (existsSync(schemaFile) && statSync(schemaFile).size === 0) rmSync(schemaFile);
   console.error('\n!!  A ESTRUTURA NAO FOI GERADA.');
-  console.error('    Causa mais comum: o Docker Desktop nao esta aberto.');
-  console.error('    Abra o Docker Desktop, espere ficar "Running" e rode de novo.');
+  console.error('    Verifique: Docker Desktop aberto e SUPABASE_DB_PASSWORD no .env.');
   console.error('    Sigo para os dados assim mesmo - um backup parcial vale mais que nenhum.');
 }
 

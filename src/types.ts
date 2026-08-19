@@ -53,7 +53,7 @@ export interface CareGuideItem {
 export interface Customer {
   id: string; // e.g., "CLI-1001"
   name: string; // Alphanumeric
-  cpf: string | number; // 11 dígitos (BIGINT no banco, mas flexível aqui)
+  cpf: string; // 11 dígitos, sempre texto: zeros à esquerda são significativos
   email: string; // Email
   phone?: string;
   notes?: string;

@@ -145,13 +145,14 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       return;
     }
 
-    const cpfNumero = Number(cpf.replace(/\D/g, ''));
-    console.log('📤 Enviando CPF:', cpfNumero, 'tipo:', typeof cpfNumero);
+    // Texto, nunca número: CPF tem zeros à esquerda significativos, e
+    // Number('00100000011') vira 100000011 — dois dígitos a menos.
+    const cpfDigitos = cpf.replace(/\D/g, '');
 
     const customerToSave: any = {
       id: initialCustomer?.id || `CLI-${Math.floor(1000 + Math.random() * 9000)}`,
       name: name.trim(),
-      cpf: cpfNumero,
+      cpf: cpfDigitos,
       email: email.trim().toLowerCase(),
       phone: phone.trim() || undefined,
       notes: notes.trim() || undefined,

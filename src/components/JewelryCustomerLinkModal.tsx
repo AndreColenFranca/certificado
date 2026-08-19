@@ -41,7 +41,13 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
     preSelectedCert?.id || (rootCertificates[0]?.id || (certificates[0]?.id || ''))
   );
   const [notes, setNotes] = useState('');
-  const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
+  const [issueDate, setIssueDate] = useState(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  });
   const [submitted, setSubmitted] = useState(false);
 
   // Sync props when modal opens or selections change

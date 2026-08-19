@@ -520,6 +520,14 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
     const certId = initialCert?.id || `CERT-${new Date().getFullYear()}-${randomHex}`;
     const serialNum = initialCert?.serialNumber || `SN-${Math.floor(100000 + Math.random() * 900000)}`;
 
+    const getTodayAsLocalDate = () => {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
     const certToSave: JewelryCertificate = {
       id: certId,
       serialNumber: serialNum,
@@ -528,8 +536,8 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
       model,
       manufacturer,
       manufacturerLogoUrl: formatImageUrl(manufacturerLogoUrl),
-      manufacturingDate: initialCert?.manufacturingDate || new Date().toISOString().split('T')[0],
-      issueDate: new Date().toISOString().split('T')[0],
+      manufacturingDate: initialCert?.manufacturingDate || getTodayAsLocalDate(),
+      issueDate: getTodayAsLocalDate(),
       currentOwnerName,
       ownerCpf: ownerCpf ? String(ownerCpf) : undefined,
       ownerEmail: ownerEmail || undefined,

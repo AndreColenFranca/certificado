@@ -18,7 +18,13 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
   if (!isOpen || !cert) return null;
 
   const [serviceType, setServiceType] = useState<'Inspeção de Qualidade' | 'Polimento & Banho' | 'Ajuste de Aro' | 'Substituição de Garra' | 'Limpeza Ultrassônica'>('Polimento & Banho');
-  const [preferredDate, setPreferredDate] = useState(new Date().toISOString().split('T')[0]);
+  const [preferredDate, setPreferredDate] = useState(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  });
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
 

@@ -7,3 +7,14 @@ coverage/
 .env*
 !.env.example
 .vercel
+
+# Scripts com credenciais - NUNCA commitar
+export-dados.js
+export-schema.js
+
+# Backups de dados com informações de clientes - NUNCA commitar
+supabase/migrations/dados_backup_*.sql
+supabase/migrations/*_remote_schema.sql
+
+# Arquivos desnecessários
+supabase/migrations/Rodar.txt

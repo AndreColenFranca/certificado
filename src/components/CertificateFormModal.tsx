@@ -106,8 +106,8 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
         // um atributo hoje não pode mudar o que foi certificado ontem.
         const certStones = (initialCert?.stones || []) as StoneDetail[];
         const endpoints = [
-          { key: 'metal_purities', setState: setPurityOptions, stored: () => [initialCert?.metal_purity || initialCert?.metalPurity] },
-          { key: 'metal_colors', setState: setColorOptions, stored: () => [initialCert?.metal_color || initialCert?.metalColor] },
+          { key: 'metal_purities', setState: setPurityOptions, stored: () => [initialCert?.metalPurity] },
+          { key: 'metal_colors', setState: setColorOptions, stored: () => [initialCert?.metalColor] },
           { key: 'collections', setState: setCollectionOptions, stored: () => [initialCert?.collection] },
           { key: 'manufacturers', setState: setManufacturerOptions, stored: () => [initialCert?.manufacturer] },
           { key: 'finishes', setState: setFinishOptions, stored: () => [initialCert?.finish] },
@@ -175,10 +175,10 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   const [manufacturerLogoUrl, setManufacturerLogoUrl] = useState(
     initialCert?.manufacturerLogoUrl || defaultCompanyLogo || DEFAULT_BRAND_LOGO_DRIVE_URL
   );
-  const [currentOwnerName, setCurrentOwnerName] = useState(initialCert?.current_owner_name || initialCert?.currentOwnerName || selectedCustomerForNewCert?.name || '');
-  const [ownerCpf, setOwnerCpf] = useState(initialCert?.owner_cpf || initialCert?.ownerCpf || selectedCustomerForNewCert?.cpf || '');
-  const [ownerEmail, setOwnerEmail] = useState(initialCert?.owner_email || initialCert?.ownerEmail || selectedCustomerForNewCert?.email || '');
-  const [ownerId, setOwnerId] = useState(initialCert?.owner_id || initialCert?.ownerId || selectedCustomerForNewCert?.id || '');
+  const [currentOwnerName, setCurrentOwnerName] = useState(initialCert?.currentOwnerName || selectedCustomerForNewCert?.name || '');
+  const [ownerCpf, setOwnerCpf] = useState(initialCert?.ownerCpf || selectedCustomerForNewCert?.cpf || '');
+  const [ownerEmail, setOwnerEmail] = useState(initialCert?.ownerEmail || selectedCustomerForNewCert?.email || '');
+  const [ownerId, setOwnerId] = useState(initialCert?.ownerId || selectedCustomerForNewCert?.id || '');
 
   useEffect(() => {
     if (selectedCustomerForNewCert) {
@@ -197,25 +197,25 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
       setModel(initialCert.model || '');
       setManufacturer(initialCert.manufacturer || defaultCompanyName);
       setManufacturerLogoUrl(initialCert.manufacturerLogoUrl || defaultCompanyLogo || DEFAULT_BRAND_LOGO_DRIVE_URL);
-      setCurrentOwnerName(initialCert.current_owner_name || initialCert.currentOwnerName || '');
-      setOwnerCpf(initialCert.owner_cpf || initialCert.ownerCpf || '');
-      setOwnerEmail(initialCert.owner_email || initialCert.ownerEmail || '');
-      setOwnerId(initialCert.owner_id || initialCert.ownerId || '');
-      setMetalPurity(initialCert.metal_purity || initialCert.metalPurity || '');
-      setMetalColor(initialCert.metal_color || initialCert.metalColor || '');
-      setGrossWeightGrams(initialCert.gross_weight_grams ?? initialCert.grossWeightGrams ?? '');
-      setWidthCm(initialCert.width_cm ?? initialCert.widthCm ?? '');
+      setCurrentOwnerName(initialCert.currentOwnerName || '');
+      setOwnerCpf(initialCert.ownerCpf || '');
+      setOwnerEmail(initialCert.ownerEmail || '');
+      setOwnerId(initialCert.ownerId || '');
+      setMetalPurity(initialCert.metalPurity || '');
+      setMetalColor(initialCert.metalColor || '');
+      setGrossWeightGrams(initialCert.grossWeightGrams ?? '');
+      setWidthCm(initialCert.widthCm ?? '');
       setFinish(initialCert.finish || '');
-      setHasStones(initialCert.has_stones ?? initialCert.hasStones ?? true);
+      setHasStones(initialCert.hasStones ?? true);
       if (initialCert.stones && initialCert.stones.length > 0) {
         setStones(initialCert.stones);
       }
       if (initialCert.images && initialCert.images.length > 0) {
         setImages(initialCert.images.map(formatImageUrl));
       }
-      setWarrantyMonths(initialCert.warranty_months ?? initialCert.warrantyMonths ?? -1);
-      setInternalNotes(initialCert.internal_notes || initialCert.internalNotes || '');
-      setWarrantyTerms(initialCert.warranty_terms || initialCert.warrantyTerms || `[icon:verified] **A gente sabe que escolher uma aliança não é só sobre o material**
+      setWarrantyMonths(initialCert.warrantyMonths ?? -1);
+      setInternalNotes(initialCert.internalNotes || '');
+      setWarrantyTerms(initialCert.warrantyTerms || `[icon:verified] **A gente sabe que escolher uma aliança não é só sobre o material**
 
 É sobre o que ela representa. Por isso, a Estilo Raro Joias garante a qualidade e autenticidade de cada peça, desde o primeiro dia.
 
@@ -250,17 +250,18 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
 - Manutenção pra sempre
 
 Porque a gente acredita que uma aliança de verdade não é só bonita no dia da compra. É um compromisso duradouro.`);
-      setEstimatedValueBRL(initialCert.estimated_value_brl ?? initialCert.estimatedValueBRL ?? '');
+      setEstimatedValueBRL(initialCert.estimatedValueBRL ?? '');
     }
   }, [initialCert]);
   
-  const [metalPurity, setMetalPurity] = useState<string>(initialCert?.metal_purity || initialCert?.metalPurity || '');
-  const [metalColor, setMetalColor] = useState<string>(initialCert?.metal_color || initialCert?.metalColor || '');
-  const [grossWeightGrams, setGrossWeightGrams] = useState<number>(initialCert?.gross_weight_grams ?? initialCert?.grossWeightGrams ?? '');
-  const [widthCm, setWidthCm] = useState<number>(initialCert?.width_cm ?? initialCert?.widthCm ?? '');
+  const [metalPurity, setMetalPurity] = useState<string>(initialCert?.metalPurity || '');
+  const [metalColor, setMetalColor] = useState<string>(initialCert?.metalColor || '');
+  // '' (e não 0) para o campo aparecer em branco quando não há valor.
+  const [grossWeightGrams, setGrossWeightGrams] = useState<number | ''>(initialCert?.grossWeightGrams ?? '');
+  const [widthCm, setWidthCm] = useState<number | ''>(initialCert?.widthCm ?? '');
   const [finish, setFinish] = useState<string>(initialCert?.finish || '');
 
-  const [hasStones, setHasStones] = useState<boolean>(initialCert?.has_stones ?? initialCert?.hasStones ?? true);
+  const [hasStones, setHasStones] = useState<boolean>(initialCert?.hasStones ?? true);
   const [stones, setStones] = useState<StoneDetail[]>(initialCert?.stones && initialCert.stones.length > 0 ? initialCert.stones : []);
 
   const [images, setImages] = useState<string[]>(
@@ -273,9 +274,9 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
 
-  const [warrantyMonths, setWarrantyMonths] = useState<number>(initialCert?.warranty_months ?? initialCert?.warrantyMonths ?? -1);
-  const [internalNotes, setInternalNotes] = useState(initialCert?.internal_notes || initialCert?.internalNotes || '');
-  const [warrantyTerms, setWarrantyTerms] = useState(initialCert?.warranty_terms || initialCert?.warrantyTerms || `[icon:verified] **A gente sabe que escolher uma aliança não é só sobre o material**
+  const [warrantyMonths, setWarrantyMonths] = useState<number>(initialCert?.warrantyMonths ?? -1);
+  const [internalNotes, setInternalNotes] = useState(initialCert?.internalNotes || '');
+  const [warrantyTerms, setWarrantyTerms] = useState(initialCert?.warrantyTerms || `[icon:verified] **A gente sabe que escolher uma aliança não é só sobre o material**
 
 É sobre o que ela representa. Por isso, a Estilo Raro Joias garante a qualidade e autenticidade de cada peça, desde o primeiro dia.
 
@@ -310,7 +311,7 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
 - Manutenção pra sempre
 
 Porque a gente acredita que uma aliança de verdade não é só bonita no dia da compra. É um compromisso duradouro.`);
-  const [estimatedValueBRL, setEstimatedValueBRL] = useState<number>(initialCert?.estimated_value_brl ?? initialCert?.estimatedValueBRL ?? '');
+  const [estimatedValueBRL, setEstimatedValueBRL] = useState<number | ''>(initialCert?.estimatedValueBRL ?? '');
 
   // Preenche os campos de pedra que ainda estão vazios assim que as listas de
   // atributos chegam. Sem isso o select exibiria a primeira opção enquanto o
@@ -448,13 +449,14 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
       manufacturingDate: initialCert?.manufacturingDate || new Date().toISOString().split('T')[0],
       issueDate: new Date().toISOString().split('T')[0],
       currentOwnerName,
-      ownerCpf: ownerCpf || undefined,
+      ownerCpf: ownerCpf ? String(ownerCpf) : undefined,
       ownerEmail: ownerEmail || undefined,
       ownerId: ownerId || undefined,
       metalPurity,
       metalColor,
-      grossWeightGrams,
-      widthCm: widthCm > 0 ? widthCm : 0,
+      // Os campos numéricos usam '' para aparecer em branco; aqui viram número.
+      grossWeightGrams: Number(grossWeightGrams) || 0,
+      widthCm: Number(widthCm) > 0 ? Number(widthCm) : 0,
       finish,
       hasStones,
       stones: hasStones ? stones : [],
@@ -463,7 +465,7 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
       warrantyTerms,
       warrantyStatus: 'Ativa',
       authenticityHash: initialCert?.authenticityHash || '', // Gerado apenas ao vincular cliente
-      estimatedValueBRL,
+      estimatedValueBRL: Number(estimatedValueBRL) || 0,
       internalNotes,
       careGuide: initialCert?.careGuide || [
         {

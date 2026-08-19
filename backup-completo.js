@@ -5,17 +5,23 @@
  *
  * Gera dois arquivos em supabase/migrations/, ambos cobertos pelo .gitignore:
  *
- *   estrutura_<data>_<hora>.sql   DDL: tabelas, colunas, constraints,
- *                                 indices e politicas de RLS.
+ *   estrutura_<data>_<hora>.sql   DDL: extensoes, tabelas, colunas, defaults,
+ *                                 constraints, indices, RLS e politicas,
+ *                                 funcoes, triggers e grants.
  *   dados_backup_<data>_<hora>.sql  Os registros, como DELETE + INSERT.
  *
  * A estrutura vem da funcao public.estrutura_do_banco(), criada uma vez pelo
  * SQL Editor (fonte em sql/criar_funcao_estrutura.sql). Roda apenas com a
  * SERVICE_ROLE_KEY: sem Docker e sem a senha do banco.
  *
- * Isso nao substitui o pg_dump, que tambem captura triggers, funcoes,
- * sequencias, extensoes e grants. Para restauracao garantida seria preciso
- * `supabase db dump`, que exige Docker aberto e a senha do banco.
+ * O QUE ESTE BACKUP NAO COBRE, e nao tem como cobrir por aqui:
+ *   - O schema auth do Supabase, onde ficam as credenciais de login. A API de
+ *     administracao devolve emails e papeis, mas nunca os hashes de senha. Numa
+ *     restauracao, as contas precisam ser recriadas e as senhas redefinidas.
+ *     Atencao: user_orgs tem FK para auth.users(id).
+ *   - Comentarios (COMMENT ON) e default privileges.
+ * Ambos so sairiam por pg_dump, bloqueado aqui: a conexao direta do Supabase e
+ * IPv6-only e esta rede nao tem IPv6.
  */
 import 'dotenv/config';
 import { writeFileSync, statSync } from 'fs';
@@ -99,8 +105,14 @@ async function exportarDados() {
 
   let sql = '-- Dump de Dados - Certificado de Joias\n';
   sql += `-- Exportado em: ${new Date().toISOString()}\n\n`;
-  sql += '-- DESABILITAR TRIGGERS E CONSTRAINTS TEMPORARIAMENTE\n';
-  sql += 'SET CONSTRAINTS ALL DEFERRED;\n\n';
+  // Sem SET CONSTRAINTS ALL DEFERRED: ele so adia constraints declaradas
+  // DEFERRABLE, e nenhuma aqui e. Dava falsa sensacao de seguranca.
+  // A limpeza sai na ordem inversa (filho -> pai); os INSERTs, na ordem direta.
+  sql += '-- Limpeza na ordem inversa das dependencias\n';
+  for (const tabela of [...TABELAS].reverse()) {
+    sql += `DELETE FROM "${tabela}";\n`;
+  }
+  sql += '\n';
 
   let falhas = 0;
 
@@ -121,7 +133,6 @@ async function exportarDados() {
     sql += `\n-- ========================================\n`;
     sql += `-- Tabela: ${tabela} (${data.length} registros)\n`;
     sql += `-- ========================================\n`;
-    sql += `DELETE FROM "${tabela}";\n\n`;
 
     for (const linha of data) {
       const colunas = Object.keys(linha).map(c => `"${c}"`).join(', ');
@@ -133,8 +144,7 @@ async function exportarDados() {
     console.log(`  ok      ${tabela.padEnd(22)} ${String(data.length).padStart(4)} registro(s)`);
   }
 
-  sql += '\n-- REABILITAR CONSTRAINTS\n';
-  sql += 'SET CONSTRAINTS ALL IMMEDIATE;\n';
+  sql += '\n-- Fim do dump\n';
 
   const arquivo = `supabase/migrations/dados_backup_${stamp()}.sql`;
   writeFileSync(arquivo, sql, 'utf8');

@@ -79,9 +79,14 @@ begin
       || coalesce(E'\n' || (select string_agg(pg_get_indexdef(i.indexrelid) || ';',
                                    E'\n' order by i.indexrelid::regclass::text)
                             from pg_index i where i.indrelid = c.oid and not i.indisprimary) || E'\n', '')
-      || coalesce(E'\n' || 'alter table ' || quote_ident(c.relname)
-                        || ' enable row level security;' || E'\n'
-                        || (select string_agg('create policy ' || quote_ident(p.polname)
+      -- RLS pelo estado real da tabela (c.relrowsecurity), e nao pela
+      -- existencia de politicas: uma tabela com RLS ligado e zero politicas
+      -- bloqueia tudo, e restaurar sem esta linha a deixaria aberta.
+      || case when c.relrowsecurity
+              then E'\n' || 'alter table ' || quote_ident(c.relname)
+                         || ' enable row level security;' || E'\n'
+              else '' end
+      || coalesce(E'\n' || (select string_agg('create policy ' || quote_ident(p.polname)
                                    || ' on ' || quote_ident(c.relname)
                                    || ' for ' || case p.polcmd when 'r' then 'select'
                                                                when 'a' then 'insert'

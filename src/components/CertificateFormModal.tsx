@@ -59,9 +59,13 @@ const compressAndResizeImage = (file: File): Promise<string> => {
 
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
+        // JPEG nao tem transparencia; sem este fundo, areas transparentes
+        // ficariam pretas. Pinta branco antes de desenhar a foto.
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
         ctx.drawImage(img, 0, 0, width, height);
 
-        const dataUrl = canvas.toDataURL('image/png', 0.95);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
         resolve(dataUrl);
       };
       img.onerror = () => reject(new Error('Formato de imagem inválido'));

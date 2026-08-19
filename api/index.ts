@@ -1309,10 +1309,15 @@ app.put('/api/customers/:id', async (req, res) => {
     const newCust: Customer = req.body;
     const password = (newCust.password || '').trim();
 
+    // O frontend envia o UUID do cliente (getCustomers devolve id = UUID),
+    // mas chamadas antigas podem mandar o codigo CLI-xxxx. Aceita os dois.
+    const ehUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const colunaId = ehUuid ? 'id' : 'customer_code';
+
     const { data: existingCust, error: fetchError } = await supabase
       .from('customers')
       .select('*')
-      .eq('customer_code', id)
+      .eq(colunaId, id)
       .single();
 
     if (fetchError || !existingCust) {
@@ -1320,13 +1325,19 @@ app.put('/api/customers/:id', async (req, res) => {
     }
 
     // 1. Update in customers table (but NEVER change email - it's a credential)
-    const updateData = { ...newCust, updated_at: new Date().toISOString() };
-    delete (updateData as any).email; // Remove email from update to prevent credential changes
+    // Colunas explicitas: o payload traz password e orgId, que nao existem na
+    // tabela e fariam o update falhar. Email fica de fora de proposito - e
+    // credencial de login e nao pode mudar por aqui.
+    const updateData: any = { updated_at: new Date().toISOString() };
+    if (newCust.name !== undefined) updateData.name = newCust.name;
+    if (newCust.cpf !== undefined) updateData.cpf = String(newCust.cpf);
+    if (newCust.phone !== undefined) updateData.phone = newCust.phone || null;
+    if (newCust.notes !== undefined) updateData.notes = newCust.notes || null;
 
     const { error: updateError } = await supabase
       .from('customers')
       .update(updateData)
-      .eq('customer_code', id);
+      .eq(colunaId, id);
 
     if (updateError) {
       return res.status(400).json({ success: false, message: updateError.message });

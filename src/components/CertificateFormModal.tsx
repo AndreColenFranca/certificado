@@ -100,16 +100,21 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   useEffect(() => {
     const loadAttributes = async () => {
       try {
+        // `stored` devolve os valores que este certificado já gravou. Eles são
+        // mantidos na lista mesmo que tenham saído do catálogo, porque um
+        // certificado registra como a peça era na emissão: renomear ou apagar
+        // um atributo hoje não pode mudar o que foi certificado ontem.
+        const certStones = (initialCert?.stones || []) as StoneDetail[];
         const endpoints = [
-          { key: 'metal_purities', setState: setPurityOptions },
-          { key: 'metal_colors', setState: setColorOptions },
-          { key: 'collections', setState: setCollectionOptions },
-          { key: 'manufacturers', setState: setManufacturerOptions },
-          { key: 'finishes', setState: setFinishOptions },
-          { key: 'stone_types', setState: setStoneTypeOptions },
-          { key: 'setting_types', setState: setSettingTypeOptions },
-          { key: 'cut_shapes', setState: setCutShapeOptions },
-          { key: 'color_grades', setState: setColorGradeOptions }
+          { key: 'metal_purities', setState: setPurityOptions, stored: () => [initialCert?.metal_purity || initialCert?.metalPurity] },
+          { key: 'metal_colors', setState: setColorOptions, stored: () => [initialCert?.metal_color || initialCert?.metalColor] },
+          { key: 'collections', setState: setCollectionOptions, stored: () => [initialCert?.collection] },
+          { key: 'manufacturers', setState: setManufacturerOptions, stored: () => [initialCert?.manufacturer] },
+          { key: 'finishes', setState: setFinishOptions, stored: () => [initialCert?.finish] },
+          { key: 'stone_types', setState: setStoneTypeOptions, stored: () => certStones.map(s => s.type) },
+          { key: 'setting_types', setState: setSettingTypeOptions, stored: () => certStones.map(s => s.settingType) },
+          { key: 'cut_shapes', setState: setCutShapeOptions, stored: () => certStones.map(s => s.cutShape) },
+          { key: 'color_grades', setState: setColorGradeOptions, stored: () => certStones.map(s => s.colorGrade) }
         ];
 
         for (const endpoint of endpoints) {
@@ -120,7 +125,13 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
             if (data.success && Array.isArray(data.data)) {
               const sorted = [...data.data].sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
               const names = sorted.map((item: any) => item.name);
-              endpoint.setState(names);
+              // Acrescenta ao fim os valores já gravados que não estão mais no
+              // catálogo, para o select exibir o que foi certificado em vez de
+              // cair silenciosamente na primeira opção.
+              const missing = Array.from(
+                new Set((endpoint.stored() as (string | undefined)[]).filter(v => v && !names.includes(v)))
+              ) as string[];
+              endpoint.setState([...names, ...missing]);
 
               // Se carregou coleções, atualiza o estado se estiver vazio
               if (endpoint.key === 'collections' && !initialCert?.collection && names.length > 0) {
@@ -300,32 +311,6 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
 
 Porque a gente acredita que uma aliança de verdade não é só bonita no dia da compra. É um compromisso duradouro.`);
   const [estimatedValueBRL, setEstimatedValueBRL] = useState<number>(initialCert?.estimated_value_brl ?? initialCert?.estimatedValueBRL ?? '');
-
-  // Sync state if options change or initialCert changes
-  useEffect(() => {
-    const purityValue = initialCert?.metal_purity || initialCert?.metalPurity;
-    if (purityValue && !purityOptions.includes(purityValue)) {
-      setPurityOptions(prev => [...prev, purityValue]);
-    }
-    const colorValue = initialCert?.metal_color || initialCert?.metalColor;
-    if (colorValue && !colorOptions.includes(colorValue)) {
-      setColorOptions(prev => [...prev, colorValue]);
-    }
-    if (initialCert?.collection && !collectionOptions.includes(initialCert.collection)) {
-      setCollectionOptions(prev => [...prev, initialCert.collection]);
-    }
-    if (initialCert?.finish && !finishOptions.includes(initialCert.finish)) {
-      setFinishOptions(prev => [...prev, initialCert.finish]);
-    }
-    // Sync stone types from loaded certificate
-    if (initialCert?.stones && Array.isArray(initialCert.stones)) {
-      initialCert.stones.forEach(stone => {
-        if (stone.type && !stoneTypeOptions.includes(stone.type)) {
-          setStoneTypeOptions(prev => [...prev, stone.type]);
-        }
-      });
-    }
-  }, [initialCert]);
 
   // Preenche os campos de pedra que ainda estão vazios assim que as listas de
   // atributos chegam. Sem isso o select exibiria a primeira opção enquanto o

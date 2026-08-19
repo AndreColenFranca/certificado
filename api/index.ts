@@ -59,56 +59,6 @@ app.get('/api/health', (req, res) => {
   res.json({ message: 'API Certificado de Joias', status: 'online', version: '1.0' });
 });
 
-// Debug endpoint to check Supabase connection
-app.get('/api/debug/health', async (req, res) => {
-  try {
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return res.status(500).json({
-        status: 'error',
-        message: 'Env vars not configured',
-        supabaseUrl: !!supabaseUrl,
-        supabaseServiceKey: !!supabaseServiceKey
-      });
-    }
-
-    if (!supabase) {
-      return res.status(500).json({
-        status: 'error',
-        message: 'Supabase client not initialized'
-      });
-    }
-
-    // Test basic query
-    const { data: orgs, error: orgError } = await supabase
-      .from('organizations')
-      .select('id, name')
-      .limit(1);
-
-    if (orgError) {
-      return res.status(500).json({
-        status: 'error',
-        message: 'Organizations query failed',
-        error: orgError.message,
-        code: orgError.code
-      });
-    }
-
-    return res.json({
-      status: 'ok',
-      supabaseInitialized: !!supabase,
-      organizationsCount: orgs?.length || 0,
-      message: 'Supabase connection OK'
-    });
-  } catch (err: any) {
-    res.status(500).json({
-      status: 'error',
-      message: err.message
-    });
-  }
-});
 
 // Default Organization UUID for local testing
 const DEFAULT_ORG_ID = '550e8400-e29b-41d4-a716-446655440000'; // UUID correspondente a 'default'
@@ -134,12 +84,13 @@ app.use(async (req: any, res, next) => {
       const userId = decoded.sub;
       const email = decoded.email;
 
-      // Set default user object
+      // Set default user object. authenticated = veio um JWT decodificavel.
       req.user = {
         id: userId,
         org_id: DEFAULT_ORG_ID,
         role: 'user',
-        email: email
+        email: email,
+        authenticated: !!userId
       };
 
       // Try to fetch user from auth_users table to get org_id
@@ -170,13 +121,30 @@ app.use(async (req: any, res, next) => {
   next();
 });
 
-// Debug endpoint - check user org_id
-app.get('/api/debug/user', (req, res) => {
-  res.json({
-    user: (req as any).user,
-    message: 'User info for debugging'
-  });
+// Gate de autenticacao: nada e acessivel sem login, com uma unica excecao -
+// as rotas de autenticacao (login e recuperacao de senha), senao ninguem
+// consegue entrar. Todo o resto responde 401 sem um JWT valido.
+const ROTAS_PUBLICAS = new Set([
+  '/api/login',
+  '/api/auth/login',
+  '/api/auth/forgot-password',
+  '/api/auth/update-password',
+  '/api/auth/register',
+  '/api/auth/register-profile',
+  '/api/auth/me',
+  '/api/auth/create-root-user',
+  '/api/auth/set-root-profile',
+  '/api/health',
+  '/api/organizations/health',
+]);
+
+app.use((req: any, res, next) => {
+  if (ROTAS_PUBLICAS.has(req.path)) return next();
+  if (req.user?.authenticated) return next();
+  return res.status(401).json({ success: false, message: 'Autenticacao necessaria.' });
 });
+
+// Debug endpoint - check user org_id
 
 // Sync/Create user in auth_users table with correct org_id
 app.post('/api/sync-user-org', async (req, res) => {
@@ -1150,41 +1118,10 @@ app.delete('/api/users/:id', async (req, res) => {
 });
 
 // DEBUG: Get ALL customers (no filter)
-app.get('/api/debug/all-customers', async (req, res) => {
-  try {
-    const { data } = await supabase.from('customers').select('id, email, org_id, name');
-    res.json({ total: data?.length, data });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
 // DEBUG: Get customer by UUID
-app.get('/api/debug/customer-by-id/:id', async (req, res) => {
-  try {
-    const { data } = await supabase
-      .from('customers')
-      .select('*')
-      .eq('id', req.params.id)
-      .single();
-    res.json({ data });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
 // DEBUG: Check user org_id from JWT
-app.get('/api/debug/user-org', async (req, res) => {
-  try {
-    const user = (req as any).user;
-    res.json({
-      user: user ? { id: user.id, email: user.email, org_id: user.org_id } : null,
-      defaultOrgId: '550e8400-e29b-41d4-a716-446655440000'
-    });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
 // --- Customers API ---
 // Get all customers

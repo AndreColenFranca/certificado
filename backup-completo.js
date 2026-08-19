@@ -1,60 +1,56 @@
 /**
  * Backup completo: estrutura do banco + dados.
  *
- * Etapa 1 - estrutura (DDL): tabelas, colunas, constraints, índices,
- *   políticas de RLS, triggers e funções. Vem do `supabase db dump`, que roda
- *   o pg_dump dentro do Docker. É por isso que o Docker Desktop precisa estar
- *   aberto: a biblioteca do Supabase só lê dados, nunca a estrutura.
+ * Etapa 1 - estrutura (DDL): tabelas, colunas, constraints, indices e
+ *   politicas de RLS. Vem da funcao public.estrutura_do_banco(), criada uma
+ *   vez pelo SQL Editor (ver sql/criar_funcao_estrutura.sql). Usa a
+ *   SERVICE_ROLE_KEY, sem Docker e sem a senha do banco.
+ *
+ *   Nao substitui o pg_dump, que tambem captura triggers, funcoes, sequencias,
+ *   extensoes e grants. Para restauracao garantida, use
+ *   `supabase db dump` (exige Docker aberto e SUPABASE_DB_PASSWORD no .env).
  *
  * Etapa 2 - dados: delega para o export-dados.js, que gera os INSERTs.
  *
- * Uso:  node backup-completo.js       (ou: npm run backup)
+ * Uso:  npm run backup
  */
 import 'dotenv/config';
 import { spawnSync } from 'child_process';
-import { existsSync, statSync, rmSync } from 'fs';
+import { writeFileSync, statSync } from 'fs';
+import { createClient } from '@supabase/supabase-js';
 
 const stamp = new Date().toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-');
-
-// O sufixo _remote_schema.sql é coberto pelo .gitignore e segue o padrão
-// dos dumps que a CLI do Supabase já gerou aqui.
-const schemaFile = `supabase/migrations/${stamp}_remote_schema.sql`;
-
-const run = (cmd, args) =>
-  spawnSync(cmd, args, { stdio: 'inherit', shell: true }).status === 0;
+const schemaFile = `supabase/migrations/estrutura_${stamp}.sql`;
 
 console.log('\n=== 1/2  ESTRUTURA DO BANCO ===\n');
 
-// Sem a senha do banco a CLI tenta provisionar um papel de acesso pela API de
-// gerenciamento, e isso responde 401. Passando -p ela conecta direto.
-const dbPassword = process.env.SUPABASE_DB_PASSWORD;
-
 let schemaOk = false;
 
-if (!dbPassword) {
-  console.error('!!  SUPABASE_DB_PASSWORD nao esta no .env - a estrutura sera pulada.');
-  console.error('    Pegue em: Supabase > Project Settings > Database > Database password');
-  console.error('    (se nao lembrar, de Reset database password) e acrescente ao .env:');
-  console.error('    SUPABASE_DB_PASSWORD=sua-senha');
-} else {
-  const args = ['supabase', 'db', 'dump', '--schema', 'public',
-                '-p', `"${dbPassword}"`, '-f', `"${schemaFile}"`];
-  schemaOk = run('npx', args) && existsSync(schemaFile) && statSync(schemaFile).size > 0;
-}
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-if (schemaOk) {
-  console.log(`\nEstrutura salva em: ${schemaFile} (${(statSync(schemaFile).size / 1024).toFixed(1)} KB)`);
+const { data: ddl, error } = await supabase.rpc('estrutura_do_banco');
+
+if (error) {
+  console.error(`!!  Nao consegui ler a estrutura: ${error.message}`);
+  console.error('    Se a funcao nao existe, rode uma vez no SQL Editor do Supabase');
+  console.error('    o arquivo sql/criar_funcao_estrutura.sql.');
+} else if (!ddl || !ddl.trim()) {
+  console.error('!!  A funcao respondeu vazio - nenhuma tabela encontrada no schema public.');
 } else {
-  // Nao deixa para tras o arquivo de 0 byte que o pg_dump cria antes de falhar.
-  if (existsSync(schemaFile) && statSync(schemaFile).size === 0) rmSync(schemaFile);
-  console.error('\n!!  A ESTRUTURA NAO FOI GERADA.');
-  console.error('    Verifique: Docker Desktop aberto e SUPABASE_DB_PASSWORD no .env.');
-  console.error('    Sigo para os dados assim mesmo - um backup parcial vale mais que nenhum.');
+  writeFileSync(schemaFile, ddl, 'utf8');
+  const tabelas = (ddl.match(/^-- Tabela: /gm) || []).length;
+  console.log(`Estrutura salva em: ${schemaFile}`);
+  console.log(`${tabelas} tabela(s), ${(statSync(schemaFile).size / 1024).toFixed(1)} KB`);
+  schemaOk = true;
 }
 
 console.log('\n=== 2/2  DADOS ===\n');
 
-const dataOk = run('node', ['export-dados.js']);
+const dataOk =
+  spawnSync('node', ['export-dados.js'], { stdio: 'inherit', shell: true }).status === 0;
 
 console.log('\n=== RESUMO ===');
 console.log(`Estrutura: ${schemaOk ? 'OK' : 'FALHOU'}`);

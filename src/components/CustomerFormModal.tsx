@@ -162,7 +162,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       updatedAt: new Date().toISOString()
     };
 
-    console.log('📤 Customer to save:', customerToSave);
     onSave(customerToSave);
   };
 

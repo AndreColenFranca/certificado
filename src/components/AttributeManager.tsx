@@ -123,20 +123,17 @@ export const AttributeManager: React.FC<AttributeManagerProps> = ({
         console.warn('Atributo não encontrado:', id);
         return false;
       }
-      console.log('Atualizando ordem:', { id, newOrder, name: attr.name });
       const payload = {
         name: attr.name,
         description: attr.description || '',
         order: newOrder
       };
-      console.log('Payload:', payload);
       const res = await fetchWithAuth(`${endpoint}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      console.log('Resposta:', { ok: res.ok, status: res.status, data });
       if (!res.ok) {
         console.error('Erro ao atualizar ordem:', data);
         setError(`Erro ao atualizar: ${data.error}`);

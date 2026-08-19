@@ -81,8 +81,6 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   customers = [],
   selectedCustomerForNewCert
 }) => {
-  if (!isOpen) return null;
-
   const defaultCompanyName = 'Estilo Raro Joias';
   const defaultCompanyLogo = '';
 
@@ -487,6 +485,10 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
     onSave(certToSave);
     onClose();
   };
+
+  // Depois de todos os hooks: sair antes deles faria o React contar zero hooks
+  // com o modal fechado e vinte com ele aberto, quebrando a ordem que ele exige.
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">

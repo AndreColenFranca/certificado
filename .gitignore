@@ -18,3 +18,4 @@ supabase/migrations/*_remote_schema.sql
 
 # Arquivos desnecessários
 supabase/migrations/Rodar.txt
+ESTRUTURA_BANCO.md

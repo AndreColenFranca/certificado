@@ -34,7 +34,7 @@ import {
 } from '../server-helpers/attributesHelpers.js';
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -53,6 +53,24 @@ if (supabaseUrl && supabaseServiceKey) {
   }
 }
 
+// Limites das fotos da joia. Valem aqui tambem, e nao so na tela: a tela e
+// so conveniencia, quem garante a regra e o servidor. Precisam bater com os
+// valores em src/components/CertificateFormModal.tsx.
+const MAX_FOTOS_POR_JOIA = 3;
+const LIMITE_FOTO_MB = 1;
+const LIMITE_FOTO_BYTES = LIMITE_FOTO_MB * 1024 * 1024;
+
+// Devolve a mensagem de erro quando o certificado passa do teto de fotos, ou
+// null quando esta dentro. Quem chama decide o status da resposta.
+function conferirQuantidadeDeFotos(images: any): string | null {
+  if (images === undefined || images === null) return null;
+  if (!Array.isArray(images)) return 'O campo images precisa ser uma lista.';
+  if (images.length > MAX_FOTOS_POR_JOIA) {
+    return `Maximo de ${MAX_FOTOS_POR_JOIA} fotos por joia. Este certificado veio com ${images.length}.`;
+  }
+  return null;
+}
+
 // Root route
 // Health check - only for API requests
 app.get('/api/health', (req, res) => {
@@ -63,58 +81,52 @@ app.get('/api/health', (req, res) => {
 // Default Organization UUID for local testing
 const DEFAULT_ORG_ID = '550e8400-e29b-41d4-a716-446655440000'; // UUID correspondente a 'default'
 
-// Middleware to extract org_id from JWT and fetch from database
+// Middleware de autenticacao: descobre quem e o usuario a partir do token.
+//
+// A parte do meio de um JWT e apenas texto em base64 — qualquer um escreve o
+// que quiser ali. O que prova a identidade e a assinatura, a terceira parte,
+// que so o Supabase consegue produzir e conferir. Por isso o token vai inteiro
+// para o `getUser`: ele responde com o usuario apenas se a assinatura bater e
+// o token nao estiver expirado. Ler o token por conta propria, sem essa
+// conferencia, aceitava qualquer cracha montado a mao.
 app.use(async (req: any, res, next) => {
-  // Extract token from Authorization header
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
-  if (token) {
-    try {
-      // Decode JWT (without verification for now - Supabase does the verification)
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      const decoded = JSON.parse(jsonPayload);
-      const userId = decoded.sub;
-      const email = decoded.email;
+  // Ponto de partida: nao autenticado. So um token comprovado muda isso.
+  req.user = { org_id: DEFAULT_ORG_ID };
 
-      // Set default user object. authenticated = veio um JWT decodificavel.
-      req.user = {
-        id: userId,
-        org_id: DEFAULT_ORG_ID,
-        role: 'user',
-        email: email,
-        authenticated: !!userId
-      };
+  if (!token || !supabase) return next();
 
-      // Try to fetch user from auth_users table to get org_id
-      if (supabase && email) {
-        try {
-          const { data: authUser, error } = await supabase
-            .from('auth_users')
-            .select('org_id, role, id, email')
-            .eq('email', email.toLowerCase())
-            .maybeSingle();
+  try {
+    const { data, error } = await supabase.auth.getUser(token);
+    const usuario = data?.user;
 
-          if (authUser) {
-            req.user.org_id = authUser.org_id;
-            req.user.role = authUser.role || 'user';
-          }
-        } catch (e) {
-          // Silent fail - use defaults
-        }
-      }
-    } catch (e) {
-      req.user = { org_id: DEFAULT_ORG_ID };
+    // Token falso, expirado ou revogado: segue sem autenticacao e o portao
+    // logo abaixo devolve 401.
+    if (error || !usuario?.email) return next();
+
+    req.user = {
+      id: usuario.id,
+      org_id: DEFAULT_ORG_ID,
+      role: 'user',
+      email: usuario.email,
+      authenticated: true
+    };
+
+    // org_id e papel saem da nossa tabela, nunca do que veio no token.
+    const { data: authUser } = await supabase
+      .from('auth_users')
+      .select('org_id, role')
+      .eq('email', usuario.email.toLowerCase())
+      .maybeSingle();
+
+    if (authUser) {
+      req.user.org_id = authUser.org_id;
+      req.user.role = authUser.role || 'user';
     }
-  } else {
-    // No token = use default org
+  } catch (e) {
+    // Qualquer falha na conferencia vale como nao autenticado.
     req.user = { org_id: DEFAULT_ORG_ID };
   }
 
@@ -131,7 +143,7 @@ const ROTAS_PUBLICAS = new Set([
   '/api/auth/update-password',
   '/api/auth/register',
   '/api/auth/register-profile',
-  '/api/auth/me',
+  // '/api/auth/me' saiu daqui: devolve perfil, entao exige login como o resto.
   '/api/auth/create-root-user',
   '/api/auth/set-root-profile',
   '/api/health',
@@ -363,14 +375,19 @@ app.post('/api/auth/register-profile', async (req, res) => {
 });
 
 // Get current user profile
-app.post('/api/auth/me', async (req, res) => {
+// Perfil do usuario logado. O e-mail vem do token ja conferido pelo
+// middleware, nunca do corpo da requisicao: aceitar um e-mail digitado aqui
+// deixava qualquer um puxar o perfil alheio so sabendo o endereco. Os dois
+// chamadores no front continuam mandando `email` no corpo; e ignorado de
+// proposito, e nao precisa sumir de la para isto funcionar.
+app.post('/api/auth/me', async (req: any, res) => {
   try {
-    const { email } = req.body || {};
+    const email = req.user?.email;
 
     if (!email) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
-        error: 'Email é obrigatório'
+        error: 'Autenticacao necessaria.'
       });
     }
 
@@ -1635,6 +1652,11 @@ app.post('/api/certificates', async (req, res) => {
 
     const newCert: JewelryCertificate = req.body;
 
+    const excessoDeFotos = conferirQuantidadeDeFotos(newCert.images);
+    if (excessoDeFotos) {
+      return res.status(400).json({ success: false, message: excessoDeFotos });
+    }
+
     // Ensure unique ID and timestamps
     const certCode = newCert.id || `CERT-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     const uuidId = uuidv4(); // UUID válido para o Supabase
@@ -1735,6 +1757,11 @@ app.put('/api/certificates/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Certificado não encontrado' });
     }
 
+    const excessoDeFotos = conferirQuantidadeDeFotos(req.body.images);
+    if (excessoDeFotos) {
+      return res.status(400).json({ success: false, message: excessoDeFotos });
+    }
+
     // Detectar se é uma transferência (mudança de proprietário)
     const isTransfer = req.body.currentOwnerName && req.body.currentOwnerName !== getCertResult.data.currentOwnerName;
 
@@ -1832,6 +1859,73 @@ app.delete('/api/certificates/:id', async (req, res) => {
 });
 
 // AI Gemologist Assistant route (Gemini)
+// --- Upload de fotos de certificado ---
+// As fotos vao para o Storage do Supabase, nunca para o banco. Guardar base64
+// em jewelry_certificates.images inchava a tabela (~1 MB por certificado),
+// pesava no backup e deixava a listagem lenta. Aqui a coluna passa a guardar
+// so a URL publica, ~100 caracteres.
+const BUCKET_FOTOS = 'certificates-public';
+const TIPOS_DE_FOTO: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp'
+};
+
+app.post('/api/uploads/certificate-image', async (req: any, res) => {
+  try {
+    if (!supabase) {
+      return res.status(500).json({ success: false, message: 'Supabase nao configurado no servidor.' });
+    }
+
+    const orgId = req.user?.org_id;
+    if (!orgId) {
+      return res.status(401).json({ success: false, message: 'org_id do usuario nao encontrado. Faca login novamente.' });
+    }
+
+    const { dataUrl } = req.body || {};
+    if (typeof dataUrl !== 'string' || !dataUrl) {
+      return res.status(400).json({ success: false, message: 'Envie a imagem no campo dataUrl.' });
+    }
+
+    const partes = dataUrl.match(/^data:([^;,]+);base64,(.+)$/);
+    if (!partes) {
+      return res.status(400).json({ success: false, message: 'dataUrl invalida: esperado data:<tipo>;base64,<conteudo>.' });
+    }
+
+    const contentType = partes[1].toLowerCase();
+    const extensao = TIPOS_DE_FOTO[contentType];
+    if (!extensao) {
+      return res.status(400).json({ success: false, message: 'Formato nao aceito. Use JPEG, PNG ou WEBP.' });
+    }
+
+    const arquivo = Buffer.from(partes[2], 'base64');
+    if (arquivo.length === 0) {
+      return res.status(400).json({ success: false, message: 'Imagem vazia.' });
+    }
+    if (arquivo.length > LIMITE_FOTO_BYTES) {
+      return res.status(413).json({ success: false, message: `Imagem acima de ${LIMITE_FOTO_MB} MB.` });
+    }
+
+    // O caminho comeca pelo org_id: cada joalheria fica na sua pasta, o que
+    // mantem a separacao multi-tenant tambem no Storage.
+    const caminho = `${orgId}/${uuidv4()}.${extensao}`;
+
+    const { error: erroUpload } = await supabase.storage
+      .from(BUCKET_FOTOS)
+      .upload(caminho, arquivo, { contentType, upsert: false });
+
+    if (erroUpload) {
+      return res.status(400).json({ success: false, message: `Falha ao enviar a imagem: ${erroUpload.message}` });
+    }
+
+    const { data: publico } = supabase.storage.from(BUCKET_FOTOS).getPublicUrl(caminho);
+
+    res.json({ success: true, url: publico.publicUrl, path: caminho });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: 'Erro ao enviar a imagem.', error: err.message });
+  }
+});
+
 app.post('/api/gemini/analyze-jewel', async (req, res) => {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -2471,7 +2565,7 @@ app.post('/api/migrate/cpf-numeric', async (req, res) => {
 
 if (!process.env.VERCEL) {
   startServer().then(() => {
-    app.listen(3000, () => {
+    app.listen(PORT, () => {
     });
   });
 }

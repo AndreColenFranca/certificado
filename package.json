@@ -9,7 +9,11 @@
     "start": "node dist/index.js",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "backup": "node backup-completo.js"
+    "backup": "node backup-completo.js",
+    "migrar-imagens": "node migrar-imagens-storage.js",
+    "faxina-fotos": "node faxina-fotos.js",
+    "backup-fotos": "node backup-fotos.js",
+    "restaurar-fotos": "node restaurar-fotos.js"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

@@ -3,6 +3,7 @@ import { JewelryCertificate, StoneDetail, Customer } from '../types';
 import { X, Sparkles, Plus, Trash2, Edit3, Check, Upload, Loader2, Image as ImageIcon, Link as LinkIcon, GripVertical, ChevronLeft, ChevronRight, Star, Move, Users, CreditCard, Mail } from 'lucide-react';
 import { formatImageUrl, DEFAULT_BRAND_LOGO_DRIVE_URL } from '../utils/imageUtils';
 import { fetchWithAuth } from '../utils/fetchWithAuth';
+import { uploadCertificateImage } from '../utils/uploadImage';
 
 interface CertificateFormModalProps {
   isOpen: boolean;
@@ -23,6 +24,20 @@ const DEFAULT_STONE_TYPES: string[] = [];
 const DEFAULT_SETTING_TYPES: string[] = [];
 const DEFAULT_CUT_SHAPES: string[] = [];
 const DEFAULT_COLOR_GRADES: string[] = [];
+
+// Limites das fotos da joia. O certificado guarda so a URL do Storage, mas
+// o peso ainda pesa no portal do cliente, na impressao e na conta do bucket:
+// tres fotos de 1 MB por peca e o teto combinado.
+export const MAX_FOTOS_POR_JOIA = 3;
+export const LIMITE_FOTO_MB = 1;
+const LIMITE_FOTO_BYTES = LIMITE_FOTO_MB * 1024 * 1024;
+
+// Quanto pesa, em bytes, a imagem dentro de uma dataURL base64.
+const pesoDaDataUrl = (dataUrl: string): number => {
+  const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
+  const enchimento = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+  return Math.floor((base64.length * 3) / 4) - enchimento;
+};
 
 // Helper to compress local uploaded image for high-definition rendering
 const compressAndResizeImage = (file: File): Promise<string> => {
@@ -65,8 +80,44 @@ const compressAndResizeImage = (file: File): Promise<string> => {
         ctx.fillRect(0, 0, width, height);
         ctx.drawImage(img, 0, 0, width, height);
 
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        resolve(dataUrl);
+        // Uma passada so nao garante o limite: a mesma qualidade gera
+        // arquivos bem diferentes conforme a foto. Entao baixa a qualidade
+        // por degraus e, se ainda assim nao couber, encolhe a imagem e
+        // tenta de novo. A ordem importa: perder qualidade incomoda menos
+        // que perder resolucao numa foto de joia.
+        const qualidades = [0.85, 0.75, 0.65, 0.55, 0.45, 0.35];
+        let dataUrl = '';
+
+        for (let tentativa = 0; tentativa < 4; tentativa++) {
+          for (const qualidade of qualidades) {
+            dataUrl = canvas.toDataURL('image/jpeg', qualidade);
+            if (pesoDaDataUrl(dataUrl) <= LIMITE_FOTO_BYTES) {
+              resolve(dataUrl);
+              return;
+            }
+          }
+
+          // Nao coube nem na pior qualidade: reduz 25% e repete.
+          const menorLargura = Math.round(canvas.width * 0.75);
+          const menorAltura = Math.round(canvas.height * 0.75);
+          if (menorLargura < 200 || menorAltura < 200) break;
+
+          const reduzido = document.createElement('canvas');
+          reduzido.width = menorLargura;
+          reduzido.height = menorAltura;
+          const ctxReduzido = reduzido.getContext('2d');
+          if (!ctxReduzido) break;
+          ctxReduzido.imageSmoothingEnabled = true;
+          ctxReduzido.imageSmoothingQuality = 'high';
+          ctxReduzido.fillStyle = '#ffffff';
+          ctxReduzido.fillRect(0, 0, menorLargura, menorAltura);
+          ctxReduzido.drawImage(canvas, 0, 0, menorLargura, menorAltura);
+          canvas.width = menorLargura;
+          canvas.height = menorAltura;
+          ctx.drawImage(reduzido, 0, 0);
+        }
+
+        reject(new Error(`Nao foi possivel deixar esta foto abaixo de ${LIMITE_FOTO_MB} MB. Tente uma imagem menor ou com menos detalhe.`));
       };
       img.onerror = () => reject(new Error('Formato de imagem inválido'));
       img.src = event.target?.result as string;
@@ -355,13 +406,41 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
   // Helper to process FileList or File[] for uploads
   const processFileList = async (files: FileList | File[]) => {
     if (files && files.length > 0) {
+      // Conta o que ja esta anexado: o limite vale por joia, nao por lote.
+      const vagas = MAX_FOTOS_POR_JOIA - images.length;
+      if (vagas <= 0) {
+        alert(`Esta joia ja tem o maximo de ${MAX_FOTOS_POR_JOIA} fotos. Remova uma antes de adicionar outra.`);
+        return;
+      }
+
+      const selecionadas = Array.from(files).filter(file => file.type.startsWith('image/'));
+
+      // Barra no envio: o arquivo escolhido ja tem que vir abaixo do limite.
+      // O uso e quase todo em desktop, com a foto ja preparada, entao e melhor
+      // avisar do que aceitar e encolher a imagem por baixo dos panos.
+      const pesadas = selecionadas.filter(file => file.size > LIMITE_FOTO_BYTES);
+      if (pesadas.length > 0) {
+        const lista = pesadas.map(file => `${file.name} (${Math.round(file.size / 1024)} KB)`).join(', ');
+        alert(`Limite de ${LIMITE_FOTO_MB} MB por foto. Nao foram anexadas: ${lista}. Reduza a imagem e tente de novo.`);
+      }
+
+      const dentroDoLimite = selecionadas.filter(file => file.size <= LIMITE_FOTO_BYTES);
+      const aceitas = dentroDoLimite.slice(0, vagas);
+      if (dentroDoLimite.length > aceitas.length) {
+        alert(`Cabem so mais ${vagas} foto(s) nesta joia (maximo de ${MAX_FOTOS_POR_JOIA}). As demais foram ignoradas.`);
+      }
+
+      if (aceitas.length === 0) return;
+
       setIsProcessingUpload(true);
       try {
         const newUrls: string[] = [];
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          if (file.type.startsWith('image/')) {
-            const url = await compressAndResizeImage(file);
+        for (const file of aceitas) {
+          {
+            // Comprime no navegador e sobe para o Storage: o certificado guarda
+            // a URL publica, nunca a imagem inteira em base64.
+            const dataUrl = await compressAndResizeImage(file);
+            const url = await uploadCertificateImage(dataUrl);
             newUrls.push(url);
           }
         }
@@ -369,7 +448,8 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
           setImages(prev => [...prev, ...newUrls]);
         }
       } catch (err) {
-        alert('Erro ao processar imagem local. Selecione imagens PNG, JPG ou WEBP válidas.');
+        const motivo = err instanceof Error ? err.message : '';
+        alert(motivo || 'Erro ao processar imagem local. Selecione imagens PNG, JPG ou WEBP válidas.');
       } finally {
         setIsProcessingUpload(false);
       }
@@ -960,7 +1040,7 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
                     <span className="text-amber-200 font-semibold flex items-center gap-1.5">
                       <Move className="w-3.5 h-3.5 text-amber-400" />
-                      Fotos Anexadas ao Certificado ({images.length}):
+                      Fotos Anexadas ao Certificado ({images.length} de {MAX_FOTOS_POR_JOIA}):
                     </span>
                     <span className="text-zinc-400 text-[11px]">
                       💡 Arraste os cards para alterar a ordem. A <b>1ª foto</b> é a capa principal!
@@ -1071,6 +1151,10 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
                     type="button"
                     onClick={() => {
                       if (customImageUrl.trim()) {
+                        if (images.length >= MAX_FOTOS_POR_JOIA) {
+                          alert(`Esta joia ja tem o maximo de ${MAX_FOTOS_POR_JOIA} fotos. Remova uma antes de adicionar outra.`);
+                          return;
+                        }
                         const formatted = formatImageUrl(customImageUrl.trim());
                         if (!images.includes(formatted)) {
                           setImages([...images, formatted]);
@@ -1088,7 +1172,7 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
                 <div className="p-3.5 bg-zinc-900 border border-amber-500/40 rounded-xl space-y-1.5 shadow-sm">
                   <p className="flex items-center gap-2 text-amber-300 font-bold text-xs">
                     <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Suporte a links do Google Drive e fotos de alta resolução</span>
+                    <span>Máximo de {MAX_FOTOS_POR_JOIA} fotos por joia, até {LIMITE_FOTO_MB} MB cada</span>
                   </p>
                   <p className="text-zinc-200 text-xs font-normal leading-relaxed">
                     Links do Google Drive (<code className="text-amber-300 font-mono font-semibold bg-zinc-800 px-1.5 py-0.5 rounded border border-amber-500/30 text-[11px]">drive.google.com/file/d/...</code>) são convertidos automaticamente para renderização direta.

@@ -706,7 +706,6 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
                   onChange={(e) => setFinish(e.target.value)}
                   className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500 mt-auto"
                 >
-                  {!finish && <option value="">Selecione o acabamento...</option>}
                   {finishOptions.map(opt => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}

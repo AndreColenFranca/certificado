@@ -32,6 +32,11 @@ export const MAX_FOTOS_POR_JOIA = 3;
 export const LIMITE_FOTO_MB = 1;
 const LIMITE_FOTO_BYTES = LIMITE_FOTO_MB * 1024 * 1024;
 
+// Lado maximo, em pixels, para onde a foto e reduzida. Fica aqui em cima
+// porque o aviso na tela de cadastro anuncia esse mesmo numero: separados,
+// um mudaria sem o outro e o texto passaria a prometer coisa errada.
+export const LADO_IDEAL_PX = 1200;
+
 // Quanto pesa, em bytes, a imagem dentro de uma dataURL base64.
 const pesoDaDataUrl = (dataUrl: string): number => {
   const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
@@ -47,8 +52,8 @@ const compressAndResizeImage = (file: File): Promise<string> => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 1200;
+        const MAX_WIDTH = LADO_IDEAL_PX;
+        const MAX_HEIGHT = LADO_IDEAL_PX;
         let width = img.width;
         let height = img.height;
 
@@ -1027,6 +1032,9 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
                         </p>
                         <p className="text-[11px] text-zinc-400">
                           ou clique para selecionar arquivos do seu dispositivo (PNG, JPG, WEBP)
+                        </p>
+                        <p className="text-[11px] text-zinc-500">
+                          No máximo {MAX_FOTOS_POR_JOIA} fotos · tamanho ideal {LADO_IDEAL_PX}×{LADO_IDEAL_PX} px · até {LIMITE_FOTO_MB} MB por foto
                         </p>
                       </div>
                     </>

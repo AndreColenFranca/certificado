@@ -1017,8 +1017,6 @@ export default function App() {
     return (
       <SupabaseLoginView
         onLoginSuccess={handleLoginSuccess}
-        companyName={companyName}
-        companyLogoUrl={companyLogoUrl}
         theme={theme}
       />
     );

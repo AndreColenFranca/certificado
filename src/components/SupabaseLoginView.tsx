@@ -5,15 +5,11 @@ import { supabaseAuth } from '../utils/supabaseAuth';
 
 interface SupabaseLoginViewProps {
   onLoginSuccess: (user: AppUser) => void;
-  companyName: string;
-  companyLogoUrl: string;
   theme?: 'luxury-dark' | 'classic-light';
 }
 
 export const SupabaseLoginView = ({
   onLoginSuccess,
-  companyName,
-  companyLogoUrl,
   theme = 'luxury-dark'
 }: SupabaseLoginViewProps) => {
   const [email, setEmail] = useState('');
@@ -105,15 +101,15 @@ export const SupabaseLoginView = ({
 
           {/* Header */}
           <div className="text-center space-y-3 mb-8">
+            {/* Sem logo de joalheria, como na tela de escolha: aqui ainda nao
+                se sabe de qual loja a pessoa e, e a logo padrao do sistema e a
+                da Estilo Raro - quem e da Vivara era recebido pela marca da
+                concorrente. A coroa e o nome do sistema servem para as duas. */}
             <div className="inline-flex items-center justify-center mb-4">
-              {companyLogoUrl ? (
-                <img src={companyLogoUrl} alt="Logo" className="h-20 w-auto max-w-xs" />
-              ) : (
-                <Crown className="w-8 h-8 text-amber-500" />
-              )}
+              <Crown className="w-8 h-8 text-amber-500" />
             </div>
             <h1 className="text-xl font-semibold text-amber-700">
-              Emissão de Certificado
+              Certificado de Joias
             </h1>
             {isSignUp && (
               <p className="text-sm opacity-60">

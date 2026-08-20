@@ -10,6 +10,7 @@
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "backup": "node backup-completo.js",
+    "restaurar": "node restaurar-completo.js",
     "migrar-imagens": "node migrar-imagens-storage.js",
     "faxina-fotos": "node faxina-fotos.js",
     "backup-fotos": "node backup-fotos.js",

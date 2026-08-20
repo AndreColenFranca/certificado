@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { pastaDeBackup } from './backup-dir.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').replace(/\s+/g, '');
@@ -45,7 +46,7 @@ async function baixarBucket(bucket, pastaLocal) {
 
 async function backup() {
   console.log('=== BACKUP DE FOTOS ===\n');
-  const pastaRaiz = `supabase/migrations/fotos_${stamp()}`;
+  const pastaRaiz = join(pastaDeBackup(), `fotos_${stamp()}`);
   mkdirSync(pastaRaiz, { recursive: true });
 
   let totalN = 0, totalBytes = 0;

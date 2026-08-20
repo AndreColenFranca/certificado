@@ -3,16 +3,35 @@ import { createClient } from '@supabase/supabase-js';
 import { readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').replace(/\s+/g, '');
 const BUCKETS = ['certificates-public', 'certificates-private', 'logos'];
 
-if (!SUPABASE_URL || !SUPABASE_KEY || !process.argv[2]) {
-  console.error('Uso: npm run restaurar-fotos -- <pasta-de-backup>\nEx: npm run restaurar-fotos -- supabase/migrations/fotos_2026-08-19_18-35');
+// Por padrao as fotos voltam para o projeto do .env - o caso de recuperar
+// arquivos perdidos no proprio ambiente. Com --destino elas vao para o projeto
+// de RESTORE_*, que e o mesmo alvo do `npm run restaurar`: numa restauracao em
+// projeto novo, banco e fotos precisam pousar no mesmo lugar, senao os
+// certificados apontam para imagens que ficaram para tras.
+const paraDestino = process.argv.includes('--destino');
+
+const SUPABASE_URL = paraDestino
+  ? process.env.RESTORE_SUPABASE_URL
+  : (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
+const SUPABASE_KEY = ((paraDestino
+  ? process.env.RESTORE_SUPABASE_SERVICE_ROLE_KEY
+  : process.env.SUPABASE_SERVICE_ROLE_KEY) || '').replace(/\s+/g, '');
+
+const pastaBackup = process.argv.slice(2).find(a => !a.startsWith('--'));
+
+if (!SUPABASE_URL || !SUPABASE_KEY || !pastaBackup) {
+  console.error('Uso: npm run restaurar-fotos -- <pasta-de-backup> [--destino]');
+  console.error('Ex:  npm run restaurar-fotos -- ~/Downloads/certificado-backups/fotos_2026-08-20_17-35');
+  console.error('\n--destino envia para o projeto de RESTORE_SUPABASE_URL (restauracao em projeto novo).');
+  if (paraDestino) console.error('Faltam RESTORE_SUPABASE_URL e RESTORE_SUPABASE_SERVICE_ROLE_KEY.');
   process.exit(1);
 }
 
-const pastaBackup = process.argv[2];
+// Enviar foto e escrita: o alvo fica a vista antes de comecar.
+console.log(`Enviando para: ${new URL(SUPABASE_URL).host}${paraDestino ? '  (projeto de destino)' : '  (projeto do .env)'}`);
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const uploadarRecursivo = async (bucket, pastaLocal, prefixo = '') => {

@@ -11,6 +11,8 @@ coverage/
 # Backups de dados com informações de clientes - NUNCA commitar
 supabase/migrations/dados_backup_*.sql
 supabase/migrations/*_remote_schema.sql
+supabase/migrations/pgdump_*.sql
+supabase/migrations/fotos_*/
 
 # Arquivos desnecessários
 supabase/migrations/Rodar.txt

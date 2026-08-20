@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, ChevronRight } from 'lucide-react';
+import { Building2, ChevronRight, Crown } from 'lucide-react';
 import { AppUser } from '../types';
 import { fetchWithAuth } from '../utils/fetchWithAuth';
 
@@ -70,15 +70,15 @@ export const OrgSelectView: React.FC<OrgSelectViewProps> = ({
         }`}>
 
           <div className="text-center space-y-4 mb-8">
-            <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 mb-2 shadow-inner">
-              <img
-                src={companyLogoUrl}
-                alt={companyName}
-                className="w-16 h-16 rounded-xl object-contain shadow-md"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
+            {/* Mesmo bloco do login: a logo em altura fixa e largura livre.
+                Antes ela era espremida num quadrado de 64px dentro de uma
+                caixa, o que encolhia logos largas ate ficarem ilegiveis. */}
+            <div className="inline-flex items-center justify-center mb-4">
+              {companyLogoUrl ? (
+                <img src={companyLogoUrl} alt={companyName || 'Logo'} className="h-20 w-auto max-w-xs" />
+              ) : (
+                <Crown className="w-8 h-8 text-amber-500" />
+              )}
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-extrabold font-serif text-amber-100 tracking-tight">

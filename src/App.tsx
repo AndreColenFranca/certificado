@@ -182,11 +182,15 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.data) {
+          // Quem escolheu a joalheria na tela de seleção já chega aqui com ela
+          // definida, e essa escolha manda. O /api/auth/me devolve sempre a
+          // organização principal do cadastro, entao usar o retorno dele aqui
+          // desfaria a escolha e jogaria o cliente de volta na outra loja.
           const completeUser: AppUser = {
             ...user,
             role: data.data.role || user.role,
-            orgId: data.data.orgId,
-            orgName: data.data.orgName
+            orgId: user.orgId || data.data.orgId,
+            orgName: user.orgName || data.data.orgName
           };
           setCurrentUser(completeUser);
         } else {
@@ -227,6 +231,7 @@ export default function App() {
     setCurrentUser(null);
     try {
       sessionStorage.removeItem('aureum_logged_user');
+      sessionStorage.removeItem('session_token');
       sessionStorage.removeItem('aureum_certificates');
       sessionStorage.removeItem('aureum_customers');
       sessionStorage.removeItem('aureum_users_db');

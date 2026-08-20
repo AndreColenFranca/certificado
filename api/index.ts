@@ -53,6 +53,20 @@ if (supabaseUrl && supabaseServiceKey) {
   }
 }
 
+// Cliente separado so para conferir email/senha. NUNCA use o cliente
+// `supabase` acima para isso: ele roda como service_role, e um
+// signInWithPassword nele troca a sessao do cliente inteiro pela do usuario
+// que acabou de logar. O servidor perderia o service_role e passaria a
+// responder todas as requisicoes, de todos os usuarios, como esse ultimo.
+// Aqui a sessao nao e guardada nem renovada, entao cada login e isolado.
+const supabaseAnonKey = (process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '')
+  .replace(/\s+/g, '').trim();
+const supabaseAuthClient: any = (supabaseUrl && supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    })
+  : null;
+
 // Limites das fotos da joia. Valem aqui tambem, e nao so na tela: a tela e
 // so conveniencia, quem garante a regra e o servidor. Precisam bater com os
 // valores em src/components/CertificateFormModal.tsx.
@@ -115,15 +129,33 @@ app.use(async (req: any, res, next) => {
     };
 
     // org_id e papel saem da nossa tabela, nunca do que veio no token.
-    const { data: authUser } = await supabase
+    // Sem .single(): um cliente em varias organizacoes tem uma linha por
+    // organizacao aqui, e .single() falharia justamente nesse caso.
+    const { data: perfis } = await supabase
       .from('auth_users')
       .select('org_id, role')
-      .eq('email', usuario.email.toLowerCase())
-      .maybeSingle();
+      .eq('email', usuario.email.toLowerCase());
 
-    if (authUser) {
-      req.user.org_id = authUser.org_id;
-      req.user.role = authUser.role || 'user';
+    const perfil = perfis?.[0];
+    if (perfil) {
+      req.user.org_id = perfil.org_id;
+      req.user.role = perfil.role || 'user';
+    }
+
+    // Cliente em varias organizacoes escolhe uma na tela de selecao, e a
+    // escolha viaja neste cabecalho. Ele sozinho nao autoriza nada: so vale
+    // se `user_orgs` confirmar que o usuario pertence aquela organizacao.
+    // Sem essa conferencia, trocar o cabecalho daria acesso a dados alheios.
+    const orgEscolhida = req.headers['x-org-id'];
+    if (orgEscolhida && orgEscolhida !== req.user.org_id) {
+      const { data: vinculo } = await supabase
+        .from('user_orgs')
+        .select('org_id')
+        .eq('user_id', usuario.id)
+        .eq('org_id', orgEscolhida)
+        .maybeSingle();
+
+      if (vinculo) req.user.org_id = vinculo.org_id;
     }
   } catch (e) {
     // Qualquer falha na conferencia vale como nao autenticado.
@@ -145,7 +177,9 @@ const ROTAS_PUBLICAS = new Set([
   '/api/auth/update-password',
   '/api/auth/register',
   '/api/auth/register-profile',
-  '/api/customer/select-org',
+  // '/api/customer/select-org' saiu daqui: quem escolhe a joalheria ja fez
+  // login e tem token. Aberta, ela respondia a qualquer um que chutasse um
+  // par usuario/organizacao, revelando quem e cliente de qual loja.
   // '/api/auth/me' saiu daqui: devolve perfil, entao exige login como o resto.
   '/api/auth/create-root-user',
   '/api/auth/set-root-profile',
@@ -701,34 +735,59 @@ app.post('/api/auth/create-root-user', async (req, res) => {
 // API Routes
 
 
+// Acha o perfil de quem acabou de provar a senha.
+//
+// A busca e pelo e-mail, e nao pelo id, porque os dois nem sempre coincidem:
+// ha perfis gravados com um id proprio, diferente do id do Supabase Auth (o
+// root e um deles). Procurar por id deixava esses usuarios de fora: o login
+// nao achava o perfil, tentava criar um que ja existia e esbarrava no e-mail
+// unico da organizacao. O e-mail e o que o Auth garante, e e por ele que o
+// middleware de autenticacao ja se orienta.
+//
+// Um cliente de varias joalherias tem uma linha por joalheria: quando houver
+// mais de uma, vale a que casa com o id do Auth, senao a primeira - qual
+// organizacao usar e decidido depois, na tela de selecao.
+async function buscarPerfilPorEmail(email: string, idDoAuth: string) {
+  const { data: perfis } = await supabase
+    .from('auth_users')
+    .select('*')
+    .eq('email', email.toLowerCase());
+
+  if (!perfis || perfis.length === 0) return null;
+  return perfis.find((p: any) => p.id === idDoAuth) || perfis[0];
+}
+
 // Supabase-only login (NO local database fallback)
 app.post('/api/login', async (req: any, res: any) => {
   try {
     const { email = '', password = '' } = req.body || {};
     const rawEmail = String(email || '').trim().toLowerCase();
 
-    console.log(`[LOGIN] Tentando login com: ${rawEmail}`);
-
     if (!supabase) return res.status(503).json({ success: false, error: 'Supabase não disponível' });
     if (!rawEmail || !password) return res.status(400).json({ success: false, error: 'Email e senha obrigatórios' });
 
-    const { data: allUsers } = await supabase.auth.admin.listUsers();
-    console.log(`[LOGIN] Usuários no Supabase:`, allUsers?.users?.map((u: any) => u.email));
-    const foundAuthUser = allUsers?.users?.find((u: any) => u.email?.toLowerCase() === rawEmail);
-    console.log(`[LOGIN] Usuário encontrado:`, foundAuthUser ? foundAuthUser.email : 'NENHUM');
-    if (!foundAuthUser) return res.status(401).json({ success: false, error: 'Email ou senha inválidos' });
+    // Confere email/senha no cliente isolado e pega o token da sessao
+    if (!supabaseAuthClient) return res.status(503).json({ success: false, error: 'Autenticação não disponível' });
+    const { data: authData, error: authError } = await supabaseAuthClient.auth.signInWithPassword({ email: rawEmail, password });
+    if (authError || !authData.user) return res.status(401).json({ success: false, error: 'Email ou senha inválidos' });
 
-    const { data: userProfile } = await supabase.from('auth_users').select('*').eq('id', foundAuthUser.id).single();
+    const foundAuthUser = authData.user;
+    const token = authData.session?.access_token;
+
+    const userProfile = await buscarPerfilPorEmail(foundAuthUser.email, foundAuthUser.id);
     if (!userProfile) {
-      const { data: newProfile } = await supabase.from('auth_users').insert({
+      const { data: newProfile, error: insertError } = await supabase.from('auth_users').insert({
         id: foundAuthUser.id, email: foundAuthUser.email,
         name: foundAuthUser.user_metadata?.display_name || foundAuthUser.email.split('@')[0],
         role: foundAuthUser.user_metadata?.role || 'customer',
         org_id: foundAuthUser.user_metadata?.org_id,
         created_at: new Date().toISOString(), updated_at: new Date().toISOString()
       }).select().single();
-      if (!newProfile) return res.status(500).json({ success: false, error: 'Falha ao criar perfil' });
-      return res.json({ success: true, message: 'Login realizado com sucesso', user: {
+      if (!newProfile) {
+        console.error(`[LOGIN] Erro ao criar perfil:`, insertError?.message);
+        return res.status(500).json({ success: false, error: 'Falha ao criar perfil' });
+      }
+      return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
         id: newProfile.id, name: newProfile.name, email: newProfile.email, role: newProfile.role,
         orgId: newProfile.org_id, orgName: 'Organização', createdAt: newProfile.created_at, isRoot: newProfile.role === 'root'
       }});
@@ -744,7 +803,7 @@ app.post('/api/login', async (req: any, res: any) => {
       if (!userOrgs || userOrgs.length === 0) {
         // Customer sem orgs registradas - retornar apenas a org_id de auth_users se houver
         const { data: org } = await supabase.from('organizations').select('*').eq('id', userProfile.org_id).single();
-        return res.json({ success: true, message: 'Login realizado com sucesso', user: {
+        return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
           id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
           orgId: userProfile.org_id, orgName: org?.display_name || org?.name || 'Organização',
           createdAt: userProfile.created_at, isRoot: false,
@@ -766,7 +825,7 @@ app.post('/api/login', async (req: any, res: any) => {
 
       // Se só tem 1 org, faz login direto nela
       if (orgList.length === 1) {
-        return res.json({ success: true, message: 'Login realizado com sucesso', user: {
+        return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
           id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
           orgId: orgList[0].id, orgName: orgList[0].name,
           createdAt: userProfile.created_at, isRoot: false,
@@ -775,7 +834,7 @@ app.post('/api/login', async (req: any, res: any) => {
       }
 
       // Se tem múltiplas orgs, retorna lista e frontend mostra seletor
-      return res.json({ success: true, message: 'Selecione a organização', user: {
+      return res.json({ success: true, message: 'Selecione a organização', token, user: {
         id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
         orgId: null, // Sem org selecionada ainda
         orgName: null,
@@ -787,7 +846,7 @@ app.post('/api/login', async (req: any, res: any) => {
 
     // Para ROOT/ADMIN/OPERATOR: usa org_id de auth_users (único)
     const { data: org } = await supabase.from('organizations').select('*').eq('id', userProfile.org_id).single();
-    return res.json({ success: true, message: 'Login realizado com sucesso', user: {
+    return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
       id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
       orgId: userProfile.org_id, orgName: org?.display_name || org?.name || 'Organização',
       createdAt: userProfile.created_at, isRoot: userProfile.role === 'root'
@@ -806,21 +865,28 @@ app.post('/api/auth/login', async (req: any, res: any) => {
     if (!supabase) return res.status(503).json({ success: false, error: 'Supabase não disponível' });
     if (!rawEmail || !password) return res.status(400).json({ success: false, error: 'Email e senha obrigatórios' });
 
-    const { data: allUsers } = await supabase.auth.admin.listUsers();
-    const foundAuthUser = allUsers?.users?.find((u: any) => u.email?.toLowerCase() === rawEmail);
-    if (!foundAuthUser) return res.status(401).json({ success: false, error: 'Email ou senha inválidos' });
+    // Confere email/senha no cliente isolado e pega o token da sessao
+    if (!supabaseAuthClient) return res.status(503).json({ success: false, error: 'Autenticação não disponível' });
+    const { data: authData, error: authError } = await supabaseAuthClient.auth.signInWithPassword({ email: rawEmail, password });
+    if (authError || !authData.user) return res.status(401).json({ success: false, error: 'Email ou senha inválidos' });
 
-    const { data: userProfile } = await supabase.from('auth_users').select('*').eq('id', foundAuthUser.id).single();
+    const foundAuthUser = authData.user;
+    const token = authData.session?.access_token;
+
+    const userProfile = await buscarPerfilPorEmail(foundAuthUser.email, foundAuthUser.id);
     if (!userProfile) {
-      const { data: newProfile } = await supabase.from('auth_users').insert({
+      const { data: newProfile, error: insertError } = await supabase.from('auth_users').insert({
         id: foundAuthUser.id, email: foundAuthUser.email,
         name: foundAuthUser.user_metadata?.display_name || foundAuthUser.email.split('@')[0],
         role: foundAuthUser.user_metadata?.role || 'customer',
         org_id: foundAuthUser.user_metadata?.org_id,
         created_at: new Date().toISOString(), updated_at: new Date().toISOString()
       }).select().single();
-      if (!newProfile) return res.status(500).json({ success: false, error: 'Falha ao criar perfil' });
-      return res.json({ success: true, message: 'Login realizado com sucesso', user: {
+      if (!newProfile) {
+        console.error(`[LOGIN] Erro ao criar perfil:`, insertError?.message);
+        return res.status(500).json({ success: false, error: 'Falha ao criar perfil' });
+      }
+      return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
         id: newProfile.id, name: newProfile.name, email: newProfile.email, role: newProfile.role,
         orgId: newProfile.org_id, orgName: 'Organização', createdAt: newProfile.created_at, isRoot: newProfile.role === 'root'
       }});
@@ -836,7 +902,7 @@ app.post('/api/auth/login', async (req: any, res: any) => {
       if (!userOrgs || userOrgs.length === 0) {
         // Customer sem orgs registradas - retornar apenas a org_id de auth_users se houver
         const { data: org } = await supabase.from('organizations').select('*').eq('id', userProfile.org_id).single();
-        return res.json({ success: true, message: 'Login realizado com sucesso', user: {
+        return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
           id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
           orgId: userProfile.org_id, orgName: org?.display_name || org?.name || 'Organização',
           createdAt: userProfile.created_at, isRoot: false,
@@ -858,7 +924,7 @@ app.post('/api/auth/login', async (req: any, res: any) => {
 
       // Se só tem 1 org, faz login direto nela
       if (orgList.length === 1) {
-        return res.json({ success: true, message: 'Login realizado com sucesso', user: {
+        return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
           id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
           orgId: orgList[0].id, orgName: orgList[0].name,
           createdAt: userProfile.created_at, isRoot: false,
@@ -867,7 +933,7 @@ app.post('/api/auth/login', async (req: any, res: any) => {
       }
 
       // Se tem múltiplas orgs, retorna lista e frontend mostra seletor
-      return res.json({ success: true, message: 'Selecione a organização', user: {
+      return res.json({ success: true, message: 'Selecione a organização', token, user: {
         id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
         orgId: null, // Sem org selecionada ainda
         orgName: null,
@@ -879,7 +945,7 @@ app.post('/api/auth/login', async (req: any, res: any) => {
 
     // Para ROOT/ADMIN/OPERATOR: usa org_id de auth_users (único)
     const { data: org } = await supabase.from('organizations').select('*').eq('id', userProfile.org_id).single();
-    return res.json({ success: true, message: 'Login realizado com sucesso', user: {
+    return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
       id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
       orgId: userProfile.org_id, orgName: org?.display_name || org?.name || 'Organização',
       createdAt: userProfile.created_at, isRoot: userProfile.role === 'root'
@@ -893,11 +959,17 @@ app.post('/api/auth/login', async (req: any, res: any) => {
 // Customer seleciona qual organização quer usar (para clientes com múltiplas orgs)
 app.post('/api/customer/select-org', async (req: any, res: any) => {
   try {
-    const { userId, orgId } = req.body;
-    console.log('[CUSTOMER/SELECT-ORG] userId:', userId, 'orgId:', orgId);
+    const { orgId } = req.body;
 
-    if (!userId || !orgId) {
-      return res.status(400).json({ success: false, error: 'userId e orgId são obrigatórios' });
+    // Quem escolhe e sempre o dono do token, nunca o userId que veio no corpo:
+    // aceitar o corpo deixaria um cliente logado escolher no lugar de outro.
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Faça login novamente' });
+    }
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'orgId é obrigatório' });
     }
 
     if (!supabase) {
@@ -910,7 +982,7 @@ app.post('/api/customer/select-org', async (req: any, res: any) => {
       .select('*')
       .eq('user_id', userId)
       .eq('org_id', orgId)
-      .single();
+      .maybeSingle();
 
     if (!userOrg) {
       return res.status(403).json({ success: false, error: 'Você não tem acesso a esta organização' });
@@ -938,8 +1010,13 @@ app.post('/api/customer/select-org', async (req: any, res: any) => {
       return res.status(404).json({ success: false, error: 'Usuário não encontrado' });
     }
 
-    // Retornar dados do usuário com a org selecionada
-    return res.json({ success: true, message: 'Organização selecionada', user: {
+    // Usar o token JWT que já temos no header da requisição (foi enviado pelo frontend)
+    // Para usuários multi-org, o token é o mesmo - apenas o orgId muda no contexto
+    const authHeader = (req as any).headers?.authorization;
+    const token = authHeader?.replace('Bearer ', '') || '';
+
+    // Retornar dados do usuário com a org selecionada e token
+    return res.json({ success: true, message: 'Organização selecionada', token, user: {
       id: userProfile.id,
       name: userProfile.name,
       email: userProfile.email,
@@ -1003,18 +1080,13 @@ app.get('/api/users', async (req, res) => {
 
 // Create new user (Allowed for Root, Admins or authenticated system requests)
 app.post('/api/users', async (req, res) => {
-  console.log('\n\n🟢🟢🟢 POST /api/users RECEBIDA 🟢🟢🟢');
-  console.log(`Body: ${JSON.stringify(req.body)}`);
-  console.log(`Supabase disponível: ${!!supabase}`);
 
   try {
     if (!supabase) {
-      console.log('❌ Supabase não inicializado!');
       return res.status(500).json({ success: false, message: 'Supabase não disponível' });
     }
 
     const { requesterEmail, name, email, password, role, orgId } = req.body;
-    console.log(`Email recebido: ${email}, Role: ${role}`);
     const userOrgId = orgId || (req as any).user?.org_id || DEFAULT_ORG_ID;
     const requesterRole = (req as any).user?.role || 'user';
 
@@ -1029,7 +1101,6 @@ app.post('/api/users', async (req, res) => {
     // ADMIN: só pode criar OPERATOR
     // OPERATOR/CUSTOMER: não pode criar ninguém
     if (requesterRole === 'root' && role !== 'admin') {
-      console.log(`[SECURITY] Root tentou criar ${role} - apenas ADMIN é permitido`);
       return res.status(403).json({
         success: false,
         message: 'Usuário Raiz pode criar apenas Administradores.'
@@ -1037,7 +1108,6 @@ app.post('/api/users', async (req, res) => {
     }
 
     if (requesterRole === 'admin' && role !== 'operator') {
-      console.log(`[SECURITY] Admin ${requesterEmail} tentou criar ${role} - apenas OPERATOR é permitido`);
       return res.status(403).json({
         success: false,
         message: 'Administradores podem criar apenas Operadores.'
@@ -1045,7 +1115,6 @@ app.post('/api/users', async (req, res) => {
     }
 
     if (requesterRole !== 'root' && requesterRole !== 'admin') {
-      console.log(`[SECURITY] ${requesterRole} tentou criar usuário - não permitido`);
       return res.status(403).json({
         success: false,
         message: 'Apenas Administradores e o Usuário Raiz podem criar usuários.'
@@ -1068,15 +1137,11 @@ app.post('/api/users', async (req, res) => {
 
     // Salvar no Supabase
     const roleToSave = role || 'operator';
-    console.log(`[DEBUG] Criando usuário: email=${cleanEmail}, role=${roleToSave}, requesterEmail=${requesterEmail}`);
 
     // 1. FIRST: Create user in Supabase Auth (auth.users table)
     let authUserId = newUserId;
-    console.log(`[DEBUG] === INICIANDO CRIAÇÃO NO SUPABASE AUTH ===`);
-    console.log(`[DEBUG] Email: ${cleanEmail}, Senha: ${password}, Role: ${roleToSave}`);
 
     try {
-      console.log(`[DEBUG] Chamando supabase.auth.admin.createUser...`);
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: cleanEmail,
         password,
@@ -1087,9 +1152,6 @@ app.post('/api/users', async (req, res) => {
         email_confirm: true
       });
 
-      console.log(`[DEBUG] Resposta do Supabase Auth:`);
-      console.log(`[DEBUG] - authData: ${JSON.stringify(authData)}`);
-      console.log(`[DEBUG] - authError: ${authError ? authError.message : 'null'}`);
 
       if (authError) {
         console.error(`[ERROR] Failed to create user in Supabase Auth:`, authError.message);
@@ -1101,9 +1163,7 @@ app.post('/api/users', async (req, res) => {
 
       if (authData.user) {
         authUserId = authData.user.id;
-        console.log(`[DEBUG] ✅ Usuário criado no Supabase Auth: id=${authUserId}`);
       } else {
-        console.log(`[DEBUG] ⚠️ authData.user é null`);
       }
     } catch (authErr: any) {
       console.error(`[ERROR] Exception creating user in Supabase Auth:`, authErr.message);
@@ -1139,7 +1199,6 @@ app.post('/api/users', async (req, res) => {
       });
     }
 
-    console.log(`[DEBUG] Usuário criado: id=${insertedUser.id}, role=${insertedUser.role}`);
 
     res.status(201).json({
       success: true,
@@ -1184,20 +1243,16 @@ app.put('/api/users/:id', async (req, res) => {
     const now = new Date().toISOString();
     const cleanEmail = email ? email.trim().toLowerCase() : undefined;
 
-    console.log(`[UPDATE] Validando email: ${cleanEmail} (anterior: ${user.email})`);
 
     // Validar email duplicado (se foi alterado)
     if (cleanEmail && cleanEmail !== user.email?.toLowerCase()) {
-      console.log(`[UPDATE] Email foi alterado, verificando duplicatas...`);
       const { data: existingEmail, error: checkError } = await supabase
         .from('auth_users')
         .select('id, email')
         .eq('email', cleanEmail);
 
-      console.log(`[UPDATE] Resultado da busca: ${JSON.stringify({ existingEmail, checkError })}`);
 
       if (existingEmail && existingEmail.length > 0) {
-        console.log(`[UPDATE] Email já existe! Retornando erro.`);
         return res.status(400).json({
           success: false,
           message: 'Este e-mail já está cadastrado para outro usuário.'
@@ -1211,7 +1266,6 @@ app.put('/api/users/:id', async (req, res) => {
         await supabase.auth.admin.updateUserById(user.id, {
           email: cleanEmail
         });
-        console.log(`[UPDATE] Email atualizado no Supabase Auth: ${user.email} → ${cleanEmail}`);
       } catch (authErr: any) {
         console.error(`[UPDATE] Erro ao atualizar email em Supabase Auth: ${authErr.message}`);
         return res.status(400).json({
@@ -1284,7 +1338,6 @@ app.delete('/api/users/:id', async (req, res) => {
     // 1. Deletar do Supabase Auth (auth.users)
     try {
       await supabase.auth.admin.deleteUser(user.id);
-      console.log(`[DELETE] Usuário ${user.email} removido do Supabase Auth`);
     } catch (authErr: any) {
       console.error(`[DELETE] Erro ao remover do Supabase Auth: ${authErr.message}`);
       // Continua mesmo se falhar aqui
@@ -1530,7 +1583,6 @@ app.put('/api/customers/:id', async (req, res) => {
 // Sync missing Supabase Auth for customers (admin endpoint)
 app.post('/api/customers/sync/missing-auth', async (req, res) => {
   try {
-    console.log('[SYNC] Sincronizando clientes sem Supabase Auth...');
 
     // Get all customers
     const { data: allCustomers } = await supabase.from('customers').select('*');
@@ -1551,7 +1603,6 @@ app.post('/api/customers/sync/missing-auth', async (req, res) => {
       if (!custEmail) continue;
 
       if (!authEmails.has(custEmail)) {
-        console.log(`[SYNC] Criando Auth para ${custEmail}...`);
 
         // Create in Supabase Auth with default password
         const { data: newAuth, error: authError } = await supabase.auth.admin.createUser({
@@ -1593,7 +1644,6 @@ app.post('/api/customers/sync/missing-auth', async (req, res) => {
         }
 
         synced++;
-        console.log(`[SYNC] ✅ ${custEmail} sincronizado`);
       }
     }
 
@@ -1650,47 +1700,55 @@ app.delete('/api/customers/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Cliente não encontrado' });
     }
 
-    // 2. Delete from Supabase Auth and auth_users table
-    // Get user ID first (to delete from user_orgs)
-    let userId: string | null = null;
+    // 2. Desligar o cliente DESTA joalheria, e so dela.
+    //
+    // O mesmo cliente pode comprar em varias joalherias. Cada uma tem sua
+    // propria linha em `customers` e seu vinculo em `user_orgs`, mas a conta
+    // de login e uma so: uma linha em `auth_users` e uma no Supabase Auth,
+    // compartilhadas. Por isso o vinculo daqui cai com o org_id junto,
+    // enquanto a conta so cai quando nao restar nenhuma joalheria.
+    const emailCliente = String(targetCust.email || '').toLowerCase();
     try {
-      const { data: authUser } = await supabase
+      const { data: perfil } = await supabase
         .from('auth_users')
         .select('id')
-        .eq('email', targetCust.email)
-        .single();
+        .eq('email', emailCliente)
+        .maybeSingle();
 
-      if (authUser?.id) {
-        userId = authUser.id;
+      const userId = perfil?.id;
 
-        // Delete from user_orgs first
+      if (userId) {
         await supabase
           .from('user_orgs')
           .delete()
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .eq('org_id', userOrgId);
       }
 
-      // Delete from auth_users
-      await supabase
-        .from('auth_users')
-        .delete()
-        .eq('email', targetCust.email);
+      // `user_orgs` e quem sabe de quantas joalherias ele e cliente.
+      const { data: vinculosRestantes } = userId
+        ? await supabase.from('user_orgs').select('org_id').eq('user_id', userId)
+        : { data: [] };
+      const aindaEhCliente = (vinculosRestantes?.length || 0) > 0;
+
+      if (aindaEhCliente) {
+        // Continua comprando em outra joalheria: a conta de login fica, e o
+        // perfil e realocado se estava apontando justamente para a que saiu.
+        // Sem isso ele ficaria sem perfil e nao conseguiria mais entrar.
+        await supabase
+          .from('auth_users')
+          .update({ org_id: vinculosRestantes![0].org_id, updated_at: new Date().toISOString() })
+          .eq('email', emailCliente)
+          .eq('org_id', userOrgId);
+      } else {
+        // Nao e mais cliente de ninguem: aqui sim a conta toda vai embora.
+        await supabase.from('auth_users').delete().eq('email', emailCliente);
+
+        const { data: authUsers } = await supabase.auth.admin.listUsers();
+        const contaLogin = authUsers?.users?.find((u: any) => u.email?.toLowerCase() === emailCliente);
+        if (contaLogin) await supabase.auth.admin.deleteUser(contaLogin.id);
+      }
     } catch (authUsersErr: any) {
-      // Silent fail
-    }
-
-    // Then try to delete from Supabase Auth
-    try {
-      const { data: authUsers } = await supabase.auth.admin.listUsers();
-
-      if (authUsers) {
-        const authUser = authUsers.users?.find((u: any) => u.email?.toLowerCase() === targetCust.email?.toLowerCase());
-
-        if (authUser) {
-          await supabase.auth.admin.deleteUser(authUser.id);
-        }
-      }
-    } catch (authErr: any) {
       // Silent fail
     }
 
@@ -1944,14 +2002,6 @@ app.post('/api/certificates', async (req, res) => {
 
     const result = await createCertificate(supabase, certToSave);
 
-    console.log(`[POST /api/certificates] Created cert:`, {
-      id: uuidId,
-      title: newCert.title,
-      org_id: userOrgId,
-      is_root: certToSave.is_root,
-      success: result.success,
-      error: result.error
-    });
 
     if (!result.success) {
       const errMsg = result.error || 'Erro ao salvar certificado';
@@ -2512,7 +2562,6 @@ const createAttributeEndpoints = (tableName: string, apiPath: string) => {
         message: 'ERRO CRÍTICO: org_id do usuário não foi encontrado. Faça login novamente.'
       });
     }
-      console.log(`[DEBUG POST ${apiPath}] userOrgId=${userOrgId}, DEFAULT_ORG_ID=${DEFAULT_ORG_ID}`);
 
       if (!userOrgId) {
         return res.status(401).json({
@@ -2693,14 +2742,12 @@ app.post('/api/migrate/users-to-auth', async (req, res) => {
     // For each user, check if exists in Supabase Auth, if not create
     for (const user of authUsers || []) {
       try {
-        console.log(`[MIGRATE] Processing user ${user.email}...`);
 
         // Check if user exists in auth.users
         const { data: existingAuthUser, error: checkError } = await supabase
           .auth.admin.getUserById(user.id);
 
         if (existingAuthUser) {
-          console.log(`[MIGRATE] User ${user.email} already exists, updating password...`);
 
           // Update password
           const { error: updateError } = await supabase.auth.admin.updateUserById(user.id, {
@@ -2720,7 +2767,6 @@ app.post('/api/migrate/users-to-auth', async (req, res) => {
             continue;
           }
 
-          console.log(`[MIGRATE] Updated password for ${user.email}`);
           results.updated++;
           continue;
         }
@@ -2745,7 +2791,6 @@ app.post('/api/migrate/users-to-auth', async (req, res) => {
           continue;
         }
 
-        console.log(`[MIGRATE] Created user ${user.email} in Supabase Auth with password 123456`);
         results.created++;
       } catch (err: any) {
         console.error(`[MIGRATE] Exception for ${user.email}:`, err.message);

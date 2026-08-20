@@ -86,6 +86,11 @@ export const supabaseAuth = {
         return { success: false, error: data.error || 'Falha ao autenticar usuário' };
       }
 
+      // Armazenar token separado (mais seguro)
+      if (data.token) {
+        sessionStorage.setItem('session_token', data.token);
+      }
+
       // Add multi-tenancy support fields
       const user = data.user as AppUser;
       if (data.user.orgs) {

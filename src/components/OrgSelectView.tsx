@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Building2, ChevronRight } from 'lucide-react';
 import { AppUser } from '../types';
+import { fetchWithAuth } from '../utils/fetchWithAuth';
 
 interface OrgSelectViewProps {
   user: any;
@@ -28,18 +29,19 @@ export const OrgSelectView: React.FC<OrgSelectViewProps> = ({
     setErrorMsg('');
 
     try {
-      const response = await fetch('/api/customer/select-org', {
+      // O servidor identifica quem escolhe pelo token, entao aqui vai so a
+      // joalheria escolhida.
+      const response = await fetchWithAuth('/api/customer/select-org', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          orgId: orgId
-        })
+        body: JSON.stringify({ orgId })
       });
 
       const data = await response.json();
 
       if (data && data.success && data.user) {
+        if (data.token) {
+          sessionStorage.setItem('session_token', data.token);
+        }
         onOrgSelected(data.user);
       } else {
         setErrorMsg(data?.error || 'Falha ao selecionar organização');

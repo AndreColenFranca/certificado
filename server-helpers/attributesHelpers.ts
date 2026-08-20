@@ -1,7 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
-console.log('🔴 [HELPERS] Arquivo attributesHelpers.ts foi CARREGADO!');
-
 export interface AttributeRecord {
   id: string;
   name: string;
@@ -57,7 +55,6 @@ export async function getAttribute(supabase: SupabaseClient, tableName: string, 
 }
 
 export async function createAttribute(supabase: SupabaseClient, tableName: string, orgId: string, attr: Partial<AttributeRecord>): Promise<AttributeRecord> {
-  console.log(`[DEBUG createAttribute] tableName=${tableName}, orgId=${orgId}, name=${attr.name}`);
 
   if (!orgId) {
     throw new Error(`ERRO CRÍTICO: org_id é obrigatório para createAttribute(). Recebido: ${orgId}`);
@@ -71,7 +68,6 @@ export async function createAttribute(supabase: SupabaseClient, tableName: strin
     const now = new Date().toISOString();
     const id = `${tableName.slice(0, 3)}-${Math.random().toString(36).substr(2, 9)}`.toLowerCase();
 
-    console.log(`[DEBUG INSERT] Inserindo: id=${id}, org_id=${orgId}, name=${attr.name}`);
     const { data, error } = await supabase
       .from(tableName)
       .insert([{

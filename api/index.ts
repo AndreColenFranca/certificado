@@ -1503,7 +1503,7 @@ app.post('/api/customers', async (req, res) => {
     const { error: userOrgError } = await supabase.from('user_orgs').insert({
       user_id: userId,
       org_id: userOrgId,
-      role: 'member',
+      role: 'customer',
       created_at: now,
       updated_at: now
     });
@@ -1637,7 +1637,7 @@ app.post('/api/customers/sync/missing-auth', async (req, res) => {
           await supabase.from('user_orgs').insert({
             user_id: newAuth.user?.id,
             org_id: customer.org_id,
-            role: 'member',
+            role: 'customer',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });

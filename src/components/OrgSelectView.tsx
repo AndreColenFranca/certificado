@@ -7,8 +7,6 @@ interface OrgSelectViewProps {
   user: any;
   onOrgSelected: (user: AppUser) => void;
   onBack: () => void;
-  companyName: string;
-  companyLogoUrl: string;
   theme?: 'luxury-dark' | 'classic-light';
 }
 
@@ -16,8 +14,6 @@ export const OrgSelectView: React.FC<OrgSelectViewProps> = ({
   user,
   onOrgSelected,
   onBack,
-  companyName,
-  companyLogoUrl,
   theme = 'luxury-dark'
 }) => {
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
@@ -70,22 +66,20 @@ export const OrgSelectView: React.FC<OrgSelectViewProps> = ({
         }`}>
 
           <div className="text-center space-y-4 mb-8">
-            {/* Mesmo bloco do login: a logo em altura fixa e largura livre.
-                Antes ela era espremida num quadrado de 64px dentro de uma
-                caixa, o que encolhia logos largas ate ficarem ilegiveis. */}
+            {/* Nenhuma logo de joalheria aqui, de proposito. Esta e a tela em
+                que o cliente ainda NAO escolheu a loja: estampar a marca de uma
+                delas - seja a da sessao anterior, seja a logo padrao, que e a
+                da Estilo Raro - responde por ele a pergunta que a tela esta
+                fazendo. A coroa e o nome do sistema sao neutros. */}
             <div className="inline-flex items-center justify-center mb-4">
-              {companyLogoUrl ? (
-                <img src={companyLogoUrl} alt={companyName || 'Logo'} className="h-20 w-auto max-w-xs" />
-              ) : (
-                <Crown className="w-8 h-8 text-amber-500" />
-              )}
+              <Crown className="w-8 h-8 text-amber-500" />
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-extrabold font-serif text-amber-100 tracking-tight">
-              Selecione a Joalheria
+              Certificado de Joias
             </h1>
             <p className="text-xs text-zinc-300 max-w-xs mx-auto leading-relaxed font-medium">
-              Você é cliente em múltiplas organizações. Escolha qual deseja acessar.
+              Você é cliente em mais de uma joalheria. Escolha qual deseja acessar.
             </p>
           </div>
 

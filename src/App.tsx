@@ -1034,8 +1034,6 @@ export default function App() {
           setCurrentUser(null);
           sessionStorage.removeItem('aureum_logged_user');
         }}
-        companyName={companyName}
-        companyLogoUrl={companyLogoUrl}
         theme={theme}
       />
     );

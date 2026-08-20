@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Lock, Eye, EyeOff, ShieldCheck, Sparkles, KeyRound, User } from 'lucide-react';
 import { AppUser } from '../types';
 import { ROOT_USER_EMAIL } from '../config/constants';
+import { OrgSelectView } from './OrgSelectView';
 
 interface LoginViewProps {
   onLoginSuccess: (user: AppUser) => void;
@@ -21,6 +22,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [pendingUser, setPendingUser] = useState<any>(null);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,7 +46,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
       const data = await response.json();
 
       if (data && data.success && data.user) {
-        onLoginSuccess(data.user);
+        // Se customer tem múltiplas orgs, mostrar seletor
+        if (data.user.requiresOrgSelection) {
+          setPendingUser(data.user);
+        } else {
+          onLoginSuccess(data.user);
+        }
       } else {
         setErrorMsg(data?.error || 'Falha ao fazer login');
       }
@@ -54,6 +61,20 @@ export const LoginView: React.FC<LoginViewProps> = ({
       setIsLoading(false);
     }
   };
+
+  // Se há usuário pendente (escolhendo org), mostrar seletor
+  if (pendingUser) {
+    return (
+      <OrgSelectView
+        user={pendingUser}
+        onOrgSelected={onLoginSuccess}
+        onBack={() => setPendingUser(null)}
+        companyName={companyName}
+        companyLogoUrl={companyLogoUrl}
+        theme={theme}
+      />
+    );
+  }
 
   const isLight = theme === 'classic-light';
 

@@ -9,6 +9,8 @@ export interface AppUser {
   cpf?: string;
   orgId?: string;
   orgName?: string;
+  orgs?: Array<{ id: string; name: string }>;
+  requiresOrgSelection?: boolean;
 }
 
 export type MetalPurity = string;

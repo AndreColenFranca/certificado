@@ -137,6 +137,8 @@ app.use(async (req: any, res, next) => {
 // as rotas de autenticacao (login e recuperacao de senha), senao ninguem
 // consegue entrar. Todo o resto responde 401 sem um JWT valido.
 const ROTAS_PUBLICAS = new Set([
+  '/',
+  '/favicon.ico',
   '/api/login',
   '/api/auth/login',
   '/api/auth/forgot-password',
@@ -152,6 +154,8 @@ const ROTAS_PUBLICAS = new Set([
 
 app.use((req: any, res, next) => {
   if (ROTAS_PUBLICAS.has(req.path)) return next();
+  // Arquivos estáticos (JS, CSS, imagens, fonts, etc)
+  if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)$/i)) return next();
   if (req.user?.authenticated) return next();
   return res.status(401).json({ success: false, message: 'Autenticacao necessaria.' });
 });
@@ -729,6 +733,58 @@ app.post('/api/login', async (req: any, res: any) => {
       }});
     }
 
+    // Para CUSTOMER: buscar todas as orgs em user_orgs
+    if (userProfile.role === 'customer') {
+      const { data: userOrgs } = await supabase
+        .from('user_orgs')
+        .select('org_id, role')
+        .eq('user_id', userProfile.id);
+
+      if (!userOrgs || userOrgs.length === 0) {
+        // Customer sem orgs registradas - retornar apenas a org_id de auth_users se houver
+        const { data: org } = await supabase.from('organizations').select('*').eq('id', userProfile.org_id).single();
+        return res.json({ success: true, message: 'Login realizado com sucesso', user: {
+          id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
+          orgId: userProfile.org_id, orgName: org?.display_name || org?.name || 'Organização',
+          createdAt: userProfile.created_at, isRoot: false,
+          orgs: userProfile.org_id ? [{ id: userProfile.org_id, name: org?.display_name || org?.name }] : []
+        }});
+      }
+
+      // Buscar dados das organizações
+      const orgIds = userOrgs.map((uo: any) => uo.org_id);
+      const { data: orgs } = await supabase
+        .from('organizations')
+        .select('id, name, display_name')
+        .in('id', orgIds);
+
+      const orgList = (orgs || []).map((org: any) => ({
+        id: org.id,
+        name: org.display_name || org.name
+      }));
+
+      // Se só tem 1 org, faz login direto nela
+      if (orgList.length === 1) {
+        return res.json({ success: true, message: 'Login realizado com sucesso', user: {
+          id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
+          orgId: orgList[0].id, orgName: orgList[0].name,
+          createdAt: userProfile.created_at, isRoot: false,
+          orgs: orgList
+        }});
+      }
+
+      // Se tem múltiplas orgs, retorna lista e frontend mostra seletor
+      return res.json({ success: true, message: 'Selecione a organização', user: {
+        id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
+        orgId: null, // Sem org selecionada ainda
+        orgName: null,
+        createdAt: userProfile.created_at, isRoot: false,
+        orgs: orgList,
+        requiresOrgSelection: true
+      }});
+    }
+
+    // Para ROOT/ADMIN/OPERATOR: usa org_id de auth_users (único)
     const { data: org } = await supabase.from('organizations').select('*').eq('id', userProfile.org_id).single();
     return res.json({ success: true, message: 'Login realizado com sucesso', user: {
       id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
@@ -769,6 +825,58 @@ app.post('/api/auth/login', async (req: any, res: any) => {
       }});
     }
 
+    // Para CUSTOMER: buscar todas as orgs em user_orgs
+    if (userProfile.role === 'customer') {
+      const { data: userOrgs } = await supabase
+        .from('user_orgs')
+        .select('org_id, role')
+        .eq('user_id', userProfile.id);
+
+      if (!userOrgs || userOrgs.length === 0) {
+        // Customer sem orgs registradas - retornar apenas a org_id de auth_users se houver
+        const { data: org } = await supabase.from('organizations').select('*').eq('id', userProfile.org_id).single();
+        return res.json({ success: true, message: 'Login realizado com sucesso', user: {
+          id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
+          orgId: userProfile.org_id, orgName: org?.display_name || org?.name || 'Organização',
+          createdAt: userProfile.created_at, isRoot: false,
+          orgs: userProfile.org_id ? [{ id: userProfile.org_id, name: org?.display_name || org?.name }] : []
+        }});
+      }
+
+      // Buscar dados das organizações
+      const orgIds = userOrgs.map((uo: any) => uo.org_id);
+      const { data: orgs } = await supabase
+        .from('organizations')
+        .select('id, name, display_name')
+        .in('id', orgIds);
+
+      const orgList = (orgs || []).map((org: any) => ({
+        id: org.id,
+        name: org.display_name || org.name
+      }));
+
+      // Se só tem 1 org, faz login direto nela
+      if (orgList.length === 1) {
+        return res.json({ success: true, message: 'Login realizado com sucesso', user: {
+          id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
+          orgId: orgList[0].id, orgName: orgList[0].name,
+          createdAt: userProfile.created_at, isRoot: false,
+          orgs: orgList
+        }});
+      }
+
+      // Se tem múltiplas orgs, retorna lista e frontend mostra seletor
+      return res.json({ success: true, message: 'Selecione a organização', user: {
+        id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
+        orgId: null, // Sem org selecionada ainda
+        orgName: null,
+        createdAt: userProfile.created_at, isRoot: false,
+        orgs: orgList,
+        requiresOrgSelection: true
+      }});
+    }
+
+    // Para ROOT/ADMIN/OPERATOR: usa org_id de auth_users (único)
     const { data: org } = await supabase.from('organizations').select('*').eq('id', userProfile.org_id).single();
     return res.json({ success: true, message: 'Login realizado com sucesso', user: {
       id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
@@ -781,6 +889,69 @@ app.post('/api/auth/login', async (req: any, res: any) => {
   }
 });
 
+// Customer seleciona qual organização quer usar (para clientes com múltiplas orgs)
+app.post('/api/customer/select-org', async (req: any, res: any) => {
+  try {
+    const { userId, orgId } = req.body;
+
+    if (!userId || !orgId) {
+      return res.status(400).json({ success: false, error: 'userId e orgId são obrigatórios' });
+    }
+
+    if (!supabase) {
+      return res.status(503).json({ success: false, error: 'Supabase não disponível' });
+    }
+
+    // Verificar se o usuário realmente pertence à organização
+    const { data: userOrg } = await supabase
+      .from('user_orgs')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('org_id', orgId)
+      .single();
+
+    if (!userOrg) {
+      return res.status(403).json({ success: false, error: 'Você não tem acesso a esta organização' });
+    }
+
+    // Buscar dados da organização
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('id, name, display_name')
+      .eq('id', orgId)
+      .single();
+
+    if (!org) {
+      return res.status(404).json({ success: false, error: 'Organização não encontrada' });
+    }
+
+    // Buscar perfil do usuário
+    const { data: userProfile } = await supabase
+      .from('auth_users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (!userProfile) {
+      return res.status(404).json({ success: false, error: 'Usuário não encontrado' });
+    }
+
+    // Retornar dados do usuário com a org selecionada
+    return res.json({ success: true, message: 'Organização selecionada', user: {
+      id: userProfile.id,
+      name: userProfile.name,
+      email: userProfile.email,
+      role: userProfile.role,
+      orgId: org.id,
+      orgName: org.display_name || org.name,
+      createdAt: userProfile.created_at,
+      isRoot: false
+    }});
+  } catch (err: any) {
+    console.error('[CUSTOMER/SELECT-ORG] Erro:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // Get all registered users (filtered by org_id and role permissions)
 app.get('/api/users', async (req, res) => {
@@ -1216,37 +1387,74 @@ app.post('/api/customers', async (req, res) => {
       return res.status(400).json({ success: false, message: supabaseCreateResult.error });
     }
 
-    // 2. Create in Supabase Auth (OBRIGATÓRIO)
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: cleanEmail,
-      password: password,
-      email_confirm: true,
-      user_metadata: {
-        display_name: newCust.name,
-        role: 'customer',
-        customer_id: newCust.id
-      }
-    });
+    // 2. Check if user already exists in this org
+    const { data: existingInOrg } = await supabase
+      .from('auth_users')
+      .select('id')
+      .eq('email', cleanEmail)
+      .eq('org_id', userOrgId)
+      .single();
 
-    if (authError || !authData?.user) {
-      // Rollback: delete from customers if auth fails
+    if (existingInOrg) {
       await supabase.from('customers').delete().eq('customer_code', newCust.id);
-      return res.status(400).json({ success: false, message: `Autenticação obrigatória falhou: ${authError?.message || 'Desconhecido'}` });
+      return res.status(400).json({ success: false, message: 'Cliente com este email já existe nesta organização' });
     }
 
-    // 3. Create profile in auth_users table
-    const { error: profileError } = await supabase.from('auth_users').insert({
-      id: authData.user.id,
-      email: cleanEmail,
-      name: newCust.name,
-      role: 'customer',
+    // Check if email exists in auth_users (another org)
+    const { data: existingInAuth } = await supabase
+      .from('auth_users')
+      .select('id')
+      .eq('email', cleanEmail)
+      .maybeSingle();
+
+    let userId: string;
+
+    if (existingInAuth) {
+      // Reuse user from another org (auth_users already exists, just use the ID)
+      userId = existingInAuth.id;
+    } else {
+      // Create new user
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: cleanEmail,
+        password: password,
+        email_confirm: true,
+        user_metadata: { display_name: newCust.name, role: 'customer', customer_id: newCust.id }
+      });
+
+      if (authError || !authData?.user) {
+        await supabase.from('customers').delete().eq('customer_code', newCust.id);
+        return res.status(400).json({ success: false, message: `Falha na autenticação: ${authError?.message || 'Desconhecido'}` });
+      }
+
+      userId = authData.user.id;
+
+      // Create auth_users entry
+      const { error: profileError } = await supabase.from('auth_users').insert({
+        id: userId,
+        email: cleanEmail,
+        name: newCust.name,
+        role: 'customer',
+        org_id: userOrgId,
+        created_at: now,
+        updated_at: now
+      });
+
+      if (profileError) {
+        return res.status(400).json({ success: false, message: `Falha ao criar perfil: ${profileError.message}` });
+      }
+    }
+
+    // 3. Add to user_orgs (for multi-tenancy support)
+    const { error: userOrgError } = await supabase.from('user_orgs').insert({
+      user_id: userId,
       org_id: userOrgId,
+      role: 'member',
       created_at: now,
       updated_at: now
     });
 
-    if (profileError) {
-      return res.status(400).json({ success: false, message: `Falha ao criar perfil: ${profileError.message}` });
+    if (userOrgError) {
+      console.error('Aviso: Falha ao adicionar usuário em user_orgs:', userOrgError.message);
     }
 
     res.status(201).json({ success: true, data: newCust, message: 'Cliente cadastrado com sucesso' });
@@ -1361,7 +1569,7 @@ app.post('/api/customers/sync/missing-auth', async (req, res) => {
         }
 
         // Create profile in auth_users
-        await supabase.from('auth_users').insert({
+        const { error: profileError } = await supabase.from('auth_users').insert({
           id: newAuth.user?.id,
           email: custEmail,
           name: customer.name,
@@ -1370,6 +1578,17 @@ app.post('/api/customers/sync/missing-auth', async (req, res) => {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
+
+        if (!profileError) {
+          // Add to user_orgs for multi-tenancy support
+          await supabase.from('user_orgs').insert({
+            user_id: newAuth.user?.id,
+            org_id: customer.org_id,
+            role: 'member',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        }
 
         synced++;
         console.log(`[SYNC] ✅ ${custEmail} sincronizado`);
@@ -1430,8 +1649,26 @@ app.delete('/api/customers/:id', async (req, res) => {
     }
 
     // 2. Delete from Supabase Auth and auth_users table
-    // Delete from auth_users table FIRST (easier, less risky)
+    // Get user ID first (to delete from user_orgs)
+    let userId: string | null = null;
     try {
+      const { data: authUser } = await supabase
+        .from('auth_users')
+        .select('id')
+        .eq('email', targetCust.email)
+        .single();
+
+      if (authUser?.id) {
+        userId = authUser.id;
+
+        // Delete from user_orgs first
+        await supabase
+          .from('user_orgs')
+          .delete()
+          .eq('user_id', userId);
+      }
+
+      // Delete from auth_users
       await supabase
         .from('auth_users')
         .delete()
@@ -1573,9 +1810,6 @@ app.get('/api/certificates', async (req, res) => {
 
     if (result.success && result.data) {
       const transformedData = result.data.map(transformCertificateFromDb);
-      console.log(`[GET /api/certificates] Retrieved ${transformedData.length} certs for org:`, userOrgId, {
-        certIds: transformedData.map(c => ({ id: c.id, title: c.title, isRoot: c.isRoot, orgId: c.orgId }))
-      });
       return res.json({ success: true, count: transformedData.length, data: transformedData });
     }
 

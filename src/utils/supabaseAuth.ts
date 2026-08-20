@@ -68,59 +68,34 @@ export const supabaseAuth = {
   // Sign in with email and password
   async signIn(email: string, password: string): Promise<AuthResponse> {
     try {
-      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
+      // Use backend /api/login for proper multi-tenancy support
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
       });
 
-      if (signInError) {
-        return { success: false, error: signInError.message };
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return { success: false, error: errorData.error || 'Falha ao autenticar' };
       }
 
-      if (!authData.user) {
-        return { success: false, error: 'Falha ao autenticar usuário' };
+      const data = await response.json();
+
+      if (!data.success || !data.user) {
+        return { success: false, error: data.error || 'Falha ao autenticar usuário' };
       }
 
-      const isRootEmail = email === ROOT_USER_EMAIL;
-
-      try {
-        const meRes = await fetchWithAuth('/api/auth/me', {
-          method: 'POST',
-          body: JSON.stringify({ email })
-        });
-
-        if (meRes.ok) {
-          const meData = await meRes.json();
-          if (meData.success && meData.data) {
-            return {
-              success: true,
-              user: {
-                id: authData.user.id,
-                name: meData.data.name || authData.user.user_metadata?.display_name || email,
-                email: authData.user.email || email,
-                role: meData.data.role,
-                isRoot: isRootEmail || meData.data.role === 'root',
-                orgId: meData.data.orgId,
-                createdAt: authData.user.created_at || new Date().toISOString()
-              }
-            };
-          }
-        }
-      } catch (e) {
+      // Add multi-tenancy support fields
+      const user = data.user as AppUser;
+      if (data.user.orgs) {
+        user.orgs = data.user.orgs;
+      }
+      if (data.user.requiresOrgSelection !== undefined) {
+        user.requiresOrgSelection = data.user.requiresOrgSelection;
       }
 
-      return {
-        success: true,
-        user: {
-          id: authData.user.id,
-          name: authData.user.user_metadata?.display_name || (isRootEmail ? 'André Luiz Colen (Administrador Raiz)' : email),
-          email: authData.user.email || email,
-          role: isRootEmail ? 'root' : 'customer',
-          isRoot: isRootEmail,
-          orgId: '550e8400-e29b-41d4-a716-446655440000',
-          createdAt: authData.user.created_at || new Date().toISOString()
-        }
-      };
+      return { success: true, user };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Erro desconhecido' };
     }

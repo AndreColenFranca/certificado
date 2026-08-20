@@ -293,11 +293,22 @@ export default function App() {
     // sessionStorage.setItem('aureum_theme', nextTheme); // Supabase only
   };
 
-  // Load certificates and customers from backend API on mount
+  // Persist current user to sessionStorage
   useEffect(() => {
-    fetchCertificates();
-    fetchCustomers();
-  }, []);
+    if (currentUser) {
+      try {
+        sessionStorage.setItem('aureum_logged_user', JSON.stringify(currentUser));
+      } catch (e) {}
+    }
+  }, [currentUser]);
+
+  // Load certificates and customers from backend API on mount (only if authenticated)
+  useEffect(() => {
+    if (currentUser) {
+      fetchCertificates();
+      fetchCustomers();
+    }
+  }, [currentUser]);
 
   // Salvar viewMode no localStorage
   useEffect(() => {

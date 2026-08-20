@@ -16,6 +16,7 @@ export const SupabaseLoginView = ({
   companyLogoUrl,
   theme = 'luxury-dark'
 }: SupabaseLoginViewProps) => {
+  console.log('[SupabaseLoginView] Renderizado');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -68,10 +69,13 @@ export const SupabaseLoginView = ({
           }
           result = await supabaseAuth.signUp(email, password, name);
         } else {
+          console.log('[DEBUG] Chamando signIn para:', email);
           result = await supabaseAuth.signIn(email, password);
+          console.log('[DEBUG] Resultado do signIn:', result);
         }
 
         if (result.success && result.user) {
+          console.log('[DEBUG] Login sucesso! Orgs:', result.user.orgs, 'requiresOrgSelection:', result.user.requiresOrgSelection);
           onLoginSuccess(result.user);
         } else {
           setErrorMsg(result.error || 'Erro na autenticação');

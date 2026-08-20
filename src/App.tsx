@@ -308,15 +308,18 @@ export default function App() {
     }
   }, [currentUser]);
 
-  // O nome da joalheria logada vai para a aba do navegador. Antes o titulo era
-  // fixo no index.html com o nome de uma joalheria so, entao quem entrava por
-  // outra via o nome errado na aba a sessao inteira. Deslogado nao ha joalheria
-  // nenhuma, e o titulo volta ao nome neutro do sistema.
+  // A aba do navegador mostra a joalheria em que se esta trabalhando, e so
+  // isso: quem tem duas abertas lado a lado precisa distinguir uma da outra de
+  // relance, e um sufixo igual nas duas atrapalharia justamente isso.
+  //
+  // Sem joalheria definida - login, ou a tela de escolha de quem e cliente de
+  // varias - o titulo e o nome do sistema. A escolha entra na condicao junto
+  // com o orgName porque nessa tela ainda nao ha loja escolhida, e anunciar
+  // uma delas na aba contradiria a pergunta que a tela esta fazendo.
   useEffect(() => {
-    document.title = currentUser?.orgName
-      ? `${currentUser.orgName} — Certificado de Joias`
-      : 'Certificado de Joias';
-  }, [currentUser?.orgName]);
+    const joalheria = currentUser?.requiresOrgSelection ? null : currentUser?.orgName;
+    document.title = joalheria || 'Certificado de Joias';
+  }, [currentUser?.orgName, currentUser?.requiresOrgSelection]);
 
   // Load certificates and customers from backend API on mount (only if authenticated)
   useEffect(() => {

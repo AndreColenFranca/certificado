@@ -16,7 +16,6 @@ export const SupabaseLoginView = ({
   companyLogoUrl,
   theme = 'luxury-dark'
 }: SupabaseLoginViewProps) => {
-  console.log('[SupabaseLoginView] Renderizado');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');

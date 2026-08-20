@@ -145,6 +145,7 @@ const ROTAS_PUBLICAS = new Set([
   '/api/auth/update-password',
   '/api/auth/register',
   '/api/auth/register-profile',
+  '/api/customer/select-org',
   // '/api/auth/me' saiu daqui: devolve perfil, entao exige login como o resto.
   '/api/auth/create-root-user',
   '/api/auth/set-root-profile',
@@ -893,6 +894,7 @@ app.post('/api/auth/login', async (req: any, res: any) => {
 app.post('/api/customer/select-org', async (req: any, res: any) => {
   try {
     const { userId, orgId } = req.body;
+    console.log('[CUSTOMER/SELECT-ORG] userId:', userId, 'orgId:', orgId);
 
     if (!userId || !orgId) {
       return res.status(400).json({ success: false, error: 'userId e orgId são obrigatórios' });

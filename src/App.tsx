@@ -22,6 +22,7 @@ import { SupabaseLoginView } from './components/SupabaseLoginView';
 import { UserManagementModal } from './components/UserManagementModal';
 import { CustomerPortalView } from './components/CustomerPortalView';
 import { OrganizationsView } from './components/OrganizationsView';
+import { OrgSelectView } from './components/OrgSelectView';
 import { AttributesView } from './components/AttributesView';
 import { supabaseAuth } from './utils/supabaseAuth';
 import { extractCertIdFromInput, findCertificateByQuery, findCertificatesByQuery } from './utils/certUtils';
@@ -998,6 +999,23 @@ export default function App() {
     return (
       <SupabaseLoginView
         onLoginSuccess={handleLoginSuccess}
+        companyName={companyName}
+        companyLogoUrl={companyLogoUrl}
+        theme={theme}
+      />
+    );
+  }
+
+  // If customer has multiple orgs, show selector first
+  if (currentUser.requiresOrgSelection) {
+    return (
+      <OrgSelectView
+        user={currentUser}
+        onOrgSelected={handleLoginSuccess}
+        onBack={() => {
+          setCurrentUser(null);
+          sessionStorage.removeItem('aureum_logged_user');
+        }}
         companyName={companyName}
         companyLogoUrl={companyLogoUrl}
         theme={theme}

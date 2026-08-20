@@ -115,7 +115,10 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         c => c.id !== initialCustomer?.id && String(c.cpf) === String(cpf)
       );
       if (duplicateCpf) {
-        newErrors.cpf = `CPF já cadastrado!`;
+        // "nesta joalheria" nao e enfeite: a mesma pessoa pode ser cliente de
+        // varias, e a lista conferida aqui so tem a joalheria logada. Sem isso
+        // a mensagem parece dizer que o CPF esta bloqueado em todo lugar.
+        newErrors.cpf = 'CPF já cadastrado nesta joalheria.';
       }
     }
 
@@ -130,7 +133,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         c => c.id !== initialCustomer?.id && c.email.trim().toLowerCase() === cleanEmail
       );
       if (duplicateEmail) {
-        newErrors.email = `E-mail já Cadastrado!`;
+        newErrors.email = 'E-mail já cadastrado nesta joalheria.';
       }
     }
 

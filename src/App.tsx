@@ -308,6 +308,16 @@ export default function App() {
     }
   }, [currentUser]);
 
+  // O nome da joalheria logada vai para a aba do navegador. Antes o titulo era
+  // fixo no index.html com o nome de uma joalheria so, entao quem entrava por
+  // outra via o nome errado na aba a sessao inteira. Deslogado nao ha joalheria
+  // nenhuma, e o titulo volta ao nome neutro do sistema.
+  useEffect(() => {
+    document.title = currentUser?.orgName
+      ? `${currentUser.orgName} — Certificado de Joias`
+      : 'Certificado de Joias';
+  }, [currentUser?.orgName]);
+
   // Load certificates and customers from backend API on mount (only if authenticated)
   useEffect(() => {
     if (currentUser) {

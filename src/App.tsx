@@ -500,19 +500,21 @@ export default function App() {
   const handleConfirmDeleteCustomer = async (id: string) => {
     const targetCust = customers.find(c => c.id === id);
     const custCpf = String(targetCust?.cpf || '').trim();
+    const custEmail = String(targetCust?.email || '').trim().toLowerCase();
 
     // Quais certificados somem da tela na hora. Quem de fato os apaga e o
     // servidor, na mesma chamada que remove o cliente; isto aqui e so para a
     // lista nao ficar mostrando peca de dono que acabou de sair.
     //
-    // Casa pelos mesmos dois identificadores que o servidor usa - id e CPF - e
-    // nao por nome. Antes o nome entrava tambem, entao um homonimo sumia da
-    // tela sem ter sido apagado e voltava no proximo carregamento.
+    // Casa pelos mesmos tres identificadores que o servidor usa - id, CPF e
+    // e-mail - e nao por nome. Antes o nome entrava tambem, entao um homonimo
+    // sumia da tela sem ter sido apagado e voltava no proximo carregamento.
     const linkedCertIds = new Set(
       certificates
         .filter(c =>
           (c.ownerId && c.ownerId === id) ||
-          (custCpf && typeof c.ownerCpf === 'string' && c.ownerCpf.trim() === custCpf)
+          (custCpf && typeof c.ownerCpf === 'string' && c.ownerCpf.trim() === custCpf) ||
+          (custEmail && typeof c.ownerEmail === 'string' && c.ownerEmail.trim().toLowerCase() === custEmail)
         )
         .map(c => c.id.toUpperCase())
     );
@@ -1465,12 +1467,14 @@ export default function App() {
         customerToDelete={customerToDelete}
         onConfirmDelete={handleConfirmDeleteCustomer}
         piecesCount={
-          // Mesmos identificadores que o servidor usa para apagar - id e CPF -
-          // para o numero anunciado aqui ser o numero que realmente sai.
+          // Mesmos identificadores que o servidor usa para apagar - id, CPF e
+          // e-mail - para o numero anunciado aqui ser o numero que sai.
           customerToDelete
             ? certificates.filter(c =>
                 (c.ownerId && c.ownerId === customerToDelete.id) ||
-                (c.ownerCpf && c.ownerCpf === customerToDelete.cpf)
+                (c.ownerCpf && c.ownerCpf === customerToDelete.cpf) ||
+                (c.ownerEmail && customerToDelete.email &&
+                  c.ownerEmail.trim().toLowerCase() === customerToDelete.email.trim().toLowerCase())
               ).length
             : 0
         }

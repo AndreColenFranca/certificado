@@ -1769,10 +1769,18 @@ app.delete('/api/customers/:id', async (req, res) => {
     // Casa por `owner_id` e por `owner_cpf`, os dois identificadores estaveis.
     // Por nome nao: homonimo apagaria certificado de outra pessoa, e nome nao
     // e credencial de coisa nenhuma aqui.
+    //
+    // O e-mail entra junto porque o certificado guarda um retrato do dono na
+    // hora da emissao, e nem todo caminho de emissao preenche `owner_id` - ha
+    // certificados no banco com ele nulo. O CPF sozinho tambem nao basta: quem
+    // recadastra a mesma pessoa pode digitar outro CPF, e ai o certificado
+    // antigo fica sem nada que o ligue ao cliente. O e-mail e o identificador
+    // que nao muda: e a credencial de login, unica por joalheria.
     const cpfCliente = String(targetCust.cpf || '').trim();
     const alvos = [
       { coluna: 'owner_id', valor: targetCust.id },
       ...(cpfCliente ? [{ coluna: 'owner_cpf', valor: cpfCliente }] : []),
+      ...(emailCliente ? [{ coluna: 'owner_email', valor: emailCliente }] : []),
     ];
 
     let passaportesRemovidos = 0;

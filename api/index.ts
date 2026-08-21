@@ -1752,7 +1752,49 @@ app.delete('/api/customers/:id', async (req, res) => {
       // Silent fail
     }
 
-    // 3. Delete from customers table using UUID (double-check org_id for security)
+    // 3. Os passaportes emitidos para este cliente saem junto.
+    //
+    // Ate agora quem removia os certificados da tela era so o navegador: o
+    // front tirava do estado local e nada era apagado no banco, entao eles
+    // reapareciam no proximo carregamento. Ficou um certificado orfao na
+    // Vivara desse jeito.
+    //
+    // So passaporte (`is_root = false`). A joia raiz e o catalogo da
+    // joalheria, nao do cliente - nenhuma tem dono - e apaga-la levaria junto
+    // os passaportes de outros clientes emitidos para a mesma peca.
+    //
+    // O `org_id` entra em toda condicao: o mesmo cliente compra em varias
+    // joalherias, e sair de uma nao pode apagar o que ele tem na outra.
+    //
+    // Casa por `owner_id` e por `owner_cpf`, os dois identificadores estaveis.
+    // Por nome nao: homonimo apagaria certificado de outra pessoa, e nome nao
+    // e credencial de coisa nenhuma aqui.
+    const cpfCliente = String(targetCust.cpf || '').trim();
+    const alvos = [
+      { coluna: 'owner_id', valor: targetCust.id },
+      ...(cpfCliente ? [{ coluna: 'owner_cpf', valor: cpfCliente }] : []),
+    ];
+
+    let passaportesRemovidos = 0;
+    for (const { coluna, valor } of alvos) {
+      const { data: apagados, error: erroCert } = await supabase
+        .from('jewelry_certificates')
+        .delete()
+        .eq('org_id', userOrgId)
+        .eq('is_root', false)
+        .eq(coluna, valor)
+        .select('id');
+
+      if (erroCert) {
+        return res.status(400).json({
+          success: false,
+          message: `Falha ao remover os certificados do cliente: ${erroCert.message}`
+        });
+      }
+      passaportesRemovidos += apagados?.length || 0;
+    }
+
+    // 4. Delete from customers table using UUID (double-check org_id for security)
     const { error: deleteError } = await supabase
       .from('customers')
       .delete()
@@ -1763,7 +1805,11 @@ app.delete('/api/customers/:id', async (req, res) => {
       return res.status(400).json({ success: false, message: `Falha ao deletar cliente: ${deleteError.message}` });
     }
 
-    res.json({ success: true, message: 'Cliente removido com sucesso (autenticação e dados)' });
+    res.json({
+      success: true,
+      certificadosRemovidos: passaportesRemovidos,
+      message: `Cliente removido com sucesso, junto com ${passaportesRemovidos} certificado(s).`
+    });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message || 'Erro ao remover cliente' });
   }

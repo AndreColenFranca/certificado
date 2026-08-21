@@ -500,15 +500,19 @@ export default function App() {
   const handleConfirmDeleteCustomer = async (id: string) => {
     const targetCust = customers.find(c => c.id === id);
     const custCpf = String(targetCust?.cpf || '').trim();
-    const custName = targetCust?.name?.trim();
 
-    // Identify linked certificates
+    // Quais certificados somem da tela na hora. Quem de fato os apaga e o
+    // servidor, na mesma chamada que remove o cliente; isto aqui e so para a
+    // lista nao ficar mostrando peca de dono que acabou de sair.
+    //
+    // Casa pelos mesmos dois identificadores que o servidor usa - id e CPF - e
+    // nao por nome. Antes o nome entrava tambem, entao um homonimo sumia da
+    // tela sem ter sido apagado e voltava no proximo carregamento.
     const linkedCertIds = new Set(
       certificates
         .filter(c =>
           (c.ownerId && c.ownerId === id) ||
-          (custCpf && typeof c.ownerCpf === 'string' && c.ownerCpf.trim() === custCpf) ||
-          (custName && typeof c.currentOwnerName === 'string' && c.currentOwnerName.trim() === custName)
+          (custCpf && typeof c.ownerCpf === 'string' && c.ownerCpf.trim() === custCpf)
         )
         .map(c => c.id.toUpperCase())
     );
@@ -548,8 +552,13 @@ export default function App() {
     // Manter na tela de clientes após deletar
     setViewMode('customers');
 
-    // Invalidate cache and refetch
-    setTimeout(() => fetchCustomers(true), 500);
+    // Recarrega os dois: o servidor apaga cliente e certificados na mesma
+    // chamada, e e ele quem diz o que sobrou. Sem recarregar os certificados,
+    // a tela ficaria acreditando na filtragem local ate o proximo F5.
+    setTimeout(() => {
+      fetchCustomers(true);
+      fetchCertificates(true);
+    }, 500);
   };
 
   // Handle Mode Change
@@ -1456,8 +1465,13 @@ export default function App() {
         customerToDelete={customerToDelete}
         onConfirmDelete={handleConfirmDeleteCustomer}
         piecesCount={
-          customerToDelete 
-            ? certificates.filter(c => c.ownerCpf === customerToDelete.cpf || c.currentOwnerName === customerToDelete.name).length 
+          // Mesmos identificadores que o servidor usa para apagar - id e CPF -
+          // para o numero anunciado aqui ser o numero que realmente sai.
+          customerToDelete
+            ? certificates.filter(c =>
+                (c.ownerId && c.ownerId === customerToDelete.id) ||
+                (c.ownerCpf && c.ownerCpf === customerToDelete.cpf)
+              ).length
             : 0
         }
       />

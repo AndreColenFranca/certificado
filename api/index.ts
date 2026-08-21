@@ -1759,48 +1759,51 @@ app.delete('/api/customers/:id', async (req, res) => {
     // reapareciam no proximo carregamento. Ficou um certificado orfao na
     // Vivara desse jeito.
     //
-    // So passaporte (`is_root = false`). A joia raiz e o catalogo da
-    // joalheria, nao do cliente - nenhuma tem dono - e apaga-la levaria junto
-    // os passaportes de outros clientes emitidos para a mesma peca.
+    // O certificado guarda um retrato do dono na hora da emissao, em tres
+    // campos. Basta um casar:
     //
-    // O `org_id` entra em toda condicao: o mesmo cliente compra em varias
-    // joalherias, e sair de uma nao pode apagar o que ele tem na outra.
+    //   owner_email  o que nao muda - e a credencial de login, e a rota de
+    //                edicao recusa altera-lo. Hoje e o unico preenchido em
+    //                todos os certificados com dono.
+    //   owner_cpf    sozinho nao basta: quem recadastra a mesma pessoa pode
+    //                digitar outro CPF, e o certificado antigo fica solto.
+    //   owner_id     o mais direto, mas nem todo registro tem - ha certificados
+    //                antigos no banco com ele nulo.
     //
-    // Casa por `owner_id` e por `owner_cpf`, os dois identificadores estaveis.
     // Por nome nao: homonimo apagaria certificado de outra pessoa, e nome nao
     // e credencial de coisa nenhuma aqui.
     //
-    // O e-mail entra junto porque o certificado guarda um retrato do dono na
-    // hora da emissao, e nem todo caminho de emissao preenche `owner_id` - ha
-    // certificados no banco com ele nulo. O CPF sozinho tambem nao basta: quem
-    // recadastra a mesma pessoa pode digitar outro CPF, e ai o certificado
-    // antigo fica sem nada que o ligue ao cliente. O e-mail e o identificador
-    // que nao muda: e a credencial de login, unica por joalheria.
+    // Um `.or()` so, e nao tres DELETE em sequencia: mesma condicao, uma ida
+    // ao banco. Os valores vao entre aspas para uma virgula dentro deles nao
+    // ser lida como separador de condicao.
     const cpfCliente = String(targetCust.cpf || '').trim();
-    const alvos = [
-      { coluna: 'owner_id', valor: targetCust.id },
-      ...(cpfCliente ? [{ coluna: 'owner_cpf', valor: cpfCliente }] : []),
-      ...(emailCliente ? [{ coluna: 'owner_email', valor: emailCliente }] : []),
+    const condicoes = [
+      `owner_id.eq."${targetCust.id}"`,
+      ...(cpfCliente ? [`owner_cpf.eq."${cpfCliente}"`] : []),
+      ...(emailCliente ? [`owner_email.eq."${emailCliente}"`] : []),
     ];
 
-    let passaportesRemovidos = 0;
-    for (const { coluna, valor } of alvos) {
-      const { data: apagados, error: erroCert } = await supabase
-        .from('jewelry_certificates')
-        .delete()
-        .eq('org_id', userOrgId)
-        .eq('is_root', false)
-        .eq(coluna, valor)
-        .select('id');
+    const { data: apagados, error: erroCert } = await supabase
+      .from('jewelry_certificates')
+      .delete()
+      // O mesmo cliente compra em varias joalherias: sair de uma nao pode
+      // apagar o que ele tem na outra.
+      .eq('org_id', userOrgId)
+      // So passaporte. A joia raiz e o catalogo da joalheria, nao do cliente -
+      // nenhuma tem dono - e apaga-la levaria junto os passaportes de outros
+      // clientes emitidos para a mesma peca.
+      .eq('is_root', false)
+      .or(condicoes.join(','))
+      .select('id');
 
-      if (erroCert) {
-        return res.status(400).json({
-          success: false,
-          message: `Falha ao remover os certificados do cliente: ${erroCert.message}`
-        });
-      }
-      passaportesRemovidos += apagados?.length || 0;
+    if (erroCert) {
+      return res.status(400).json({
+        success: false,
+        message: `Falha ao remover os certificados do cliente: ${erroCert.message}`
+      });
     }
+
+    const passaportesRemovidos = apagados?.length || 0;
 
     // 4. Delete from customers table using UUID (double-check org_id for security)
     const { error: deleteError } = await supabase

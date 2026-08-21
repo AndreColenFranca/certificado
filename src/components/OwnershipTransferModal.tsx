@@ -114,7 +114,10 @@ export const OwnershipTransferModal: React.FC<OwnershipTransferModalProps> = ({
                   onChange={handleCustomerSelect}
                   className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 focus:outline-none focus:border-amber-500 text-xs"
                 >
-                  <option value="">-- Selecionar Cliente Cadastrado (ou digitar manualmente abaixo) --</option>
+                  {/* Os campos abaixo sao somente leitura e so se preenchem
+                      por esta selecao, entao o texto nao pode oferecer
+                      digitacao manual - a tela nao faz isso. */}
+                  <option value="">-- Selecione o novo proprietário --</option>
                   {customers.map(c => (
                     <option key={c.id} value={c.id}>
                       {c.name} - CPF: {c.cpf} ({c.email})

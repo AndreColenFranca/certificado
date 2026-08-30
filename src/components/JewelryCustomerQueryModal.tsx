@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { formatImageUrl } from '../utils/imageUtils';
 import { isRootCert, isChildCert, getChildCertificatesForParent } from '../utils/certHierarchy';
+import { certificateBelongsTo } from '../utils/customerUtils';
 
 interface JewelryCustomerQueryModalProps {
   isOpen: boolean;
@@ -251,11 +252,7 @@ export const JewelryCustomerQueryModal: React.FC<JewelryCustomerQueryModalProps>
                 <div className="space-y-3">
                   {childCertificates.map((child) => {
                     // Find customer object if available
-                    const matchedCustomer = customers.find(c =>
-                      (child.ownerId && c.id === child.ownerId) ||
-                      (child.ownerCpf && c.cpf && String(c.cpf).replace(/\D/g, '') === String(child.ownerCpf).replace(/\D/g, '')) ||
-                      (child.currentOwnerName && c.name && c.name.trim().toLowerCase() === child.currentOwnerName.trim().toLowerCase())
-                    );
+                    const matchedCustomer = customers.find(c => certificateBelongsTo(child, c));
 
                     return (
                       <div 

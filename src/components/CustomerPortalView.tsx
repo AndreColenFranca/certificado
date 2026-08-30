@@ -15,7 +15,7 @@ import {
   UserCheck
 } from 'lucide-react';
 import { formatImageUrl } from '../utils/imageUtils';
-import { formatUserGreeting } from '../utils/customerUtils';
+import { formatUserGreeting, certificateBelongsTo, certificateHasOwnerIdentity, maintenanceHistoryBelongsTo } from '../utils/customerUtils';
 
 interface CustomerPortalViewProps {
   currentUser: AppUser;
@@ -39,43 +39,25 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
   // Filter certificates that belong to this customer
   const myCertificates = certificates.filter(cert => {
     if (!currentUser) return false;
-    const userEmail = typeof currentUser.email === 'string' ? currentUser.email.toLowerCase().trim() : '';
-    const userCpf = typeof currentUser.cpf === 'string' ? currentUser.cpf.replace(/\D/g, '') : '';
-    const custId = currentUser.customerId;
-    const userName = typeof currentUser.name === 'string' ? currentUser.name.toLowerCase().trim() : '';
 
-    const certOwnerEmail = typeof cert.ownerEmail === 'string' ? cert.ownerEmail.toLowerCase().trim() : '';
-    const certOwnerCpf = typeof cert.ownerCpf === 'string' ? cert.ownerCpf.replace(/\D/g, '') : '';
-    const certOwnerId = cert.ownerId;
-    const certOwnerName = typeof cert.currentOwnerName === 'string' ? cert.currentOwnerName.toLowerCase().trim() : '';
+    const eu = {
+      id: currentUser.customerId,
+      name: currentUser.name,
+      cpf: currentUser.cpf,
+      email: currentUser.email
+    };
 
-    // Direct match
-    if (
-      (custId && certOwnerId === custId) ||
-      (userEmail && certOwnerEmail === userEmail) ||
-      (userCpf && certOwnerCpf && certOwnerCpf === userCpf) ||
-      (userName && certOwnerName && certOwnerName === userName)
-    ) {
-      return true;
+    // Se o certificado diz quem e o dono, e ele quem decide - e so ele.
+    if (certificateHasOwnerIdentity(cert)) {
+      return certificateBelongsTo(cert, eu);
     }
 
-    // Maintenance history match
-    if (cert.maintenanceHistory && cert.maintenanceHistory.length > 0) {
-      return cert.maintenanceHistory.some(m => {
-        const mEmail = typeof m.customerEmail === 'string' ? m.customerEmail.toLowerCase().trim() : '';
-        const mCpf = typeof m.customerCpf === 'string' ? m.customerCpf.replace(/\D/g, '') : '';
-        const mId = m.customerId;
-        const mName = typeof m.customerName === 'string' ? m.customerName.toLowerCase().trim() : '';
-        return (
-          (custId && mId === custId) ||
-          (userEmail && mEmail === userEmail) ||
-          (userCpf && mCpf && mCpf === userCpf) ||
-          (userName && mName && mName === userName)
-        );
-      });
-    }
-
-    return false;
+    // Certificado antigo, sem nenhum campo de dono preenchido: so ai o
+    // historico serve de pista de quem e o titular. Historico e dono
+    // PASSADO - o registro de emissao guarda o CPF e o e-mail do primeiro
+    // titular para sempre, e usa-lo como prova de posse devolvia a peca a
+    // quem ja tinha transferido.
+    return maintenanceHistoryBelongsTo(cert.maintenanceHistory, eu);
   });
 
   // Apply search query filter among customer's pieces

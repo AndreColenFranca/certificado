@@ -766,9 +766,14 @@ export default function App() {
     const updatedCert: JewelryCertificate = {
       ...target,
       currentOwnerName: newOwnerName,
-      ownerCpf: ownerCpf || target.ownerCpf,
-      ownerEmail: ownerEmail || target.ownerEmail,
-      ownerId: ownerId || target.ownerId,
+      // Sem o "|| target.…": o dono novo substitui o antigo em bloco. Com o
+      // fallback, transferir para um cliente sem CPF ou sem e-mail cadastrado
+      // deixava o dado de quem cedeu no certificado, e a peca continuava
+      // casando com os dois. String vazia e proposital: undefined some no
+      // JSON.stringify e o servidor manteria o valor antigo.
+      ownerCpf: ownerCpf || '',
+      ownerEmail: ownerEmail || '',
+      ownerId: ownerId || '',
       maintenanceHistory: [transferRecord, ...target.maintenanceHistory]
     };
 

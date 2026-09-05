@@ -20,9 +20,21 @@
  *
  * SE O DOCKER ESTIVER FECHADO, a etapa 1 cai para a funcao
  * public.estrutura_do_banco() (fonte em sql/criar_funcao_estrutura.sql), que
- * roda so com a SERVICE_ROLE_KEY. Ela enxerga tabelas e colunas, e mais nada:
- * o backup continua util para consulta, mas nao serve para restaurar sozinho.
- * O aviso aparece na tela e no resumo.
+ * roda so com a SERVICE_ROLE_KEY. Ela restaura, sim: medido neste banco em
+ * 2026-09-05, os dois caminhos dao os mesmos 16 tabelas, 21 politicas, 6
+ * triggers, 16 tabelas com RLS ligado e as mesmas 5 FKs, 16 PKs e 13 CHECKs.
+ *
+ * O texto que ficou aqui ate 2026-09-05 dizia que a funcao "enxerga tabelas e
+ * colunas, e mais nada" e que o arquivo "nao serve para restaurar sozinho".
+ * Era falso, e do tipo que faz estrago: quem lesse isso com o Docker fechado
+ * jogaria fora um backup bom e adiaria a copia achando que nao tinha uma.
+ *
+ * O QUE A FUNCAO PERDE DE VERDADE, neste banco: os COMMENT ON (havia 1). E,
+ * em geral, a clausula `TO <papel>` das politicas - `FOR SELECT TO
+ * authenticated` voltaria como `FOR SELECT`, que vale para todos os papeis.
+ * Aqui isso nao chega a morder, porque nenhuma das 21 politicas usa `TO`; no
+ * backup do encurtador morde. O pg_dump segue sendo o caminho preferido por
+ * ser um retrato exato, e nao porque o outro seja inutil.
  *
  * O QUE ESTE BACKUP NAO COBRE: o schema auth do Supabase, onde ficam as
  * credenciais. A API de administracao devolve emails e papeis, nunca os hashes
@@ -75,6 +87,20 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 // 1/3  ESTRUTURA
 // ---------------------------------------------------------------------------
 
+/**
+ * Conta o que tem dentro de um arquivo de estrutura.
+ *
+ * Serve para os dois caminhos - pg_dump e funcao no banco - de proposito: e
+ * comparando os dois resumos, lado a lado, que da para ver o que o plano B
+ * deixou de fora neste banco, em vez de confiar num aviso escrito de memoria.
+ */
+function contarObjetos(sql) {
+  const conta = p => (sql.match(new RegExp(`^${p}`, 'gmi')) || []).length;
+  return `${conta('create table')} tabela(s), ${conta('create policy')} politica(s), ` +
+         `${conta('create trigger')} trigger(s), ${conta('create( or replace)? function')} funcao(oes), ` +
+         `${conta('create( unique)? index')} indice(s)`;
+}
+
 /** O identificador do projeto vive dentro da propria URL do Supabase. */
 function refDoProjeto() {
   const m = String(SUPABASE_URL || '').match(/https:\/\/([a-z0-9-]+)\.supabase\.co/i);
@@ -123,16 +149,15 @@ function estruturaPorPgDump(arquivo) {
 
   writeFileSync(arquivo, sql, 'utf8');
 
-  const conta = p => (sql.match(new RegExp(`^${p}`, 'gm')) || []).length;
-  return {
-    ok: true,
-    resumo: `${conta('CREATE TABLE')} tabela(s), ${conta('CREATE POLICY')} politica(s), ` +
-            `${conta('CREATE TRIGGER')} trigger(s), ${conta('CREATE FUNCTION')} funcao(oes), ` +
-            `${conta('CREATE INDEX')} indice(s)`,
-  };
+  return { ok: true, resumo: contarObjetos(sql) };
 }
 
-/** Plano B, sem Docker: a funcao no banco. So enxerga tabelas e colunas. */
+/**
+ * Plano B, sem Docker: a funcao no banco.
+ *
+ * Traz tabelas, constraints, indices, RLS, politicas, triggers, funcoes e
+ * grants. Ver o cabecalho do arquivo para o que ela perde.
+ */
 async function estruturaPorFuncao(arquivo) {
   const { data: ddl, error } = await supabase.rpc('estrutura_do_banco');
 
@@ -144,8 +169,7 @@ async function estruturaPorFuncao(arquivo) {
   }
 
   writeFileSync(arquivo, ddl, 'utf8');
-  const tabelas = (ddl.match(/^-- Tabela: /gm) || []).length;
-  return { ok: true, resumo: `${tabelas} tabela(s), so nomes e colunas` };
+  return { ok: true, resumo: contarObjetos(ddl) };
 }
 
 async function exportarEstrutura() {
@@ -161,7 +185,7 @@ async function exportarEstrutura() {
   }
 
   console.log(`pg_dump nao rodou: ${viaPgDump.motivo}`);
-  console.log('Caindo para a funcao no banco (abra o Docker Desktop para o schema completo).\n');
+  console.log('Caindo para a funcao no banco - que traz quase tudo; ver o aviso no fim.\n');
 
   const arquivoSimples = join(pastaDeBackup(), `estrutura_${stamp()}.sql`);
   const viaFuncao = await estruturaPorFuncao(arquivoSimples);
@@ -271,16 +295,20 @@ const dadosOk = await exportarDados();
 const fotosOk = exportarFotos();
 
 console.log('\n=== RESUMO ===');
-console.log(`Estrutura: ${estrutura.ok ? (estrutura.completa ? 'OK (schema completo)' : 'OK (so tabelas e colunas)') : 'FALHOU'}`);
+console.log(`Estrutura: ${estrutura.ok ? (estrutura.completa ? 'OK (pg_dump, fiel)' : 'OK (funcao no banco, ver aviso)') : 'FALHOU'}`);
 console.log(`Dados:     ${dadosOk ? 'OK' : 'FALHOU'}`);
 console.log(`Fotos:     ${fotosOk ? 'OK' : 'FALHOU'}`);
 
-// Estrutura incompleta nao e falha do backup, mas muda o que ele serve para
-// fazer: quem tentar restaurar com esse arquivo sobe as tabelas sem RLS.
+// A estrutura pela funcao restaura, sim - o aviso e sobre diferencas
+// especificas, nao sobre o arquivo ser inutil. Dizer "saiu sem politicas de
+// seguranca" quando as 21 estao la dentro so ensina a ignorar o aviso.
 if (estrutura.ok && !estrutura.completa) {
-  console.log('\nAtencao: a estrutura saiu sem politicas de seguranca, triggers');
-  console.log('nem indices. Para restaurar de verdade, abra o Docker Desktop e');
-  console.log('rode de novo.');
+  console.log('\nAtencao: a estrutura veio da funcao no banco, nao do pg_dump. Ela traz');
+  console.log('tabelas, constraints, indices, RLS, politicas, triggers, funcoes e grants,');
+  console.log('e restaura. O que ela perde sao os COMMENT ON e, se alguma politica um dia');
+  console.log('usar `TO <papel>`, essa clausula - a politica voltaria valendo para todos');
+  console.log('os papeis em vez de so para um.');
+  console.log('\nPara um retrato exato, abra o Docker Desktop e rode de novo.');
 }
 
 process.exit(estrutura.ok && dadosOk && fotosOk ? 0 : 1);

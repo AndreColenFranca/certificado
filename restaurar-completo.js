@@ -214,10 +214,15 @@ function backupMaisRecente(prefixo) {
 /**
  * Qual arquivo de estrutura usar.
  *
- * O pgdump_schema_* ganha do estrutura_* sempre que existir: o segundo vem da
- * funcao no banco e so tem tabelas e colunas. Restaurar com ele deixa o
- * projeto novo sem politicas de seguranca - de pe, mas com as tabelas
- * destrancadas e sem separacao entre organizacoes.
+ * O pgdump_schema_* ganha do estrutura_* sempre que existir, por ser um
+ * retrato exato. Mas o segundo nao e o consolo que este comentario dizia ate
+ * 2026-09-05 ("so tem tabelas e colunas", "deixa o projeto novo sem politicas
+ * de seguranca"): comparados neste banco, os dois trazem as mesmas 16
+ * tabelas, 21 politicas, 6 triggers, 16 RLS e os mesmos FK/PK/CHECK. O
+ * estrutura_* restaura, e as organizacoes continuam separadas.
+ *
+ * O que ele perde: os COMMENT ON, e a clausula `TO <papel>` de qualquer
+ * politica que venha a usa-la (hoje nenhuma usa).
  */
 function arquivoDeEstrutura() {
   try {
@@ -441,14 +446,15 @@ async function restaurar() {
 
   console.log('=== RESTAURACAO ===\n');
   console.log(`Dados     : ${arquivoDados}`);
-  console.log(`Estrutura : ${estrutura.caminho}${estrutura.completo ? '' : '   (so tabelas e colunas)'}`);
+  console.log(`Estrutura : ${estrutura.caminho}${estrutura.completo ? '' : '   (funcao no banco, ver aviso)'}`);
   console.log(`Fotos     : ${pastaFotos || 'nenhuma pasta fotos_* encontrada'}`);
 
   if (!estrutura.completo) {
-    console.log('\nAviso: esse arquivo de estrutura veio da funcao no banco, entao nao');
-    console.log('traz politicas de seguranca, triggers nem indices. O projeto restaurado');
-    console.log('subiria com as tabelas destrancadas. Rode `npm run backup` com o Docker');
-    console.log('aberto para gerar um pgdump_schema_*.sql antes de restaurar de verdade.');
+    console.log('\nAviso: esse arquivo de estrutura veio da funcao no banco, nao do pg_dump.');
+    console.log('Ele restaura - traz tabelas, constraints, indices, RLS, politicas, triggers,');
+    console.log('funcoes e grants -, mas perde os COMMENT ON e a clausula `TO <papel>` de');
+    console.log('qualquer politica que use uma. Para um retrato exato, rode `npm run backup`');
+    console.log('com o Docker aberto e restaure a partir do pgdump_schema_*.sql que sair.');
   }
 
   // A leitura vem antes de qualquer conexao: conferir se o backup esta

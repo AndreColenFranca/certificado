@@ -12,6 +12,7 @@
     "backup": "node backup-completo.js",
     "restaurar": "node restaurar-completo.js",
     "migrar-imagens": "node migrar-imagens-storage.js",
+    "migrar-logos": "node migrar-logos-storage.js",
     "faxina-fotos": "node faxina-fotos.js",
     "backup-fotos": "node backup-fotos.js",
     "restaurar-fotos": "node restaurar-fotos.js"

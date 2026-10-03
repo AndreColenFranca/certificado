@@ -7,7 +7,9 @@ interface CompanyLogoModalProps {
   onClose: () => void;
   companyName: string;
   companyLogoUrl: string;
-  onSaveCompanyConfig: (name: string, logoUrl: string) => void;
+  // Devolve Promise: o salvamento sobe o logotipo para o Storage, e o modal
+  // espera o resultado antes de anunciar sucesso.
+  onSaveCompanyConfig: (name: string, logoUrl: string) => void | Promise<void>;
 }
 
 
@@ -70,13 +72,18 @@ export const CompanyLogoModal: React.FC<CompanyLogoModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const [name, setName] = useState(companyName || 'Estilo Raro Joias');
+  // Sem 'Estilo Raro Joias' como reserva: num aplicativo com varias joalherias,
+  // uma marca chumbada aqui estampa a loja errada em quem abrir a tela sem nome
+  // carregado. Era o mesmo defeito do formulario de certificado.
+  const [name, setName] = useState(companyName || '');
   const [logoUrl, setLogoUrl] = useState(companyLogoUrl || '');
   const [inputUrl, setInputUrl] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [imgLoadError, setImgLoadError] = useState(false);
   const [previewBg, setPreviewBg] = useState<'white' | 'dark'>('white');
   const [successMsg, setSuccessMsg] = useState(false);
+  const [erroMsg, setErroMsg] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Handle local image file upload with compression
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,16 +110,32 @@ export const CompanyLogoModal: React.FC<CompanyLogoModalProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  /**
+   * Espera o salvamento terminar antes de anunciar sucesso.
+   *
+   * Antes isto era sincrono: chamava `onSaveCompanyConfig`, mostrava "pronto"
+   * e fechava em 1,5s sem saber o resultado. Agora o logotipo sobe para o
+   * Storage durante o salvamento, e um envio que falha precisa aparecer - com
+   * a janela aberta, para nao perder a imagem escolhida.
+   */
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || isSaving) return;
 
-    onSaveCompanyConfig(name.trim(), logoUrl);
-    setSuccessMsg(true);
-    setTimeout(() => {
-      setSuccessMsg(false);
-      onClose();
-    }, 1500);
+    setErroMsg('');
+    setIsSaving(true);
+    try {
+      await onSaveCompanyConfig(name.trim(), logoUrl);
+      setSuccessMsg(true);
+      setTimeout(() => {
+        setSuccessMsg(false);
+        onClose();
+      }, 1500);
+    } catch (err: any) {
+      setErroMsg(err?.message || 'Não consegui salvar o logotipo. Tente de novo.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -216,7 +239,10 @@ export const CompanyLogoModal: React.FC<CompanyLogoModalProps> = ({
 
             {/* Option A: Upload File */}
             <div className="space-y-2">
-              <label className="block text-zinc-300 font-medium">1. Enviar Arquivo de Logotipo (PNG, JPG, SVG)</label>
+              {/* SVG saiu do texto: o envio recusa, so aceita JPEG, PNG e WEBP.
+                  Oferecer um formato que o servidor devolve com erro e pior que
+                  nao oferecer. */}
+              <label className="block text-zinc-300 font-medium">1. Enviar Arquivo de Logotipo (PNG, JPG ou WEBP, até 1 MB)</label>
               <label className="flex items-center justify-center gap-3 p-4 bg-zinc-900/80 border-2 border-dashed border-amber-500/40 rounded-2xl cursor-pointer hover:border-amber-400 hover:bg-zinc-900 transition-all text-amber-300">
                 {isProcessing ? (
                   <div className="flex items-center gap-2">
@@ -231,7 +257,7 @@ export const CompanyLogoModal: React.FC<CompanyLogoModalProps> = ({
                 )}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   onChange={handleFileUpload}
                   disabled={isProcessing}
                   className="hidden"
@@ -261,13 +287,19 @@ export const CompanyLogoModal: React.FC<CompanyLogoModalProps> = ({
             </div>
 
 
+            {erroMsg && (
+              <p className="text-xs text-red-300 bg-red-950/40 border border-red-800/50 rounded-xl px-3 py-2">
+                {erroMsg}
+              </p>
+            )}
+
             {/* Save Button */}
             <button
               type="submit"
-              disabled={isProcessing}
+              disabled={isProcessing || isSaving}
               className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-zinc-950 font-bold rounded-xl shadow-xl transition-all text-xs uppercase tracking-wider disabled:opacity-50"
             >
-              Aplicar Logotipo em Todos os Certificados
+              {isSaving ? 'Enviando logotipo...' : 'Aplicar Logotipo em Todos os Certificados'}
             </button>
 
           </form>

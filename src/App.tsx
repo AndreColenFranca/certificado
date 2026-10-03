@@ -28,6 +28,7 @@ import { supabaseAuth } from './utils/supabaseAuth';
 import { extractCertIdFromInput, findCertificateByQuery, findCertificatesByQuery } from './utils/certUtils';
 import { isRootCert } from './utils/certHierarchy';
 import { fetchWithAuth } from './utils/fetchWithAuth';
+import { uploadCertificateImage } from './utils/uploadImage';
 import { ShieldAlert, Search } from 'lucide-react';
 
 export const getCertIdFromUrl = (): string | null => {
@@ -246,7 +247,11 @@ export default function App() {
   };
 
   // Company Brand State
-  const [companyName, setCompanyName] = useState<string>('Estilo Raro Joias');
+  // Sem marca chumbada: o nome real chega em `orgDisplayName`, buscado da
+  // organizacao logo apos o login. Com 'Estilo Raro Joias' aqui, quem entrava
+  // na Vivara via o nome da outra loja ate a resposta chegar - e no modal de
+  // logotipo o campo ja vinha preenchido com ele.
+  const [companyName, setCompanyName] = useState<string>('');
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string>(logoImage);
 
   // Certificate Modals state
@@ -413,7 +418,12 @@ export default function App() {
         .then(res => res.json())
         .then(data => {
           if (data.success && data.data) {
-            setOrgDisplayName(data.data.display_name || data.data.name);
+            const nomeDaLoja = data.data.display_name || data.data.name;
+            setOrgDisplayName(nomeDaLoja);
+            // O nome da marca acompanha a joalheria escolhida. Alimentar aqui
+            // vale por todos os lugares que recebem `companyName` - cabecalho,
+            // modal de logotipo, portal do cliente - em vez de corrigir cada um.
+            setCompanyName(nomeDaLoja);
             // Carregar logo da organização
             if (data.data.logo_url) {
               setCompanyLogoUrl(data.data.logo_url);
@@ -979,7 +989,30 @@ export default function App() {
   };
 
   // Save Company Brand Configuration
-  const handleSaveCompanyConfig = async (newName: string, newLogoUrl: string) => {
+  const handleSaveCompanyConfig = async (newName: string, logoEscolhido: string) => {
+    /**
+     * Logotipo vai para o Storage, nao para dentro do banco.
+     *
+     * Quem escolhe um arquivo recebe um data URI em base64, e ele ia inteiro
+     * para `organizations.logo_url`. O logotipo de uma joalheria aqui chegou a
+     * 363 KB, que viajavam a cada login e a cada troca de loja - e, nesse
+     * tamanho, o proxy do servidor de desenvolvimento chega a derrubar a
+     * resposta. O mesmo motivo que levou as fotos das joias para o bucket.
+     *
+     * A rota de upload ja existe e ja separa por joalheria
+     * (`<org_id>/<uuid>`), entao aqui so se troca o conteudo pela URL. De
+     * quebra, ela valida formato e tamanho, o que o caminho antigo nao fazia:
+     * dava para gravar um logotipo de 5 MB e so descobrir pela lentidao.
+     *
+     * Uma URL que o usuario colou (http, Drive) passa direto, sem reenvio.
+     */
+    let newLogoUrl = logoEscolhido;
+    if (newLogoUrl.startsWith('data:')) {
+      // Sem try/catch: a falha precisa chegar ao modal, que avisa e mantem a
+      // janela aberta. Engolir aqui gravaria o base64 de novo, calado.
+      newLogoUrl = await uploadCertificateImage(newLogoUrl);
+    }
+
     setCompanyName(newName);
     setCompanyLogoUrl(newLogoUrl);
 

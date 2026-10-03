@@ -1,8 +1,8 @@
 import { supabase } from '../lib/supabase';
 
 // Organização em que o usuário está trabalhando agora. Para quase todo mundo é
-// a única que ele tem; para um cliente de várias joalherias, é a que ele
-// escolheu ao entrar.
+// a única que ele tem; para um cliente de várias joalherias e para o root, é a
+// que ele escolheu ao entrar.
 function getOrgIdAtual(): string | null {
   try {
     const guardado = sessionStorage.getItem('aureum_logged_user');
@@ -45,8 +45,10 @@ export async function fetchWithAuth(
       'Content-Type': 'application/json'
     };
 
-    // Cliente em várias joalherias: avisa qual delas ele escolheu na tela de
-    // seleção. O servidor só aceita depois de conferir que ele pertence a ela.
+    // Quem trabalha em mais de uma joalheria — cliente de várias lojas, e o
+    // root — avisa aqui qual escolheu na tela de seleção. O servidor nunca
+    // aceita o valor de graça: para o cliente, confere o vínculo em
+    // `user_orgs`; para o root, confere que a organização existe.
     const orgId = getOrgIdAtual();
     if (orgId) headers['X-Org-Id'] = orgId;
 

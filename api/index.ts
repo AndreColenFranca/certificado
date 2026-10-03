@@ -146,16 +146,32 @@ app.use(async (req: any, res, next) => {
     // escolha viaja neste cabecalho. Ele sozinho nao autoriza nada: so vale
     // se `user_orgs` confirmar que o usuario pertence aquela organizacao.
     // Sem essa conferencia, trocar o cabecalho daria acesso a dados alheios.
+    //
+    // O root e a excecao, e por papel: ele trabalha em qualquer joalheria. Mas
+    // nem para ele o cabecalho passa direto - ele precisa nomear uma
+    // organizacao QUE EXISTA, senao um valor inventado colocaria a sessao num
+    // org_id fantasma e as consultas seguintes responderiam vazio, parecendo
+    // perda de dado.
     const orgEscolhida = req.headers['x-org-id'];
     if (orgEscolhida && orgEscolhida !== req.user.org_id) {
-      const { data: vinculo } = await supabase
-        .from('user_orgs')
-        .select('org_id')
-        .eq('user_id', usuario.id)
-        .eq('org_id', orgEscolhida)
-        .maybeSingle();
+      if (req.user.role === 'root') {
+        const { data: existe } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('id', orgEscolhida)
+          .maybeSingle();
 
-      if (vinculo) req.user.org_id = vinculo.org_id;
+        if (existe) req.user.org_id = existe.id;
+      } else {
+        const { data: vinculo } = await supabase
+          .from('user_orgs')
+          .select('org_id')
+          .eq('user_id', usuario.id)
+          .eq('org_id', orgEscolhida)
+          .maybeSingle();
+
+        if (vinculo) req.user.org_id = vinculo.org_id;
+      }
     }
   } catch (e) {
     // Qualquer falha na conferencia vale como nao autenticado.
@@ -164,6 +180,29 @@ app.use(async (req: any, res, next) => {
 
   next();
 });
+
+/**
+ * Portao de root para as rotas que mexem nas joalherias.
+ *
+ * O botao que abre a tela de organizacoes aparece so para o root
+ * (Sidebar.tsx), mas esconder o botao nao protege a rota: qualquer usuario
+ * autenticado - um operador, um cliente - podia criar, editar e APAGAR
+ * joalherias chamando a API direto. Apagar uma organizacao leva embora ou
+ * orfana os certificados dela.
+ *
+ * O papel vem de `req.user.role`, que o middleware acima le de `auth_users` e
+ * nunca do token. Devolve true quando ja respondeu 403, para quem chama sair
+ * com um `return`.
+ */
+function barrouNaoRoot(req: any, res: any): boolean {
+  if (req.user?.role === 'root') return false;
+
+  res.status(403).json({
+    success: false,
+    error: 'Apenas o Usuário Raiz pode gerenciar joalherias.'
+  });
+  return true;
+}
 
 // Gate de autenticacao: nada e acessivel sem login, com uma unica excecao -
 // as rotas de autenticacao (login e recuperacao de senha), senao ninguem
@@ -886,12 +925,50 @@ app.post('/api/login', async (req: any, res: any) => {
       }});
     }
 
-    // Para ROOT/ADMIN/OPERATOR: usa org_id de auth_users (único)
+    // ROOT escolhe a joalheria, como o cliente de varias lojas ja faz.
+    //
+    // Ele nao ganha linhas em `user_orgs` para isso: a autoridade do root vem
+    // do PAPEL, nao de um vinculo, e escrever vinculos falsos criaria uma
+    // segunda fonte de verdade que alguem teria de manter em dia - uma
+    // joalheria criada fora do app ficaria invisivel para ele, sem erro
+    // nenhum. Aqui a lista sai direto de `organizations`: se a org existe, o
+    // root a enxerga.
+    if (userProfile.role === 'root') {
+      const { data: todas } = await supabase
+        .from('organizations')
+        .select('id, name, display_name')
+        .order('created_at');
+
+      const orgList = (todas || []).map((o: any) => ({ id: o.id, name: o.display_name || o.name }));
+
+      if (orgList.length > 1) {
+        return res.json({ success: true, message: 'Selecione a organização', token, user: {
+          id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
+          orgId: null, orgName: null,
+          createdAt: userProfile.created_at, isRoot: true,
+          orgs: orgList,
+          requiresOrgSelection: true
+        }});
+      }
+
+      // Uma joalheria so (ou nenhuma): nao faz sentido perguntar. Com nenhuma,
+      // cai no org_id de auth_users, que e o que permite ao root entrar e
+      // criar a primeira pela tela de organizacoes.
+      const unica = orgList[0];
+      return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
+        id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
+        orgId: unica?.id || userProfile.org_id, orgName: unica?.name || 'Organização',
+        createdAt: userProfile.created_at, isRoot: true,
+        orgs: orgList
+      }});
+    }
+
+    // Para ADMIN/OPERATOR: usa org_id de auth_users (único)
     const { data: org } = await supabase.from('organizations').select('*').eq('id', userProfile.org_id).single();
     return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
       id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
       orgId: userProfile.org_id, orgName: org?.display_name || org?.name || 'Organização',
-      createdAt: userProfile.created_at, isRoot: userProfile.role === 'root'
+      createdAt: userProfile.created_at, isRoot: false
     }});
   } catch (err: any) {
     console.error(`[LOGIN] Erro:`, err.message);
@@ -991,12 +1068,50 @@ app.post('/api/auth/login', async (req: any, res: any) => {
       }});
     }
 
-    // Para ROOT/ADMIN/OPERATOR: usa org_id de auth_users (único)
+    // ROOT escolhe a joalheria, como o cliente de varias lojas ja faz.
+    //
+    // Ele nao ganha linhas em `user_orgs` para isso: a autoridade do root vem
+    // do PAPEL, nao de um vinculo, e escrever vinculos falsos criaria uma
+    // segunda fonte de verdade que alguem teria de manter em dia - uma
+    // joalheria criada fora do app ficaria invisivel para ele, sem erro
+    // nenhum. Aqui a lista sai direto de `organizations`: se a org existe, o
+    // root a enxerga.
+    if (userProfile.role === 'root') {
+      const { data: todas } = await supabase
+        .from('organizations')
+        .select('id, name, display_name')
+        .order('created_at');
+
+      const orgList = (todas || []).map((o: any) => ({ id: o.id, name: o.display_name || o.name }));
+
+      if (orgList.length > 1) {
+        return res.json({ success: true, message: 'Selecione a organização', token, user: {
+          id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
+          orgId: null, orgName: null,
+          createdAt: userProfile.created_at, isRoot: true,
+          orgs: orgList,
+          requiresOrgSelection: true
+        }});
+      }
+
+      // Uma joalheria so (ou nenhuma): nao faz sentido perguntar. Com nenhuma,
+      // cai no org_id de auth_users, que e o que permite ao root entrar e
+      // criar a primeira pela tela de organizacoes.
+      const unica = orgList[0];
+      return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
+        id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
+        orgId: unica?.id || userProfile.org_id, orgName: unica?.name || 'Organização',
+        createdAt: userProfile.created_at, isRoot: true,
+        orgs: orgList
+      }});
+    }
+
+    // Para ADMIN/OPERATOR: usa org_id de auth_users (único)
     const { data: org } = await supabase.from('organizations').select('*').eq('id', userProfile.org_id).single();
     return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
       id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
       orgId: userProfile.org_id, orgName: org?.display_name || org?.name || 'Organização',
-      createdAt: userProfile.created_at, isRoot: userProfile.role === 'root'
+      createdAt: userProfile.created_at, isRoot: false
     }});
   } catch (err: any) {
     console.error(`[AUTH/LOGIN] Erro:`, err.message);
@@ -1024,16 +1139,22 @@ app.post('/api/customer/select-org', async (req: any, res: any) => {
       return res.status(503).json({ success: false, error: 'Supabase não disponível' });
     }
 
-    // Verificar se o usuário realmente pertence à organização
-    const { data: userOrg } = await supabase
-      .from('user_orgs')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('org_id', orgId)
-      .maybeSingle();
+    // O root entra em qualquer joalheria que exista, sem vínculo em
+    // `user_orgs` - ver o comentário no ramo de login dele. A conferência não
+    // desaparece para ele: vira "a org existe?", logo abaixo, no SELECT que
+    // busca a organização. Papel vem de `req.user.role`, que o middleware lê
+    // de `auth_users` e nunca do token.
+    if (req.user?.role !== 'root') {
+      const { data: userOrg } = await supabase
+        .from('user_orgs')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('org_id', orgId)
+        .maybeSingle();
 
-    if (!userOrg) {
-      return res.status(403).json({ success: false, error: 'Você não tem acesso a esta organização' });
+      if (!userOrg) {
+        return res.status(403).json({ success: false, error: 'Você não tem acesso a esta organização' });
+      }
     }
 
     // Buscar dados da organização
@@ -1047,12 +1168,15 @@ app.post('/api/customer/select-org', async (req: any, res: any) => {
       return res.status(404).json({ success: false, error: 'Organização não encontrada' });
     }
 
-    // Buscar perfil do usuário
-    const { data: userProfile } = await supabase
-      .from('auth_users')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    // Perfil pelo E-MAIL, nao pelo id.
+    //
+    // O id que chega aqui e o do Supabase Auth, e ele nem sempre e igual ao
+    // `auth_users.id`: a conta root tem os dois diferentes (o perfil dela foi
+    // criado por outro caminho que os demais). Buscar por id respondia
+    // "Usuário não encontrado" e travava a escolha de joalheria so para ela.
+    // O middleware e as rotas de login sempre casaram por e-mail justamente
+    // por isso; esta rota era a unica que insistia no id.
+    const userProfile = await buscarPerfilPorEmail(req.user?.email || '', userId);
 
     if (!userProfile) {
       return res.status(404).json({ success: false, error: 'Usuário não encontrado' });
@@ -1076,7 +1200,11 @@ app.post('/api/customer/select-org', async (req: any, res: any) => {
       orgId: org.id,
       orgName: org.display_name || org.name,
       createdAt: userProfile.created_at,
-      isRoot: false,
+      // Vinha fixo em `false`, porque esta rota nasceu so para cliente. Agora
+      // o root tambem passa por aqui, e o front usa `isRoot` para mostrar o
+      // botao de cadastrar joalheria e a tela de organizacoes - com false
+      // fixo, escolher uma loja rebaixava o root e os dois desapareciam.
+      isRoot: userProfile.role === 'root',
       customerId: cadastro.customerId,
       cpf: cadastro.cpf
     }});
@@ -2458,6 +2586,8 @@ app.get('/api/organizations/:id', async (req, res) => {
 // Create organization
 app.post('/api/organizations', async (req, res) => {
   try {
+    if (barrouNaoRoot(req, res)) return;
+
     const { name, displayName, website, country, internalNotes, responsibleName, phone, email } = req.body;
 
     if (!name) {
@@ -2493,15 +2623,19 @@ app.post('/api/organizations', async (req, res) => {
       }
     }
 
-    // Generate ID automatically (slug from name)
-    const generatedId = `org-${name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`;
-
+    // O id e um UUID, nao um slug do nome.
+    //
+    // Aqui nascia `org-<nome>`, que o Postgres recusava com "invalid input
+    // syntax for type uuid" - a coluna e uuid. Ou seja, criar joalheria pelo
+    // app nunca funcionou; as duas que existem vieram de semente, com uuid.
+    // Um slug tambem amarraria a identidade da joalheria ao nome dela: um
+    // "Vivara" renomeado ficaria com id `org-vivara` para sempre, e dois nomes
+    // que gerassem o mesmo slug colidiriam na chave primaria.
     const insertData: any = {
-      id: generatedId,
+      id: uuidv4(),
       name,
       display_name: displayName || name.substring(0, 18)
     };
-    if (website) insertData.website = website;
     if (responsibleName) insertData.responsible_name = responsibleName;
     if (phone) insertData.phone = phone;
     if (email) insertData.email = email;
@@ -2529,6 +2663,8 @@ app.post('/api/organizations', async (req, res) => {
 // Update organization
 app.put('/api/organizations/:id', async (req, res) => {
   try {
+    if (barrouNaoRoot(req, res)) return;
+
     const { id } = req.params;
     const { name, displayName, website, country, internalNotes, responsibleName, phone, email, logoUrl } = req.body;
 
@@ -2569,7 +2705,12 @@ app.put('/api/organizations/:id', async (req, res) => {
     const updateData: any = { updated_at: new Date().toISOString() };
     if (name) updateData.name = name;
     if (displayName) updateData.display_name = displayName;
-    if (website) updateData.website = website;
+    // `website` e `country` nao sao gravados: as colunas nao existem em
+    // `organizations`. Com eles aqui, preencher o campo de site no formulario
+    // derrubava o salvamento inteiro com "column does not exist" - e o campo
+    // continua na tela, entao era questao de tempo. O formulario oferece os
+    // dois; se a intencao e guarda-los, o caminho e criar as colunas, nao
+    // mandar nomes que o banco nao conhece.
     if (responsibleName) updateData.responsible_name = responsibleName;
     if (phone) updateData.phone = phone;
     if (email) updateData.email = email;
@@ -2599,6 +2740,8 @@ app.put('/api/organizations/:id', async (req, res) => {
 // Delete organization
 app.delete('/api/organizations/:id', async (req, res) => {
   try {
+    if (barrouNaoRoot(req, res)) return;
+
     const { id } = req.params;
 
     if (id === 'default') {

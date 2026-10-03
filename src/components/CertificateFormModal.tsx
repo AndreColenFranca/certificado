@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { JewelryCertificate, StoneDetail, Customer } from '../types';
 import { X, Sparkles, Plus, Trash2, Edit3, Check, Upload, Loader2, Image as ImageIcon, Link as LinkIcon, GripVertical, ChevronLeft, ChevronRight, Star, Move, Users, CreditCard, Mail } from 'lucide-react';
-import { formatImageUrl, DEFAULT_BRAND_LOGO_DRIVE_URL } from '../utils/imageUtils';
+import { formatImageUrl } from '../utils/imageUtils';
 import { fetchWithAuth } from '../utils/fetchWithAuth';
 import { uploadCertificateImage } from '../utils/uploadImage';
 
@@ -13,6 +13,13 @@ interface CertificateFormModalProps {
   onDelete?: (cert: JewelryCertificate) => void;
   customers?: Customer[];
   selectedCustomerForNewCert?: Customer | null;
+  /**
+   * Nome e logotipo da joalheria em que se esta trabalhando agora. Servem de
+   * padrao para uma peca nova - sem eles, o certificado nasce com a marca de
+   * outra empresa. Ver `defaultCompanyName`/`defaultCompanyLogo` abaixo.
+   */
+  companyName?: string;
+  companyLogoUrl?: string;
 }
 
 const DEFAULT_PURITIES: string[] = [];
@@ -139,10 +146,25 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   initialCert,
   onDelete,
   customers = [],
-  selectedCustomerForNewCert
+  selectedCustomerForNewCert,
+  companyName,
+  companyLogoUrl
 }) => {
-  const defaultCompanyName = 'Estilo Raro Joias';
-  const defaultCompanyLogo = '';
+  /**
+   * O padrao de uma peca nova e a joalheria ATUAL, nao uma marca fixa.
+   *
+   * Aqui estava `'Estilo Raro Joias'` e `''`. O nome vinha chumbado e o logo,
+   * vazio, caia sempre no DEFAULT_BRAND_LOGO_DRIVE_URL - que e o logotipo da
+   * Estilo Raro num link do Google Drive. Resultado: TODO certificado nascia
+   * estampado com a marca dela, inclusive os emitidos pela Vivara, e o
+   * passaporte publico mostrava a joalheria errada para o cliente final. Os 11
+   * certificados que existem hoje carregam esse mesmo link.
+   *
+   * O campo continua editavel: quem emite pode trocar para o fabricante real
+   * da peca, que nem sempre e a propria joalheria.
+   */
+  const defaultCompanyName = companyName || '';
+  const defaultCompanyLogo = companyLogoUrl || '';
 
   const [purityOptions, setPurityOptions] = useState<string[]>(DEFAULT_PURITIES);
   const [colorOptions, setColorOptions] = useState<string[]>(DEFAULT_COLORS);
@@ -231,7 +253,10 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   const [model, setModel] = useState(initialCert?.model || '');
   const [manufacturer, setManufacturer] = useState(initialCert?.manufacturer || manufacturerOptions[0] || '');
   const [manufacturerLogoUrl, setManufacturerLogoUrl] = useState(
-    initialCert?.manufacturerLogoUrl || defaultCompanyLogo || DEFAULT_BRAND_LOGO_DRIVE_URL
+    // Sem terceiro degrau: a joalheria sem logotipo cadastrado emite peca sem
+    // logotipo, e o passaporte mostra o selo no lugar. Melhor que estampar a
+    // marca de outra empresa, que era o que o DEFAULT_BRAND_LOGO_DRIVE_URL fazia.
+    initialCert?.manufacturerLogoUrl || defaultCompanyLogo
   );
   const [currentOwnerName, setCurrentOwnerName] = useState(initialCert?.currentOwnerName || selectedCustomerForNewCert?.name || '');
   const [ownerCpf, setOwnerCpf] = useState(initialCert?.ownerCpf || selectedCustomerForNewCert?.cpf || '');
@@ -254,7 +279,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
       setCollection(initialCert.collection || 'Haute Joaillerie 2026');
       setModel(initialCert.model || '');
       setManufacturer(initialCert.manufacturer || defaultCompanyName);
-      setManufacturerLogoUrl(initialCert.manufacturerLogoUrl || defaultCompanyLogo || DEFAULT_BRAND_LOGO_DRIVE_URL);
+      setManufacturerLogoUrl(initialCert.manufacturerLogoUrl || defaultCompanyLogo);
       setCurrentOwnerName(initialCert.currentOwnerName || '');
       setOwnerCpf(initialCert.ownerCpf || '');
       setOwnerEmail(initialCert.ownerEmail || '');

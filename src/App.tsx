@@ -1496,6 +1496,8 @@ export default function App() {
         onDelete={onRequestDeleteCertificate}
         customers={customers}
         selectedCustomerForNewCert={selectedCustomerForNewCert}
+        companyName={orgDisplayName || companyName}
+        companyLogoUrl={companyLogoUrl}
       />
 
       <CertificateSearchResultsModal

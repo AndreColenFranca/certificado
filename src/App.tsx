@@ -148,6 +148,11 @@ export default function App() {
   };
 
   const navigateToView = (newMode: ViewMode) => {
+    // FORA do `if` abaixo de proposito: quando o destino e o modo que ja esta
+    // ativo, a funcao nao faz mais nada - e era justamente nesse caso que a
+    // tela de joalherias continuava por cima.
+    setIsOrganizationsViewOpen(false);
+
     if (newMode !== viewMode) {
       setViewHistory(prev => [...prev, viewMode]);
       setViewMode(newMode);
@@ -158,6 +163,10 @@ export default function App() {
   };
 
   const handleGoBack = () => {
+    // Pelo mesmo motivo do handleSelectMode: "Voltar" com a tela de joalherias
+    // aberta nao saia dela.
+    setIsOrganizationsViewOpen(false);
+
     let nextMode: ViewMode;
     if (viewHistory.length > 0) {
       nextMode = viewHistory[viewHistory.length - 1];
@@ -579,6 +588,17 @@ export default function App() {
 
   // Handle Mode Change
   const handleSelectMode = (mode: ViewMode) => {
+    // Sair da tela de joalherias ao navegar pela barra lateral.
+    //
+    // Ela nao e um `viewMode`: e um booleano que TROCA A AREA INTEIRA (ver o
+    // `isOrganizationsViewOpen ? ... : ...` no render). Como nenhuma navegacao
+    // o desligava, abrir "Gerenciar Joalherias" e depois clicar em qualquer
+    // item da barra lateral marcava o item novo e nao mudava nada na tela -
+    // parecia um link quebrado, e so um F5 resolvia, porque o estado nasce
+    // falso. Fica aqui, no comeco e fora de qualquer condicao, porque o item
+    // clicado pode ser o mesmo `viewMode` que ja estava ativo.
+    setIsOrganizationsViewOpen(false);
+
     if (mode === 'create-new') {
       setEditingCert(null);
       setSelectedCustomerForNewCert(null);

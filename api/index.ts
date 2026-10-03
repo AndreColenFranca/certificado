@@ -2588,7 +2588,7 @@ app.post('/api/organizations', async (req, res) => {
   try {
     if (barrouNaoRoot(req, res)) return;
 
-    const { name, displayName, website, country, internalNotes, responsibleName, phone, email, warrantyTermsDefault } = req.body;
+    const { name, displayName, website, internalNotes, responsibleName, phone, email, warrantyTermsDefault } = req.body;
 
     if (!name) {
       return res.status(400).json({
@@ -2644,6 +2644,7 @@ app.post('/api/organizations', async (req, res) => {
       created_at: agora,
       updated_at: agora
     };
+    if (website) insertData.website = website;
     if (responsibleName) insertData.responsible_name = responsibleName;
     if (phone) insertData.phone = phone;
     if (email) insertData.email = email;
@@ -2675,7 +2676,7 @@ app.put('/api/organizations/:id', async (req, res) => {
     if (barrouNaoRoot(req, res)) return;
 
     const { id } = req.params;
-    const { name, displayName, website, country, internalNotes, responsibleName, phone, email, logoUrl, warrantyTermsDefault } = req.body;
+    const { name, displayName, website, internalNotes, responsibleName, phone, email, logoUrl, warrantyTermsDefault } = req.body;
 
     if (displayName && displayName.length > 18) {
       return res.status(400).json({
@@ -2714,12 +2715,7 @@ app.put('/api/organizations/:id', async (req, res) => {
     const updateData: any = { updated_at: new Date().toISOString() };
     if (name) updateData.name = name;
     if (displayName) updateData.display_name = displayName;
-    // `website` e `country` nao sao gravados: as colunas nao existem em
-    // `organizations`. Com eles aqui, preencher o campo de site no formulario
-    // derrubava o salvamento inteiro com "column does not exist" - e o campo
-    // continua na tela, entao era questao de tempo. O formulario oferece os
-    // dois; se a intencao e guarda-los, o caminho e criar as colunas, nao
-    // mandar nomes que o banco nao conhece.
+    if (website) updateData.website = website;
     if (responsibleName) updateData.responsible_name = responsibleName;
     if (phone) updateData.phone = phone;
     if (email) updateData.email = email;

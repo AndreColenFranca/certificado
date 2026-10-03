@@ -7,7 +7,6 @@ interface Organization {
   name: string;
   display_name?: string;
   website?: string;
-  country?: string;
   created_at?: string;
   responsible_name?: string;
   phone?: string;
@@ -41,7 +40,6 @@ export const OrganizationsView = ({
     name: '',
     displayName: '',
     website: '',
-    country: 'BR',
     internalNotes: '',
     responsibleName: '',
     phone: '',
@@ -103,7 +101,7 @@ export const OrganizationsView = ({
 
       if (data.success) {
         setSuccess(editingId ? 'Organização atualizada!' : 'Organização criada!');
-        setFormData({ name: '', displayName: '', website: '', country: 'BR', internalNotes: '', responsibleName: '', phone: '', email: '', warrantyTermsDefault: '' });
+        setFormData({ name: '', displayName: '', website: '', internalNotes: '', responsibleName: '', phone: '', email: '', warrantyTermsDefault: '' });
         setEditingId(null);
         setShowForm(false);
         setSearchTerm('');
@@ -144,7 +142,6 @@ export const OrganizationsView = ({
       name: org.name,
       displayName: org.display_name || '',
       website: org.website || '',
-      country: org.country || 'BR',
       internalNotes: org.internal_notes || '',
       responsibleName: org.responsible_name || '',
       phone: org.phone || '',
@@ -222,7 +219,7 @@ export const OrganizationsView = ({
               onClick={() => {
                 setShowForm(true);
                 setEditingId(null);
-                setFormData({ name: '', displayName: '', website: '', country: 'BR', internalNotes: '', responsibleName: '', phone: '', email: '', warrantyTermsDefault: '' });
+                setFormData({ name: '', displayName: '', website: '', internalNotes: '', responsibleName: '', phone: '', email: '', warrantyTermsDefault: '' });
               }}
               className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-semibold rounded-lg transition flex items-center gap-2"
             >

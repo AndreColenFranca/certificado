@@ -757,6 +757,42 @@ async function buscarPerfilPorEmail(email: string, idDoAuth: string) {
   return perfis.find((p: any) => p.id === idDoAuth) || perfis[0];
 }
 
+/**
+ * O cadastro em `customers` do cliente que esta entrando, na org escolhida.
+ *
+ * POR QUE O LOGIN PRECISA DISSO. O portal do cliente decide quais pecas sao
+ * dele comparando os campos de dono do certificado com a identidade de quem
+ * esta logado, numa cascata onde o `owner_id` DECIDE SOZINHO quando existe
+ * (ver certificateBelongsTo, em src/utils/customerUtils.ts). Sem o id do
+ * cadastro aqui, esse campo e comparado com `undefined` e nunca casa: toda
+ * peca com `owner_id` preenchido fica invisivel para o proprio dono. Era o
+ * caso de CERT-2026-634H, que nao aparecia nem para quem a recebeu numa
+ * transferencia.
+ *
+ * POR QUE FILTRADO POR ORG, e nao so por e-mail: um cliente pode ter cadastro
+ * em varias joalherias, com id - e CPF - diferentes em cada uma. Pegar o
+ * primeiro que casa o e-mail devolveria o cadastro da org errada, e o
+ * `owner_id` dos certificados daquela org nao casaria com nada.
+ *
+ * O CPF vem daqui pelo mesmo motivo, e nao de `auth_users.cpf`: essa coluna
+ * existe mas esta vazia em todos os clientes, e o CPF tambem varia por org.
+ */
+async function buscarCadastroDoCliente(email: string, orgId?: string | null) {
+  if (!email || !orgId) return { customerId: undefined, cpf: undefined };
+
+  const { data: cadastro } = await supabase
+    .from('customers')
+    .select('id, cpf')
+    .eq('email', email.toLowerCase())
+    .eq('org_id', orgId)
+    .maybeSingle();
+
+  // Cliente sem cadastro na org nao e erro: ele entra, e o portal apenas nao
+  // encontra pecas dele. Devolver undefined deixa a cascata cair para o
+  // e-mail, que e o que acontecia antes desta funcao existir.
+  return { customerId: cadastro?.id, cpf: cadastro?.cpf };
+}
+
 // Supabase-only login (NO local database fallback)
 app.post('/api/login', async (req: any, res: any) => {
   try {
@@ -803,10 +839,12 @@ app.post('/api/login', async (req: any, res: any) => {
       if (!userOrgs || userOrgs.length === 0) {
         // Customer sem orgs registradas - retornar apenas a org_id de auth_users se houver
         const { data: org } = await supabase.from('organizations').select('*').eq('id', userProfile.org_id).single();
+        const cadastro = await buscarCadastroDoCliente(userProfile.email, userProfile.org_id);
         return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
           id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
           orgId: userProfile.org_id, orgName: org?.display_name || org?.name || 'Organização',
           createdAt: userProfile.created_at, isRoot: false,
+          customerId: cadastro.customerId, cpf: cadastro.cpf,
           orgs: userProfile.org_id ? [{ id: userProfile.org_id, name: org?.display_name || org?.name }] : []
         }});
       }
@@ -825,15 +863,19 @@ app.post('/api/login', async (req: any, res: any) => {
 
       // Se só tem 1 org, faz login direto nela
       if (orgList.length === 1) {
+        const cadastro = await buscarCadastroDoCliente(userProfile.email, orgList[0].id);
         return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
           id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
           orgId: orgList[0].id, orgName: orgList[0].name,
           createdAt: userProfile.created_at, isRoot: false,
+          customerId: cadastro.customerId, cpf: cadastro.cpf,
           orgs: orgList
         }});
       }
 
-      // Se tem múltiplas orgs, retorna lista e frontend mostra seletor
+      // Se tem múltiplas orgs, retorna lista e frontend mostra seletor.
+      // Sem customerId nem cpf aqui, de proposito: eles dependem da org, e
+      // nenhuma foi escolhida ainda. Quem preenche e o /api/customer/select-org.
       return res.json({ success: true, message: 'Selecione a organização', token, user: {
         id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
         orgId: null, // Sem org selecionada ainda
@@ -902,10 +944,12 @@ app.post('/api/auth/login', async (req: any, res: any) => {
       if (!userOrgs || userOrgs.length === 0) {
         // Customer sem orgs registradas - retornar apenas a org_id de auth_users se houver
         const { data: org } = await supabase.from('organizations').select('*').eq('id', userProfile.org_id).single();
+        const cadastro = await buscarCadastroDoCliente(userProfile.email, userProfile.org_id);
         return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
           id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
           orgId: userProfile.org_id, orgName: org?.display_name || org?.name || 'Organização',
           createdAt: userProfile.created_at, isRoot: false,
+          customerId: cadastro.customerId, cpf: cadastro.cpf,
           orgs: userProfile.org_id ? [{ id: userProfile.org_id, name: org?.display_name || org?.name }] : []
         }});
       }
@@ -924,15 +968,19 @@ app.post('/api/auth/login', async (req: any, res: any) => {
 
       // Se só tem 1 org, faz login direto nela
       if (orgList.length === 1) {
+        const cadastro = await buscarCadastroDoCliente(userProfile.email, orgList[0].id);
         return res.json({ success: true, message: 'Login realizado com sucesso', token, user: {
           id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
           orgId: orgList[0].id, orgName: orgList[0].name,
           createdAt: userProfile.created_at, isRoot: false,
+          customerId: cadastro.customerId, cpf: cadastro.cpf,
           orgs: orgList
         }});
       }
 
-      // Se tem múltiplas orgs, retorna lista e frontend mostra seletor
+      // Se tem múltiplas orgs, retorna lista e frontend mostra seletor.
+      // Sem customerId nem cpf aqui, de proposito: eles dependem da org, e
+      // nenhuma foi escolhida ainda. Quem preenche e o /api/customer/select-org.
       return res.json({ success: true, message: 'Selecione a organização', token, user: {
         id: userProfile.id, name: userProfile.name, email: userProfile.email, role: userProfile.role,
         orgId: null, // Sem org selecionada ainda
@@ -1015,6 +1063,10 @@ app.post('/api/customer/select-org', async (req: any, res: any) => {
     const authHeader = (req as any).headers?.authorization;
     const token = authHeader?.replace('Bearer ', '') || '';
 
+    // Agora que a joalheria esta escolhida, da para resolver o cadastro do
+    // cliente nela - e e so com ele que o portal reconhece as pecas dele.
+    const cadastro = await buscarCadastroDoCliente(userProfile.email, org.id);
+
     // Retornar dados do usuário com a org selecionada e token
     return res.json({ success: true, message: 'Organização selecionada', token, user: {
       id: userProfile.id,
@@ -1024,7 +1076,9 @@ app.post('/api/customer/select-org', async (req: any, res: any) => {
       orgId: org.id,
       orgName: org.display_name || org.name,
       createdAt: userProfile.created_at,
-      isRoot: false
+      isRoot: false,
+      customerId: cadastro.customerId,
+      cpf: cadastro.cpf
     }});
   } catch (err: any) {
     console.error('[CUSTOMER/SELECT-ORG] Erro:', err.message);

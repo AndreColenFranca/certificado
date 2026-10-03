@@ -20,6 +20,15 @@ interface CertificateFormModalProps {
    */
   companyName?: string;
   companyLogoUrl?: string;
+  /**
+   * Termo de garantia padrao da joalheria, vindo de `organizations`.
+   *
+   * Preenche o campo de uma peca nova. Aqui estavam, em duas copias de 35
+   * linhas, um texto chumbado que prometia garantia em nome da "Estilo Raro
+   * Joias" - em toda peca, de qualquer loja. Nao e identidade visual: e a
+   * promessa legal que o cliente final le no passaporte.
+   */
+  warrantyTermsDefault?: string;
 }
 
 const DEFAULT_PURITIES: string[] = [];
@@ -148,7 +157,8 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   customers = [],
   selectedCustomerForNewCert,
   companyName,
-  companyLogoUrl
+  companyLogoUrl,
+  warrantyTermsDefault
 }) => {
   /**
    * O padrao de uma peca nova e a joalheria ATUAL, nao uma marca fixa.
@@ -298,44 +308,27 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
       }
       setWarrantyMonths(initialCert.warrantyMonths ?? -1);
       setInternalNotes(initialCert.internalNotes || '');
-      setWarrantyTerms(initialCert.warrantyTerms || `[icon:verified] **A gente sabe que escolher uma aliança não é só sobre o material**
-
-É sobre o que ela representa. Por isso, a Estilo Raro Joias garante a qualidade e autenticidade de cada peça, desde o primeiro dia.
-
-**O que a gente usa:**
-
-- Ouro 18k e prata 950
-- Técnicas apuradas de cravação, polimento e acabamento
-- Qualidade garantida em cada detalhe
-
-**Garantia Legal (seu direito):**
-
-[icon:schedule] **90 dias** a partir da data em que você recebe a peça, conforme o Código de Defesa do Consumidor
-
-- Cobrimos qualquer defeito de fabricação
-- Você escolhe como resolver:
-
-[icon:autorenew] Receber uma peça nova igualzinha
-[icon:rings] Trocar por outro modelo de mesmo valor
-[icon:card_giftcard] Usar o valor como crédito em uma nova compra
-
-**E a gente vai além do que a lei pede:**
-
-[icon:check_circle] **Troca tranquila de tamanho** - Errou na numeração? Sem pânico. A gente troca pra você acertar certinho
-
-[icon:build] **Manutenção pra vida toda** - Sua aliança foi feita pra acompanhar cada capítulo. Oferecemos manutenção por tempo indeterminado. Cobrimos apenas frete e custos de reparo, sempre transparente
-
-**Resumindo:**
-
-- Peça autêntica garantida
-- Garantia legal de 90 dias
-- Troca de tamanho sem complicação
-- Manutenção pra sempre
-
-Porque a gente acredita que uma aliança de verdade não é só bonita no dia da compra. É um compromisso duradouro.`);
+      setWarrantyTerms(initialCert.warrantyTerms || warrantyTermsDefault || '');
       setEstimatedValueBRL(initialCert.estimatedValueBRL ?? '');
     }
   }, [initialCert]);
+
+  /**
+   * Peca NOVA recebe o termo padrao da joalheria.
+   *
+   * O efeito acima so preenche quando ha `initialCert`, isto e, ao editar. E o
+   * valor inicial do useState foi lido na montagem, quando o padrao da loja
+   * ainda nao tinha chegado - a organizacao e buscada depois do login. Sem
+   * isto, a peca nova nascia com o campo vazio mesmo havendo termo cadastrado.
+   *
+   * So preenche enquanto o campo esta vazio: quem ja escreveu algo nao tem o
+   * texto trocado por baixo.
+   */
+  useEffect(() => {
+    if (!initialCert && warrantyTermsDefault && !warrantyTerms) {
+      setWarrantyTerms(warrantyTermsDefault);
+    }
+  }, [warrantyTermsDefault, initialCert]);
   
   const [metalPurity, setMetalPurity] = useState<string>(initialCert?.metalPurity || '');
   const [metalColor, setMetalColor] = useState<string>(initialCert?.metalColor || '');
@@ -359,41 +352,8 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
 
   const [warrantyMonths, setWarrantyMonths] = useState<number>(initialCert?.warrantyMonths ?? -1);
   const [internalNotes, setInternalNotes] = useState(initialCert?.internalNotes || '');
-  const [warrantyTerms, setWarrantyTerms] = useState(initialCert?.warrantyTerms || `[icon:verified] **A gente sabe que escolher uma aliança não é só sobre o material**
-
-É sobre o que ela representa. Por isso, a Estilo Raro Joias garante a qualidade e autenticidade de cada peça, desde o primeiro dia.
-
-**O que a gente usa:**
-
-- Ouro 18k e prata 950
-- Técnicas apuradas de cravação, polimento e acabamento
-- Qualidade garantida em cada detalhe
-
-**Garantia Legal (seu direito):**
-
-[icon:schedule] **90 dias** a partir da data em que você recebe a peça, conforme o Código de Defesa do Consumidor
-
-- Cobrimos qualquer defeito de fabricação
-- Você escolhe como resolver:
-
-[icon:autorenew] Receber uma peça nova igualzinha
-[icon:rings] Trocar por outro modelo de mesmo valor
-[icon:card_giftcard] Usar o valor como crédito em uma nova compra
-
-**E a gente vai além do que a lei pede:**
-
-[icon:check_circle] **Troca tranquila de tamanho** - Errou na numeração? Sem pânico. A gente troca pra você acertar certinho
-
-[icon:build] **Manutenção pra vida toda** - Sua aliança foi feita pra acompanhar cada capítulo. Oferecemos manutenção por tempo indeterminado. Cobrimos apenas frete e custos de reparo, sempre transparente
-
-**Resumindo:**
-
-- Peça autêntica garantida
-- Garantia legal de 90 dias
-- Troca de tamanho sem complicação
-- Manutenção pra sempre
-
-Porque a gente acredita que uma aliança de verdade não é só bonita no dia da compra. É um compromisso duradouro.`);
+  const [mostrarGarantia, setMostrarGarantia] = useState(false);
+  const [warrantyTerms, setWarrantyTerms] = useState(initialCert?.warrantyTerms || warrantyTermsDefault || '');
   const [estimatedValueBRL, setEstimatedValueBRL] = useState<number | ''>(initialCert?.estimatedValueBRL ?? '');
 
   // Preenche os campos de pedra que ainda estão vazios assim que as listas de
@@ -757,6 +717,36 @@ Porque a gente acredita que uma aliança de verdade não é só bonita no dia da
                   rows={3}
                   className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-xs focus:outline-none focus:border-amber-500 resize-none"
                 />
+              </div>
+
+              {/* Termos de garantia: recolhido, porque na maioria das pecas o
+                  padrao da loja basta. Mas visivel - ate hoje este texto era
+                  gravado sem que ninguem o lesse, e e ele que o cliente final
+                  abre no passaporte. */}
+              <div className="md:col-span-2">
+                <button
+                  type="button"
+                  onClick={() => setMostrarGarantia(v => !v)}
+                  className="text-[11px] text-amber-300/90 hover:text-amber-200 underline underline-offset-2"
+                >
+                  {mostrarGarantia ? 'Ocultar' : 'Ver/editar'} termos de garantia desta peça
+                  {!warrantyTerms && ' (vazio)'}
+                </button>
+
+                {mostrarGarantia && (
+                  <div className="mt-2">
+                    <textarea
+                      value={warrantyTerms}
+                      onChange={(e) => setWarrantyTerms(e.target.value)}
+                      rows={10}
+                      placeholder="O que esta peça garante ao cliente. Vem preenchido com o padrão da joalheria, se houver."
+                      className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-[11px] font-mono focus:outline-none focus:border-amber-500 resize-none"
+                    />
+                    <p className="text-[10px] text-zinc-500 mt-1">
+                      Vale só para esta peça. O padrão da joalheria se edita em Organizações.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

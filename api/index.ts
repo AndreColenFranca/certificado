@@ -2588,7 +2588,7 @@ app.post('/api/organizations', async (req, res) => {
   try {
     if (barrouNaoRoot(req, res)) return;
 
-    const { name, displayName, website, country, internalNotes, responsibleName, phone, email } = req.body;
+    const { name, displayName, website, country, internalNotes, responsibleName, phone, email, warrantyTermsDefault } = req.body;
 
     if (!name) {
       return res.status(400).json({
@@ -2640,6 +2640,7 @@ app.post('/api/organizations', async (req, res) => {
     if (phone) insertData.phone = phone;
     if (email) insertData.email = email;
     if (internalNotes) insertData.internal_notes = internalNotes;
+    if (warrantyTermsDefault) insertData.warranty_terms_default = warrantyTermsDefault;
 
     const { data, error } = await supabase
       .from('organizations')
@@ -2666,7 +2667,7 @@ app.put('/api/organizations/:id', async (req, res) => {
     if (barrouNaoRoot(req, res)) return;
 
     const { id } = req.params;
-    const { name, displayName, website, country, internalNotes, responsibleName, phone, email, logoUrl } = req.body;
+    const { name, displayName, website, country, internalNotes, responsibleName, phone, email, logoUrl, warrantyTermsDefault } = req.body;
 
     if (displayName && displayName.length > 18) {
       return res.status(400).json({
@@ -2715,6 +2716,9 @@ app.put('/api/organizations/:id', async (req, res) => {
     if (phone) updateData.phone = phone;
     if (email) updateData.email = email;
     if (internalNotes) updateData.internal_notes = internalNotes;
+    // `!== undefined`, e nao truthy: string vazia aqui significa "apagar o
+    // termo", e um `if (valor)` descartaria essa intencao em silencio.
+    if (warrantyTermsDefault !== undefined) updateData.warranty_terms_default = warrantyTermsDefault;
     if (logoUrl) updateData.logo_url = logoUrl;
 
     const { data, error } = await supabase

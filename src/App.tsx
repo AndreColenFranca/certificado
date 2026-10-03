@@ -48,6 +48,7 @@ export default function App() {
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
   const [isOrganizationsViewOpen, setIsOrganizationsViewOpen] = useState(false);
   const [orgDisplayName, setOrgDisplayName] = useState<string>('');
+  const [orgWarrantyTerms, setOrgWarrantyTerms] = useState<string>('');
   const [customerFormError, setCustomerFormError] = useState<string>('');
 
   const getInitialCertificates = (): JewelryCertificate[] => [];
@@ -420,6 +421,9 @@ export default function App() {
           if (data.success && data.data) {
             const nomeDaLoja = data.data.display_name || data.data.name;
             setOrgDisplayName(nomeDaLoja);
+            // Termo de garantia padrao da loja: preenche a peca nova no lugar
+            // do texto que antes vinha chumbado no formulario.
+            setOrgWarrantyTerms(data.data.warranty_terms_default || '');
             // O nome da marca acompanha a joalheria escolhida. Alimentar aqui
             // vale por todos os lugares que recebem `companyName` - cabecalho,
             // modal de logotipo, portal do cliente - em vez de corrigir cada um.
@@ -1531,6 +1535,7 @@ export default function App() {
         selectedCustomerForNewCert={selectedCustomerForNewCert}
         companyName={orgDisplayName || companyName}
         companyLogoUrl={companyLogoUrl}
+        warrantyTermsDefault={orgWarrantyTerms}
       />
 
       <CertificateSearchResultsModal

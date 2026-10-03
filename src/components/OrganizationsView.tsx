@@ -13,6 +13,12 @@ interface Organization {
   phone?: string;
   email?: string;
   internal_notes?: string;
+  /**
+   * Termo de garantia padrao desta joalheria. Preenche o campo do certificado
+   * no momento da emissao; cada peca pode ajustar o seu. Mudar aqui nao altera
+   * certificados ja emitidos - cada um guarda a copia do que foi prometido.
+   */
+  warranty_terms_default?: string;
 }
 
 interface OrganizationsViewProps {
@@ -39,7 +45,8 @@ export const OrganizationsView = ({
     internalNotes: '',
     responsibleName: '',
     phone: '',
-    email: ''
+    email: '',
+    warrantyTermsDefault: ''
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -96,7 +103,7 @@ export const OrganizationsView = ({
 
       if (data.success) {
         setSuccess(editingId ? 'Organização atualizada!' : 'Organização criada!');
-        setFormData({ name: '', displayName: '', website: '', country: 'BR', internalNotes: '', responsibleName: '', phone: '', email: '' });
+        setFormData({ name: '', displayName: '', website: '', country: 'BR', internalNotes: '', responsibleName: '', phone: '', email: '', warrantyTermsDefault: '' });
         setEditingId(null);
         setShowForm(false);
         setSearchTerm('');
@@ -141,7 +148,8 @@ export const OrganizationsView = ({
       internalNotes: org.internal_notes || '',
       responsibleName: org.responsible_name || '',
       phone: org.phone || '',
-      email: org.email || ''
+      email: org.email || '',
+      warrantyTermsDefault: org.warranty_terms_default || ''
     });
     setEditingId(org.id);
     setShowForm(true);
@@ -214,7 +222,7 @@ export const OrganizationsView = ({
               onClick={() => {
                 setShowForm(true);
                 setEditingId(null);
-                setFormData({ name: '', displayName: '', website: '', country: 'BR', internalNotes: '', responsibleName: '', phone: '', email: '' });
+                setFormData({ name: '', displayName: '', website: '', country: 'BR', internalNotes: '', responsibleName: '', phone: '', email: '', warrantyTermsDefault: '' });
               }}
               className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-semibold rounded-lg transition flex items-center gap-2"
             >
@@ -310,6 +318,23 @@ export const OrganizationsView = ({
                   className="w-full px-3 py-2 bg-zinc-800 border border-amber-900/40 rounded text-amber-50 resize-none"
                   rows={4}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">Termo de Garantia Padrão</label>
+                <textarea
+                  value={formData.warrantyTermsDefault}
+                  onChange={(e) => setFormData({ ...formData, warrantyTermsDefault: e.target.value })}
+                  placeholder="O que esta joalheria garante ao cliente. Este texto preenche o certificado de cada peça nova."
+                  className="w-full px-3 py-2 bg-zinc-800 border border-amber-900/40 rounded text-amber-50 resize-none font-mono text-xs"
+                  rows={10}
+                />
+                <p className="text-xs text-zinc-400 mt-1.5">
+                  Aparece no passaporte público que o cliente abre. Vale para peças emitidas
+                  daqui em diante — certificados já emitidos guardam o texto da época. Cada peça
+                  pode ajustar o seu no cadastro da joia. Deixe em branco para não prometer nada
+                  além do texto padrão do certificado.
+                </p>
               </div>
               <div className="flex gap-4">
                 <button

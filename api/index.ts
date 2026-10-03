@@ -2631,10 +2631,18 @@ app.post('/api/organizations', async (req, res) => {
     // Um slug tambem amarraria a identidade da joalheria ao nome dela: um
     // "Vivara" renomeado ficaria com id `org-vivara` para sempre, e dois nomes
     // que gerassem o mesmo slug colidiriam na chave primaria.
+    // `created_at` e `updated_at` explicitos: a coluna nao tem DEFAULT, e sem
+    // isto a joalheria nascia com data nula - a tela de Organizacoes entao
+    // omitia a linha "Criado:" so para as lojas criadas pelo aplicativo. As
+    // duas antigas mostram data porque vieram de semente, com valor explicito.
+    const agora = new Date().toISOString();
+
     const insertData: any = {
       id: uuidv4(),
       name,
-      display_name: displayName || name.substring(0, 18)
+      display_name: displayName || name.substring(0, 18),
+      created_at: agora,
+      updated_at: agora
     };
     if (responsibleName) insertData.responsible_name = responsibleName;
     if (phone) insertData.phone = phone;

@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
 import { JewelryCertificate, AppUser } from '../types';
 import { formatImageUrl } from '../utils/imageUtils';
-import { 
-  Award, 
+import { formatDateBR } from '../utils/certUtils';
+import {
+  Award,
   ShieldCheck, 
   Printer, 
   Share2, 
@@ -208,7 +209,7 @@ export const CertificateOnlyView: React.FC<CertificateOnlyViewProps> = ({
 
               <div className="min-w-0">
                 <span className="text-zinc-500 block text-[10px] font-bold uppercase tracking-wider">Data de Emissão:</span>
-                <span className="font-bold text-zinc-900 text-xs sm:text-sm">{new Date(cert.issueDate).toLocaleDateString('pt-BR')}</span>
+                <span className="font-bold text-zinc-900 text-xs sm:text-sm">{formatDateBR(cert.issueDate)}</span>
               </div>
 
               <div className="col-span-2 sm:col-span-1 min-w-0">

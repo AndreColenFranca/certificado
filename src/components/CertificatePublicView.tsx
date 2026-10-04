@@ -5,6 +5,7 @@ import { HighResPhotoInspector } from './HighResPhotoInspector';
 import { WarrantyRenderer } from './WarrantyRenderer';
 import { formatImageUrl } from '../utils/imageUtils';
 import { isCustomerLinkedToCertificate } from '../utils/customerUtils';
+import { formatDateBR } from '../utils/certUtils';
 import {
   ShieldCheck,
   Award,
@@ -183,7 +184,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
 
               <div className="flex items-center gap-1.5 sm:ml-auto">
                 <Calendar className="w-4 h-4 text-amber-400" />
-                <span>Emissão: <strong className="text-zinc-300">{new Date(cert.issueDate).toLocaleDateString('pt-BR')}</strong></span>
+                <span>Emissão: <strong className="text-zinc-300">{formatDateBR(cert.issueDate)}</strong></span>
               </div>
             </div>
 
@@ -529,7 +530,7 @@ export const CertificatePublicView: React.FC<CertificatePublicViewProps> = ({
                 </div>
                 <div className="flex justify-between text-zinc-400">
                   <span>Data de Fabricação:</span>
-                  <span className="text-zinc-200">{new Date(cert.manufacturingDate).toLocaleDateString('pt-BR')}</span>
+                  <span className="text-zinc-200">{formatDateBR(cert.manufacturingDate)}</span>
                 </div>
               </div>
             </div>

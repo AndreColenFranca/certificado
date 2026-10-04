@@ -25,7 +25,7 @@ import { OrganizationsView } from './components/OrganizationsView';
 import { OrgSelectView } from './components/OrgSelectView';
 import { AttributesView } from './components/AttributesView';
 import { supabaseAuth } from './utils/supabaseAuth';
-import { extractCertIdFromInput, findCertificateByQuery, findCertificatesByQuery } from './utils/certUtils';
+import { extractCertIdFromInput, findCertificateByQuery, findCertificatesByQuery, getTodayAsLocalDate } from './utils/certUtils';
 import { isRootCert } from './utils/certHierarchy';
 import { fetchWithAuth } from './utils/fetchWithAuth';
 import { uploadCertificateImage } from './utils/uploadImage';
@@ -870,14 +870,6 @@ export default function App() {
     // Direct user to customers page and select this customer
     setSelectedCustomerIdInManagement(customer.id);
     setViewMode('customers');
-
-    const getTodayAsLocalDate = () => {
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
 
     const issueDateStr = customIssueDate || getTodayAsLocalDate();
 

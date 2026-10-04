@@ -4,6 +4,7 @@ import { X, Sparkles, Plus, Trash2, Edit3, Check, Upload, Loader2, Image as Imag
 import { formatImageUrl } from '../utils/imageUtils';
 import { fetchWithAuth } from '../utils/fetchWithAuth';
 import { uploadCertificateImage } from '../utils/uploadImage';
+import { getTodayAsLocalDate } from '../utils/certUtils';
 
 interface CertificateFormModalProps {
   isOpen: boolean;
@@ -518,14 +519,6 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
     const randomHex = Math.random().toString(36).substring(2, 6).toUpperCase();
     const certId = initialCert?.id || `CERT-${new Date().getFullYear()}-${randomHex}`;
     const serialNum = initialCert?.serialNumber || `SN-${Math.floor(100000 + Math.random() * 900000)}`;
-
-    const getTodayAsLocalDate = () => {
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
 
     const certToSave: JewelryCertificate = {
       id: certId,

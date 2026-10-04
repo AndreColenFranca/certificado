@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Building2, Plus, Edit2, Trash2, X, Search, Mail, Globe } from 'lucide-react';
 import { fetchWithAuth } from '../utils/fetchWithAuth';
+import { formatDateBR } from '../utils/certUtils';
 
 interface Organization {
   id: string;
@@ -440,7 +441,7 @@ export const OrganizationsView = ({
                 <div className="text-xs text-zinc-500">
                   ID: {org.id}
                   {org.created_at && (
-                    <p>Criado: {new Date(org.created_at).toLocaleDateString('pt-BR')}</p>
+                    <p>Criado: {formatDateBR(org.created_at)}</p>
                   )}
                 </div>
 

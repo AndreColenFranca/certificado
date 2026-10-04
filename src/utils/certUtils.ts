@@ -1,6 +1,29 @@
 import { JewelryCertificate } from '../types';
 
 /**
+ * Formata uma string YYYY-MM-DD para DD/MM/YYYY sem passar por new Date(),
+ * evitando o problema de fuso horário: new Date('2026-10-03') interpreta como
+ * UTC meia-noite e no Brasil (UTC-3) exibe 02/10/2026.
+ */
+export const formatDateBR = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return '';
+  const parts = dateStr.split('T')[0].split('-');
+  if (parts.length !== 3) return dateStr;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+};
+
+/**
+ * Retorna a data de hoje no formato YYYY-MM-DD usando o fuso local.
+ */
+export const getTodayAsLocalDate = (): string => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+/**
  * Extracts a certificate identifier (ID, serial number, or authenticity hash) from a string,
  * which may be a plain ID ("CERT-2026-001"), a URL ("https://domain.com/cert/CERT-2026-001"),
  * a query parameter ("?cert=CERT-2026-001"), or a hash ("#cert=CERT-2026-001").

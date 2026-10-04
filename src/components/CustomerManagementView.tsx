@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { formatImageUrl } from '../utils/imageUtils';
 import { certificateBelongsTo } from '../utils/customerUtils';
+import { formatDateBR } from '../utils/certUtils';
 
 interface CustomerManagementViewProps {
   customers: Customer[];
@@ -515,7 +516,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                               <div>
                                 <span className="text-zinc-500 block text-[11px] font-medium">Emissão:</span>
                                 <span className="font-semibold text-amber-200">
-                                  {cert.issueDate ? new Date(cert.issueDate).toLocaleDateString('pt-BR') : 'Data não informada'}
+                                  {cert.issueDate ? formatDateBR(cert.issueDate) : 'Data não informada'}
                                 </span>
                               </div>
                               <div>

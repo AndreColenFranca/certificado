@@ -7,6 +7,7 @@ import {
 import { formatImageUrl } from '../utils/imageUtils';
 import { isRootCert, isChildCert, getChildCertificatesForParent } from '../utils/certHierarchy';
 import { certificateBelongsTo } from '../utils/customerUtils';
+import { formatDateBR } from '../utils/certUtils';
 
 interface JewelryCustomerQueryModalProps {
   isOpen: boolean;
@@ -336,7 +337,7 @@ export const JewelryCustomerQueryModal: React.FC<JewelryCustomerQueryModalProps>
                             <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider block">ID Passaporte & Emissão</span>
                             <p className="font-mono font-semibold text-amber-300 flex items-center gap-2">
                               <Calendar className="w-4 h-4 text-amber-400" />
-                              <span>{child.id} ({new Date(child.issueDate).toLocaleDateString('pt-BR')})</span>
+                              <span>{child.id} ({formatDateBR(child.issueDate)})</span>
                             </p>
                           </div>
                         </div>

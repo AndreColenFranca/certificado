@@ -2759,6 +2759,61 @@ app.delete('/api/organizations/:id', async (req, res) => {
       });
     }
 
+    /**
+     * Joalheria com conteudo nao se apaga.
+     *
+     * Das 15 tabelas que tem `org_id`, UMA SO tem chave estrangeira para
+     * organizations: `user_orgs`, com ON DELETE CASCADE. Todas as outras -
+     * certificados, clientes, usuarios, manutencoes, auditoria, atributos -
+     * guardam o org_id como campo solto, sem FK.
+     *
+     * Consequencia de apagar: os vinculos de acesso somem e TODO O RESTO FICA,
+     * apontando para uma joalheria que nao existe mais. Os dados viram orfaos:
+     * invisiveis na interface, porque ninguem consegue mais selecionar aquela
+     * loja, mas vivos no banco e nos backups. Aconteceu nesta base em
+     * 2026-10-03, e so foi possivel desfazer porque havia backup e os ids eram
+     * conhecidos.
+     *
+     * Cascata de verdade seria pior: certificado de joia e documento do
+     * cliente, nao deve sumir porque alguem clicou em "Deletar" na loja. Entao
+     * a regra e recusar e dizer o que esta no caminho.
+     *
+     * As tabelas de configuracao (coleções, metais, acabamentos...) nao
+     * entram na conta: sao ajustes da propria loja, e exigir esvaziar isso
+     * tornaria qualquer joalheria ja usada impossivel de apagar.
+     */
+    const PARA_CONFERIR = [
+      { tabela: 'jewelry_certificates', rotulo: 'certificado(s)' },
+      { tabela: 'customers', rotulo: 'cliente(s)' },
+      { tabela: 'auth_users', rotulo: 'usuário(s)' },
+    ];
+
+    const impedimentos: string[] = [];
+    for (const { tabela, rotulo } of PARA_CONFERIR) {
+      const { count, error: erroConta } = await supabase
+        .from(tabela)
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', id);
+
+      // Falha ao contar nao vira permissao: sem saber o que ha dentro, nao se
+      // apaga.
+      if (erroConta) {
+        return res.status(500).json({
+          success: false,
+          error: `Não consegui verificar o conteúdo da joalheria: ${erroConta.message}`
+        });
+      }
+      if (count) impedimentos.push(`${count} ${rotulo}`);
+    }
+
+    if (impedimentos.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error: `Não é possível excluir: ${impedimentos.join(', ')} pertencem a esta joalheria. ` +
+               `Transfira ou exclua esse conteúdo antes de excluir a joalheria.`
+      });
+    }
+
     const { error } = await supabase
       .from('organizations')
       .delete()

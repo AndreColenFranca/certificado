@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { JewelryCertificate, Customer } from '../types';
-import { 
-  X, ArrowRightLeft, ShieldCheck, CheckCircle2, User, Users, Gem, 
-  Sparkles, Calendar, FileText, ExternalLink, AlertCircle, Award 
+import {
+  X, ArrowRightLeft, ShieldCheck, CheckCircle2, User, Users, Gem,
+  Sparkles, Calendar, FileText, ExternalLink, AlertCircle, Award, Search
 } from 'lucide-react';
 import { formatImageUrl } from '../utils/imageUtils';
 import { isRootCert } from '../utils/certHierarchy';
@@ -40,6 +40,9 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
   const [selectedCertId, setSelectedCertId] = useState<string>(
     preSelectedCert?.id || (rootCertificates[0]?.id || (certificates[0]?.id || ''))
   );
+  const [certSearch, setCertSearch] = useState('');
+  const [certDropdownOpen, setCertDropdownOpen] = useState(false);
+  const certSearchRef = useRef<HTMLInputElement>(null);
   const [notes, setNotes] = useState('');
   const [issueDate, setIssueDate] = useState(() => {
     const today = new Date();
@@ -60,8 +63,10 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
 
     if (preSelectedCert) {
       setSelectedCertId(preSelectedCert.id);
+      setCertSearch(preSelectedCert.title);
     } else if (rootCertificates.length > 0 && (!selectedCertId || !certificates.some(c => c.id === selectedCertId))) {
       setSelectedCertId(rootCertificates[0].id);
+      setCertSearch(rootCertificates[0].title);
     }
   }, [preSelectedCustomer, preSelectedCert, isOpen]);
 
@@ -73,6 +78,24 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
   const handleCertSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const certId = e.target.value;
     setSelectedCertId(certId);
+  };
+
+  // Filtra joias pelo texto digitado (título, série ou código)
+  const filteredCerts = rootCertificates.filter(c => {
+    if (!certSearch.trim()) return true;
+    const q = certSearch.toLowerCase();
+    return (
+      c.title.toLowerCase().includes(q) ||
+      c.serialNumber.toLowerCase().includes(q) ||
+      c.id.toLowerCase().includes(q) ||
+      (c.collection || '').toLowerCase().includes(q)
+    );
+  });
+
+  const handleSelectCert = (cert: JewelryCertificate) => {
+    setSelectedCertId(cert.id);
+    setCertSearch(cert.title);
+    setCertDropdownOpen(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -176,18 +199,56 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
               {certificates.length === 0 ? (
                 <p className="text-xs text-rose-400">Nenhuma joia cadastrada no acervo. Cadastre joias no Cadastro de Joias primeiro.</p>
               ) : (
-                <select
-                  value={selectedCertId}
-                  onChange={handleCertSelectChange}
-                  className="w-full p-3 bg-zinc-950 border border-amber-900/60 rounded-xl text-amber-100 text-sm focus:outline-none focus:border-amber-500 font-bold"
-                >
-                  <option value="">-- Selecione a Joia Pai (Matriz) --</option>
-                  {rootCertificates.map(cert => (
-                    <option key={cert.id} value={cert.id}>
-                      {cert.title} ({cert.id}) — Série: {cert.serialNumber}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  {/* Campo de busca */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
+                    <input
+                      ref={certSearchRef}
+                      type="text"
+                      value={certSearch}
+                      onChange={e => { setCertSearch(e.target.value); setCertDropdownOpen(true); }}
+                      onFocus={() => setCertDropdownOpen(true)}
+                      placeholder="Digite para buscar por nome, série ou coleção..."
+                      className="w-full pl-9 pr-3 py-3 bg-zinc-950 border border-amber-900/60 rounded-xl text-amber-100 text-sm focus:outline-none focus:border-amber-500 placeholder-zinc-600"
+                    />
+                    {certSearch && (
+                      <button
+                        type="button"
+                        onClick={() => { setCertSearch(''); setSelectedCertId(''); setCertDropdownOpen(true); certSearchRef.current?.focus(); }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Lista filtrada */}
+                  {certDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-zinc-900 border border-amber-900/50 rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scrollbar">
+                      {filteredCerts.length === 0 ? (
+                        <p className="px-4 py-3 text-xs text-zinc-500">Nenhuma joia encontrada.</p>
+                      ) : (
+                        filteredCerts.map(cert => (
+                          <button
+                            key={cert.id}
+                            type="button"
+                            onClick={() => handleSelectCert(cert)}
+                            className={`w-full text-left px-4 py-2.5 hover:bg-amber-900/30 transition-colors border-b border-zinc-800 last:border-0 ${selectedCertId === cert.id ? 'bg-amber-900/20' : ''}`}
+                          >
+                            <p className="text-sm font-semibold text-amber-100 truncate">{cert.title}</p>
+                            <p className="text-xs text-zinc-400">{cert.serialNumber}{cert.collection ? ` · ${cert.collection}` : ''}</p>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  {/* Overlay para fechar ao clicar fora */}
+                  {certDropdownOpen && (
+                    <div className="fixed inset-0 z-40" onClick={() => setCertDropdownOpen(false)} />
+                  )}
+                </div>
               )}
             </div>
 

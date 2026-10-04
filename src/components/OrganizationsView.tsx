@@ -18,6 +18,8 @@ interface Organization {
    * certificados ja emitidos - cada um guarda a copia do que foi prometido.
    */
   warranty_terms_default?: string;
+  /** Manual de cuidados padrao desta joalheria. Mesma mecanica do termo. */
+  care_guide_default?: string;
 }
 
 interface OrganizationsViewProps {
@@ -44,7 +46,8 @@ export const OrganizationsView = ({
     responsibleName: '',
     phone: '',
     email: '',
-    warrantyTermsDefault: ''
+    warrantyTermsDefault: '',
+    careGuideDefault: ''
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -101,7 +104,7 @@ export const OrganizationsView = ({
 
       if (data.success) {
         setSuccess(editingId ? 'Organização atualizada!' : 'Organização criada!');
-        setFormData({ name: '', displayName: '', website: '', internalNotes: '', responsibleName: '', phone: '', email: '', warrantyTermsDefault: '' });
+        setFormData({ name: '', displayName: '', website: '', internalNotes: '', responsibleName: '', phone: '', email: '', warrantyTermsDefault: '', careGuideDefault: '' });
         setEditingId(null);
         setShowForm(false);
         setSearchTerm('');
@@ -146,7 +149,8 @@ export const OrganizationsView = ({
       responsibleName: org.responsible_name || '',
       phone: org.phone || '',
       email: org.email || '',
-      warrantyTermsDefault: org.warranty_terms_default || ''
+      warrantyTermsDefault: org.warranty_terms_default || '',
+      careGuideDefault: org.care_guide_default || ''
     });
     setEditingId(org.id);
     setShowForm(true);
@@ -219,7 +223,7 @@ export const OrganizationsView = ({
               onClick={() => {
                 setShowForm(true);
                 setEditingId(null);
-                setFormData({ name: '', displayName: '', website: '', internalNotes: '', responsibleName: '', phone: '', email: '', warrantyTermsDefault: '' });
+                setFormData({ name: '', displayName: '', website: '', internalNotes: '', responsibleName: '', phone: '', email: '', warrantyTermsDefault: '', careGuideDefault: '' });
               }}
               className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-semibold rounded-lg transition flex items-center gap-2"
             >
@@ -333,6 +337,22 @@ export const OrganizationsView = ({
                   além do texto padrão do certificado.
                 </p>
               </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2">Manual de Cuidados Padrão</label>
+                <textarea
+                  value={formData.careGuideDefault}
+                  onChange={(e) => setFormData({ ...formData, careGuideDefault: e.target.value })}
+                  placeholder="Como o cliente deve cuidar das peças desta joalheria. Preenche o certificado de cada peça nova."
+                  className="w-full px-3 py-2 bg-zinc-800 border border-amber-900/40 rounded text-amber-50 resize-none font-mono text-xs"
+                  rows={10}
+                />
+                <p className="text-xs text-zinc-400 mt-1.5">
+                  Aparece na aba "Manual de Cuidados" do passaporte público. Mesmas regras do
+                  termo de garantia: vale para peças emitidas daqui em diante, e cada peça pode
+                  ajustar o seu no cadastro da joia.
+                </p>
+              </div>
+
               <div className="flex gap-4">
                 <button
                   type="submit"

@@ -29,6 +29,8 @@ interface CertificateFormModalProps {
    * promessa legal que o cliente final le no passaporte.
    */
   warrantyTermsDefault?: string;
+  /** Manual de cuidados padrao da joalheria. Mesma mecanica do termo acima. */
+  careGuideDefault?: string;
 }
 
 const DEFAULT_PURITIES: string[] = [];
@@ -158,7 +160,8 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
   selectedCustomerForNewCert,
   companyName,
   companyLogoUrl,
-  warrantyTermsDefault
+  warrantyTermsDefault,
+  careGuideDefault
 }) => {
   /**
    * O padrao de uma peca nova e a joalheria ATUAL, nao uma marca fixa.
@@ -309,6 +312,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
       setWarrantyMonths(initialCert.warrantyMonths ?? -1);
       setInternalNotes(initialCert.internalNotes || '');
       setWarrantyTerms(initialCert.warrantyTerms || warrantyTermsDefault || '');
+      setCareGuideTerms(initialCert.careGuideTerms || careGuideDefault || '');
       setEstimatedValueBRL(initialCert.estimatedValueBRL ?? '');
     }
   }, [initialCert]);
@@ -328,7 +332,10 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
     if (!initialCert && warrantyTermsDefault && !warrantyTerms) {
       setWarrantyTerms(warrantyTermsDefault);
     }
-  }, [warrantyTermsDefault, initialCert]);
+    if (!initialCert && careGuideDefault && !careGuideTerms) {
+      setCareGuideTerms(careGuideDefault);
+    }
+  }, [warrantyTermsDefault, careGuideDefault, initialCert]);
   
   const [metalPurity, setMetalPurity] = useState<string>(initialCert?.metalPurity || '');
   const [metalColor, setMetalColor] = useState<string>(initialCert?.metalColor || '');
@@ -352,7 +359,9 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
 
   const [warrantyMonths, setWarrantyMonths] = useState<number>(initialCert?.warrantyMonths ?? -1);
   const [internalNotes, setInternalNotes] = useState(initialCert?.internalNotes || '');
+  const [careGuideTerms, setCareGuideTerms] = useState(initialCert?.careGuideTerms || careGuideDefault || '');
   const [mostrarGarantia, setMostrarGarantia] = useState(false);
+  const [mostrarCuidados, setMostrarCuidados] = useState(false);
   const [warrantyTerms, setWarrantyTerms] = useState(initialCert?.warrantyTerms || warrantyTermsDefault || '');
   const [estimatedValueBRL, setEstimatedValueBRL] = useState<number | ''>(initialCert?.estimatedValueBRL ?? '');
 
@@ -547,18 +556,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
       authenticityHash: initialCert?.authenticityHash || '', // Gerado apenas ao vincular cliente
       estimatedValueBRL: Number(estimatedValueBRL) || 0,
       internalNotes,
-      careGuide: initialCert?.careGuide || [
-        {
-          category: 'Limpeza',
-          title: 'Higienização Recomendada',
-          description: `Lave com água morna e sabão neutro. Seque com pano macio específico para ${metalPurity}.`
-        },
-        {
-          category: 'Armazenamento',
-          title: 'Acondicionamento de Segurança',
-          description: 'Guarde em estojo individual aveludado para evitar atritos.'
-        }
-      ],
+      careGuideTerms,
       maintenanceHistory: initialCert?.maintenanceHistory || [],
       createdAt: initialCert?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -744,6 +742,30 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
                     />
                     <p className="text-[10px] text-zinc-500 mt-1">
                       Vale só para esta peça. O padrão da joalheria se edita em Organizações.
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setMostrarCuidados(v => !v)}
+                  className="block mt-2 text-[11px] text-amber-300/90 hover:text-amber-200 underline underline-offset-2"
+                >
+                  {mostrarCuidados ? 'Ocultar' : 'Ver/editar'} manual de cuidados desta peça
+                  {!careGuideTerms && ' (vazio)'}
+                </button>
+
+                {mostrarCuidados && (
+                  <div className="mt-2">
+                    <textarea
+                      value={careGuideTerms}
+                      onChange={(e) => setCareGuideTerms(e.target.value)}
+                      rows={10}
+                      placeholder="Como o cliente deve cuidar desta peça. Vem preenchido com o padrão da joalheria, se houver."
+                      className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-100 text-[11px] font-mono focus:outline-none focus:border-amber-500 resize-none"
+                    />
+                    <p className="text-[10px] text-zinc-500 mt-1">
+                      Aparece na aba "Manual de Cuidados" do passaporte. Vale só para esta peça.
                     </p>
                   </div>
                 )}

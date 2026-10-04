@@ -45,12 +45,6 @@ export interface MaintenanceRecord {
   customerEmail?: string;
 }
 
-export interface CareGuideItem {
-  category: 'Limpeza' | 'Armazenamento' | 'Uso Diário' | 'Produtos Químicos' | 'Inspeção Profissional';
-  title: string;
-  description: string;
-  warning?: string;
-}
 
 export interface Customer {
   id: string; // e.g., "CLI-1001"
@@ -106,7 +100,15 @@ export interface JewelryCertificate {
   // Extra details
   estimatedValueBRL?: number;
   internalNotes?: string;
-  careGuide: CareGuideItem[];
+  /**
+   * Manual de cuidados desta peca, copiado do padrao da joalheria na emissao.
+   * Mesmo formato do termo de garantia: **negrito**, - item, [icon:nome].
+   *
+   * Substitui o antigo `careGuide: CareGuideItem[]`, que era codigo morto: a
+   * API nunca gravou a coluna, os 12 certificados estavam com ela vazia e
+   * nenhuma tela a lia.
+   */
+  careGuideTerms?: string;
   maintenanceHistory: MaintenanceRecord[];
 
   createdAt: string;

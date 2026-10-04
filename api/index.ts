@@ -2224,6 +2224,7 @@ app.post('/api/certificates', async (req, res) => {
       images: newCert.images,
       warranty_months: newCert.warrantyMonths,
       warranty_terms: newCert.warrantyTerms,
+      care_guide_terms: newCert.careGuideTerms,
       warranty_status: newCert.warrantyStatus,
       estimated_value_brl: newCert.estimatedValueBRL || 0,
       internal_notes: newCert.internalNotes || '',
@@ -2588,7 +2589,7 @@ app.post('/api/organizations', async (req, res) => {
   try {
     if (barrouNaoRoot(req, res)) return;
 
-    const { name, displayName, website, internalNotes, responsibleName, phone, email, warrantyTermsDefault } = req.body;
+    const { name, displayName, website, internalNotes, responsibleName, phone, email, warrantyTermsDefault, careGuideDefault } = req.body;
 
     if (!name) {
       return res.status(400).json({
@@ -2650,6 +2651,7 @@ app.post('/api/organizations', async (req, res) => {
     if (email) insertData.email = email;
     if (internalNotes) insertData.internal_notes = internalNotes;
     if (warrantyTermsDefault) insertData.warranty_terms_default = warrantyTermsDefault;
+    if (careGuideDefault) insertData.care_guide_default = careGuideDefault;
 
     const { data, error } = await supabase
       .from('organizations')
@@ -2676,7 +2678,7 @@ app.put('/api/organizations/:id', async (req, res) => {
     if (barrouNaoRoot(req, res)) return;
 
     const { id } = req.params;
-    const { name, displayName, website, internalNotes, responsibleName, phone, email, logoUrl, warrantyTermsDefault } = req.body;
+    const { name, displayName, website, internalNotes, responsibleName, phone, email, logoUrl, warrantyTermsDefault, careGuideDefault } = req.body;
 
     if (displayName && displayName.length > 18) {
       return res.status(400).json({
@@ -2723,6 +2725,7 @@ app.put('/api/organizations/:id', async (req, res) => {
     // `!== undefined`, e nao truthy: string vazia aqui significa "apagar o
     // termo", e um `if (valor)` descartaria essa intencao em silencio.
     if (warrantyTermsDefault !== undefined) updateData.warranty_terms_default = warrantyTermsDefault;
+    if (careGuideDefault !== undefined) updateData.care_guide_default = careGuideDefault;
     if (logoUrl) updateData.logo_url = logoUrl;
 
     const { data, error } = await supabase

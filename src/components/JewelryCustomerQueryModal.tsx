@@ -141,7 +141,7 @@ export const JewelryCustomerQueryModal: React.FC<JewelryCustomerQueryModalProps>
                   const childrenCount = getChildCertificatesForParent(c, certificates).length;
                   return (
                     <option key={c.id} value={c.id}>
-                      [Joia Pai] {c.title} ({c.id}) — {childrenCount} filha(s) emitida(s)
+                      {c.title} ({c.id}) — {childrenCount} filha(s) emitida(s)
                     </option>
                   );
                 })}

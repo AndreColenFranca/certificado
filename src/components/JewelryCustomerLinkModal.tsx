@@ -184,7 +184,7 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
                   <option value="">-- Selecione a Joia Pai (Matriz) --</option>
                   {rootCertificates.map(cert => (
                     <option key={cert.id} value={cert.id}>
-                      [Joia Pai] {cert.title} ({cert.id}) — Série: {cert.serialNumber}
+                      {cert.title} ({cert.id}) — Série: {cert.serialNumber}
                     </option>
                   ))}
                 </select>

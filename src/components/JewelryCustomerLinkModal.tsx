@@ -43,6 +43,9 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
   const [certSearch, setCertSearch] = useState('');
   const [certDropdownOpen, setCertDropdownOpen] = useState(false);
   const certSearchRef = useRef<HTMLInputElement>(null);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false);
+  const customerSearchRef = useRef<HTMLInputElement>(null);
   const [notes, setNotes] = useState('');
   const [issueDate, setIssueDate] = useState(() => {
     const today = new Date();
@@ -57,8 +60,10 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
   useEffect(() => {
     if (preSelectedCustomer) {
       setSelectedCustomerId(preSelectedCustomer.id);
+      setCustomerSearch(preSelectedCustomer.name);
     } else if (customers.length > 0 && !selectedCustomerId) {
       setSelectedCustomerId(customers[0].id);
+      setCustomerSearch(customers[0].name);
     }
 
     if (preSelectedCert) {
@@ -96,6 +101,23 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
     setSelectedCertId(cert.id);
     setCertSearch(cert.title);
     setCertDropdownOpen(false);
+  };
+
+  // Filtro de clientes
+  const filteredCustomers = customers.filter(c => {
+    if (!customerSearch.trim()) return true;
+    const q = customerSearch.toLowerCase();
+    return (
+      c.name.toLowerCase().includes(q) ||
+      (c.cpf || '').toLowerCase().includes(q) ||
+      (c.email || '').toLowerCase().includes(q)
+    );
+  });
+
+  const handleSelectCustomer = (c: Customer) => {
+    setSelectedCustomerId(c.id);
+    setCustomerSearch(c.name);
+    setCustomerDropdownOpen(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -165,17 +187,53 @@ export const JewelryCustomerLinkModal: React.FC<JewelryCustomerLinkModalProps> =
               {customers.length === 0 ? (
                 <p className="text-xs text-rose-400">Nenhum cliente cadastrado no sistema. Cadastre um cliente primeiro.</p>
               ) : (
-                <select
-                  value={selectedCustomerId}
-                  onChange={(e) => setSelectedCustomerId(e.target.value)}
-                  className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-amber-100 text-sm focus:outline-none focus:border-amber-500 font-semibold"
-                >
-                  {customers.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} — CPF: {c.cpf} ({c.email})
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
+                    <input
+                      ref={customerSearchRef}
+                      type="text"
+                      value={customerSearch}
+                      onChange={e => { setCustomerSearch(e.target.value); setCustomerDropdownOpen(true); }}
+                      onFocus={() => setCustomerDropdownOpen(true)}
+                      placeholder="Digite nome, CPF ou e-mail do cliente..."
+                      className="w-full pl-9 pr-3 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-amber-100 text-sm focus:outline-none focus:border-amber-500 placeholder-zinc-600"
+                    />
+                    {customerSearch && (
+                      <button
+                        type="button"
+                        onClick={() => { setCustomerSearch(''); setSelectedCustomerId(''); setCustomerDropdownOpen(true); customerSearchRef.current?.focus(); }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {customerDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scrollbar">
+                      {filteredCustomers.length === 0 ? (
+                        <p className="px-4 py-3 text-xs text-zinc-500">Nenhum cliente encontrado.</p>
+                      ) : (
+                        filteredCustomers.map(c => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => handleSelectCustomer(c)}
+                            className={`w-full text-left px-4 py-2.5 hover:bg-zinc-800 transition-colors border-b border-zinc-800 last:border-0 ${selectedCustomerId === c.id ? 'bg-zinc-800/60' : ''}`}
+                          >
+                            <p className="text-sm font-semibold text-amber-100 truncate">{c.name}</p>
+                            <p className="text-xs text-zinc-400">{c.cpf}{c.email ? ` · ${c.email}` : ''}</p>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  {customerDropdownOpen && (
+                    <div className="fixed inset-0 z-40" onClick={() => setCustomerDropdownOpen(false)} />
+                  )}
+                </div>
               )}
 
               {currentCustomer && (

@@ -54,7 +54,7 @@ async function backup() {
     const pasta = join(pastaRaiz, bucket);
     mkdirSync(pasta, { recursive: true });
     try {
-      const { n, bytes } = await baixarBucket(bucket, pastaRaiz);
+      const { n, bytes } = await baixarBucket(bucket, pasta);
       console.log(`${bucket.padEnd(22)} ${n} arquivo(s)  ${(bytes / 1048576).toFixed(2)} MB`);
       totalN += n;
       totalBytes += bytes;

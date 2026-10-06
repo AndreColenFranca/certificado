@@ -24,6 +24,7 @@ import { CustomerPortalView } from './components/CustomerPortalView';
 import { OrganizationsView } from './components/OrganizationsView';
 import { OrgSelectView } from './components/OrgSelectView';
 import { AttributesView } from './components/AttributesView';
+import { ResetPasswordView } from './components/ResetPasswordView';
 import { supabaseAuth } from './utils/supabaseAuth';
 import { extractCertIdFromInput, findCertificateByQuery, findCertificatesByQuery, getTodayAsLocalDate } from './utils/certUtils';
 import { isRootCert } from './utils/certHierarchy';
@@ -1078,6 +1079,21 @@ export default function App() {
       }
     }
   };
+
+  // Rota de redefinição de senha: o Supabase redireciona para /auth/reset-password
+  // com o access_token no hash, e o SDK já estabelece a sessão de recovery
+  // automaticamente. Mostrar essa tela antes do guard de login para que o
+  // usuário não veja a tela de login no meio do fluxo de reset.
+  if (typeof window !== 'undefined' && window.location.pathname === '/auth/reset-password') {
+    return (
+      <ResetPasswordView
+        onResetSuccess={() => { window.location.href = '/'; }}
+        companyName=""
+        companyLogoUrl={logoImage}
+        theme={theme}
+      />
+    );
+  }
 
   // STRICT AUTHENTICATION GUARD: Zero system access without active login session
   if (!currentUser) {

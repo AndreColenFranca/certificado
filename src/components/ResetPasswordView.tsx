@@ -77,7 +77,16 @@ export const ResetPasswordView = ({
       const { error } = await supabase.auth.updateUser({ password: newPassword });
 
       if (error) {
-        setErrorMsg(error.message);
+        const msg = error.message.toLowerCase();
+        if (msg.includes('different from the old password') || msg.includes('same as the old password')) {
+          setErrorMsg('A nova senha deve ser diferente da senha atual.');
+        } else if (msg.includes('at least') || msg.includes('characters')) {
+          setErrorMsg('A senha deve ter pelo menos 6 caracteres.');
+        } else if (msg.includes('weak') || msg.includes('strength')) {
+          setErrorMsg('Senha muito fraca. Use letras, números e símbolos.');
+        } else {
+          setErrorMsg(error.message);
+        }
         return;
       }
 

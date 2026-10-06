@@ -645,15 +645,18 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     });
 
     if (error) {
+      const msgAmigavel = (error as any).code === 'over_email_send_rate_limit'
+        ? 'Limite de emails atingido. Aguarde alguns minutos e tente novamente.'
+        : error.message;
       return res.status(400).json({
         success: false,
-        error: error.message
+        error: msgAmigavel
       });
     }
 
     res.json({
       success: true,
-      message: 'Password reset email sent. Check your inbox.',
+      message: 'Email de recuperação enviado! Verifique sua caixa de entrada.',
       data
     });
   } catch (err: any) {

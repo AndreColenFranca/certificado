@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Lock, Eye, EyeOff, ShieldCheck, Crown, Sparkles, KeyRound, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Lock, Eye, EyeOff, ShieldCheck, Crown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface ResetPasswordViewProps {
@@ -10,9 +10,6 @@ interface ResetPasswordViewProps {
 }
 
 export const ResetPasswordView = ({
-  onResetSuccess,
-  companyName,
-  companyLogoUrl,
   theme = 'luxury-dark'
 }: ResetPasswordViewProps) => {
   const [newPassword, setNewPassword] = useState('');
@@ -22,8 +19,44 @@ export const ResetPasswordView = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Estabelece a sessão de recovery a partir dos tokens no hash da URL.
+  // O cliente PKCE não processa o hash implícito automaticamente, então
+  // fazemos isso manualmente com setSession.
+  useEffect(() => {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const type = params.get('type');
+
+    if (accessToken && type === 'recovery') {
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || ''
+      }).then(({ error }) => {
+        if (error) {
+          setErrorMsg('Link inválido ou expirado. Solicite um novo email de recuperação.');
+        } else {
+          setSessionReady(true);
+          // Limpa o hash da URL sem recarregar a página
+          window.history.replaceState(null, '', '/auth/reset-password');
+        }
+      });
+    } else {
+      // Sessão já pode estar ativa (ex: PKCE trocou o code antes de chegar aqui)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setSessionReady(true);
+        } else {
+          setErrorMsg('Link inválido ou expirado. Solicite um novo email de recuperação.');
+        }
+      });
+    }
+  }, []);
+
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
@@ -41,28 +74,21 @@ export const ResetPasswordView = ({
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
 
       if (error) {
         setErrorMsg(error.message);
         return;
       }
 
-      setSuccessMsg('✅ Senha redefinida com sucesso! Redirecionando...');
-      // Clear app state to force login
+      setSuccessMsg('Senha redefinida com sucesso! Redirecionando...');
       try {
         sessionStorage.removeItem('aureum_logged_user');
         sessionStorage.removeItem('aureum_certificates');
         sessionStorage.removeItem('aureum_customers');
         sessionStorage.removeItem('aureum_theme');
-      } catch (e) {
-      }
-      setTimeout(() => {
-        // Redirect to login with logout flag
-        window.location.href = '/?logout=true';
-      }, 2000);
+      } catch (e) {}
+      setTimeout(() => { window.location.href = '/'; }, 2000);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Erro ao redefinir senha');
     } finally {
@@ -78,50 +104,38 @@ export const ResetPasswordView = ({
     }`}>
       <div className="w-full max-w-md space-y-6 animate-fade-in relative">
 
-        {/* Glow background */}
         <div className="absolute -top-12 -left-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Card */}
         <div className={`p-8 rounded-3xl border shadow-2xl relative overflow-hidden backdrop-blur-md ${
           isLight
             ? 'bg-white border-amber-900/20 shadow-amber-900/10'
             : 'bg-zinc-900 border-amber-900/50 shadow-amber-950/80'
         }`}>
 
-          {/* Header */}
+          {/* Header — igual ao SupabaseLoginView */}
           <div className="text-center space-y-3 mb-8">
-            <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 mb-2 shadow-inner">
-              {companyLogoUrl ? (
-                <img src={companyLogoUrl} alt="Logo" className="h-8 w-auto" />
-              ) : (
-                <Crown className="w-6 h-6 text-amber-500" />
-              )}
+            <div className="inline-flex items-center justify-center mb-4">
+              <Crown className="w-8 h-8 text-amber-500" />
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-              {companyName || 'Estilo Raro'}
+            <h1 className="text-xl font-semibold text-amber-700">
+              Certificado de Joias
             </h1>
-            <p className="text-sm opacity-60">
-              Redefinir Senha
-            </p>
+            <p className="text-sm opacity-60">Redefinir Senha</p>
           </div>
 
-          {/* Error Message */}
           {errorMsg && (
-            <div className="mb-4 p-4 rounded-lg bg-red-500/30 border border-red-400 text-red-100 text-sm font-medium">
-              ❌ {errorMsg}
+            <div className="mb-4 p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-200 text-sm">
+              {errorMsg}
             </div>
           )}
 
-          {/* Success Message */}
           {successMsg && (
-            <div className="mb-4 p-4 rounded-lg bg-green-500/30 border border-green-400 text-green-100 text-sm font-medium shadow-lg flex items-center gap-2">
-              <CheckCircle className="w-5 h-5" />
-              {successMsg}
+            <div className="mb-4 p-4 rounded-lg bg-green-600 border-2 border-green-300 text-white text-base font-bold shadow-xl animate-pulse">
+              ✅ {successMsg}
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
               <label className="block text-xs font-semibold uppercase tracking-wider mb-1 opacity-70">
@@ -135,7 +149,7 @@ export const ResetPasswordView = ({
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  disabled={isLoading}
+                  disabled={isLoading || !sessionReady}
                   className={`w-full pl-10 pr-10 py-2.5 rounded-xl border transition-colors ${
                     isLight
                       ? 'bg-stone-100 border-amber-900/20 text-stone-900 placeholder:text-stone-400'
@@ -145,8 +159,7 @@ export const ResetPasswordView = ({
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
-                  className="absolute right-3 top-3 opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20"
+                  className="absolute right-3 top-3 opacity-40 hover:opacity-100 transition-opacity"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -165,7 +178,7 @@ export const ResetPasswordView = ({
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  disabled={isLoading}
+                  disabled={isLoading || !sessionReady}
                   className={`w-full pl-10 pr-10 py-2.5 rounded-xl border transition-colors ${
                     isLight
                       ? 'bg-stone-100 border-amber-900/20 text-stone-900 placeholder:text-stone-400'
@@ -175,8 +188,7 @@ export const ResetPasswordView = ({
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  disabled={isLoading}
-                  className="absolute right-3 top-3 opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20"
+                  className="absolute right-3 top-3 opacity-40 hover:opacity-100 transition-opacity"
                 >
                   {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -185,7 +197,7 @@ export const ResetPasswordView = ({
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !sessionReady}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-950 font-bold transition-all duration-200 flex items-center justify-center gap-2 mt-6"
             >
               {isLoading ? (

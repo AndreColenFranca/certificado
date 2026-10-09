@@ -2717,16 +2717,16 @@ app.put('/api/organizations/:id', async (req, res) => {
       }
     }
 
+    // `!== undefined` em todos os campos opcionais: string vazia significa
+    // "apagar o valor", e um `if (valor)` descartaria essa intencao em silencio.
     const updateData: any = { updated_at: new Date().toISOString() };
     if (name) updateData.name = name;
-    if (displayName) updateData.display_name = displayName;
-    if (website) updateData.website = website;
-    if (responsibleName) updateData.responsible_name = responsibleName;
-    if (phone) updateData.phone = phone;
-    if (email) updateData.email = email;
-    if (internalNotes) updateData.internal_notes = internalNotes;
-    // `!== undefined`, e nao truthy: string vazia aqui significa "apagar o
-    // termo", e um `if (valor)` descartaria essa intencao em silencio.
+    if (displayName !== undefined) updateData.display_name = displayName;
+    if (website !== undefined) updateData.website = website;
+    if (responsibleName !== undefined) updateData.responsible_name = responsibleName;
+    if (phone !== undefined) updateData.phone = phone;
+    if (email !== undefined) updateData.email = email;
+    if (internalNotes !== undefined) updateData.internal_notes = internalNotes;
     if (warrantyTermsDefault !== undefined) updateData.warranty_terms_default = warrantyTermsDefault;
     if (careGuideDefault !== undefined) updateData.care_guide_default = careGuideDefault;
     if (logoUrl) updateData.logo_url = logoUrl;

@@ -2791,7 +2791,7 @@ app.delete('/api/organizations/:id', async (req, res) => {
     const PARA_CONFERIR = [
       { tabela: 'jewelry_certificates', rotulo: 'certificado(s)' },
       { tabela: 'customers', rotulo: 'cliente(s)' },
-      { tabela: 'auth_users', rotulo: 'usuário(s)' },
+      { tabela: 'user_orgs', rotulo: 'usuário(s)' },
     ];
 
     const impedimentos: string[] = [];
